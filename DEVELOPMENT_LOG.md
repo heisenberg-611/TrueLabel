@@ -813,3 +813,22 @@
   - `src/shared/views/partials/navbar.hbs`: Swapped plain text heading for the light/dark logo wordmark images + matching tagline.
   - `src/shared/views/dark-mode.spec.ts`: Added assertions for both wordmark assets and navbar references.
 - **Verification**: `npm test` (24/24 suites, 225/225 tests passing) and `npm run build` (exit code 0).
+
+### Entry 038 | 2026-11-18 21:59:48 +06:00 | Role-Tailored Navbar Reorganization (Desktop + Mobile)
+
+**What**: Reorganized both the desktop primary navigation and mobile drawer menu so each user role sees only the links relevant to them.
+
+**Role → Navigation mapping**:
+| Role | Links shown (after Home + Food Catalog) |
+|---|---|
+| **Guest** | Safety Documents, Verify Licence, About |
+| **Consumer** | Dietary Profile (green dot), My Reports, Dashboard |
+| **Manufacturer** | Safety Documents, Upload Certificate (upload icon), Verify Licence, Dashboard |
+| **Inspector** | Safety Documents, Complaint Queue (rose dot), Verify Licence, Dashboard |
+| **Admin** | Safety Documents, Complaint Queue (rose dot), Verify Licence, Admin Console |
+
+**Files changed**:
+- `src/shared/views/partials/navbar.hbs` — Desktop nav (lines 45–127): `{{#if (eq user.role ...)}}` chain replaces flat links. Mobile drawer (lines 319–432): same role-tailored structure with mobile styling (flex justify-between, arrow indicators, highlighted CTA rows for Dietary Profile / Upload Certificate).
+- User profile dropdown (lines 175–214): kept existing role-specific shortcuts (complementary actions like "Register New Food Product", "Pending Inspector Queue") — these supplement rather than duplicate the top nav.
+
+**Verification**: `npm run build` exit 0, `npm test` 24/24 suites 225/225 tests passing.
