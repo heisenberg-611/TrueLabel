@@ -832,3 +832,15 @@
 - User profile dropdown (lines 175–214): kept existing role-specific shortcuts (complementary actions like "Register New Food Product", "Pending Inspector Queue") — these supplement rather than duplicate the top nav.
 
 **Verification**: `npm run build` exit 0, `npm test` 24/24 suites 225/225 tests passing.
+
+### Entry 039 | 2026-11-18 22:19:30 +06:00 | User-Friendly, Role-Aware 403 Access Notice Page
+
+**What**: Replaced the raw technical 403 error dump (`HTTP 403 · ACCESS DENIED`, `User role 'inspector' lacks permission for this action`, and `Authenticated Identity` debug box) with a calm, plain-language, role- and route-aware access notice page.
+
+**Changes**:
+- `src/common/guards/roles.guard.ts`: Updated `RolesGuard` to attach structured role metadata (`isRoleRestriction: true`, `requiredRoles`) and human-readable role names (`Food Manufacturer`, `Safety Inspector`, `Consumer`, `Administrator`) to `ForbiddenException`.
+- `src/common/filters/auth-exception.filter.ts`: Added `buildForbiddenViewModel()` to generate tailored headlines, plain-English explanations, hints, and role-appropriate next-step buttons for restricted routes — specifically giving tailored guidance when a Safety Inspector or Consumer clicks **Submit safety certificates** (`/safety/documents/upload`), as well as catalog management, review/complaint queues, consumer actions, and role dashboards. Preserves custom error messages for non-role 403s.
+- `src/shared/views/forbidden.hbs`: Redesigned to match TrueLabel's editorial typography (`font-serif` sentence-case heading, warm amber lock icon, emerald primary action CTA) without technical HTTP jargon, ALL-CAPS eyebrows, or debug identity dumps. Added a quiet signed-in footer row with a one-click **Sign out to switch accounts** action (CSRF-protected).
+- `src/common/guards/roles.guard.spec.ts` & `src/common/filters/auth-exception.filter.spec.ts`: Added unit tests verifying role metadata and inspector/consumer/route-specific 403 view models.
+
+**Verification**: `npm run build` exit 0; `npm test` 24/24 suites, 228/228 tests passing.

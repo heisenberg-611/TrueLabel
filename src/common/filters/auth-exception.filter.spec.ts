@@ -13,7 +13,11 @@ describe('AuthExceptionFilter (Unit Tests)', () => {
     filter = new AuthExceptionFilter();
   });
 
-  const createMockHost = (acceptsHtml: boolean, url = '/test-path') => {
+  const createMockHost = (
+    acceptsHtml: boolean,
+    url = '/test-path',
+    sessionUser: any = { id: 1, name: 'Alice', email: 'alice@example.com', role: 'consumer' },
+  ) => {
     const mockResponse = {
       redirect: jest.fn(),
       status: jest.fn().mockReturnThis(),
@@ -24,7 +28,7 @@ describe('AuthExceptionFilter (Unit Tests)', () => {
     const mockRequest = {
       url,
       accepts: jest.fn().mockReturnValue(acceptsHtml ? 'html' : 'json'),
-      session: { user: { id: 1, name: 'Alice', email: 'alice@example.com', role: 'consumer' } },
+      session: { user: sessionUser },
     };
 
     const mockHost = {
@@ -58,7 +62,100 @@ describe('AuthExceptionFilter (Unit Tests)', () => {
         'shared/views/forbidden',
         expect.objectContaining({
           title: 'Access Forbidden — TrueLabel',
+          heading: 'You cannot complete this action',
           message: 'Access denied',
+        }),
+      );
+    });
+
+    it('should render inspector-friendly guidance when an inspector visits /safety/documents/upload', () => {
+      const { mockHost, mockResponse } = createMockHost(true, '/safety/documents/upload', {
+        id: 3,
+        name: 'Dr. Marcus Vance',
+        email: 'inspector@truelabel.demo',
+        role: 'inspector',
+      });
+      const exception = new ForbiddenException({
+        message: 'This page is only available to Food Manufacturer or Administrator accounts.',
+        isRoleRestriction: true,
+        requiredRoles: ['manufacturer', 'admin'],
+      });
+
+      filter.catch(exception, mockHost);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(403);
+      expect(mockResponse.render).toHaveBeenCalledWith(
+        'shared/views/forbidden',
+        expect.objectContaining({
+          heading: 'Submitting certificates is for food manufacturers',
+          currentRoleLabel: 'Safety Inspector',
+          primaryAction: { label: 'Review safety documents', href: '/safety/documents' },
+          secondaryAction: { label: 'Go to your dashboard', href: '/dashboard' },
+        }),
+      );
+      const viewModel = mockResponse.render.mock.calls[0][1];
+      expect(viewModel.message).toContain('Safety Inspector account');
+      expect(viewModel.message).not.toContain('lacks permission');
+    });
+
+    it('should render consumer-friendly guidance when a consumer visits /safety/documents/upload', () => {
+      const { mockHost, mockResponse } = createMockHost(true, '/safety/documents/upload', {
+        id: 2,
+        name: 'Sarah Chen',
+        email: 'consumer@truelabel.demo',
+        role: 'consumer',
+      });
+      const exception = new ForbiddenException({
+        message: 'This page is only available to Food Manufacturer or Administrator accounts.',
+        isRoleRestriction: true,
+        requiredRoles: ['manufacturer', 'admin'],
+      });
+
+      filter.catch(exception, mockHost);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(403);
+      expect(mockResponse.render).toHaveBeenCalledWith(
+        'shared/views/forbidden',
+        expect.objectContaining({
+          heading: 'Submitting certificates is for food manufacturers',
+          currentRoleLabel: 'Consumer',
+          primaryAction: { label: 'Browse safety documents', href: '/safety/documents' },
+          secondaryAction: { label: 'Explore food catalog', href: '/catalog' },
+        }),
+      );
+      const viewModel = mockResponse.render.mock.calls[0][1];
+      expect(viewModel.message).toContain('Consumer account');
+    });
+
+    it('should render role-aware guidance for catalog management and inspector queue routes', () => {
+      const { mockHost: catalogHost, mockResponse: catalogRes } = createMockHost(
+        true,
+        '/catalog/manage/create',
+      );
+      const roleError = new ForbiddenException({
+        message: 'This page is only available to Food Manufacturer or Administrator accounts.',
+        isRoleRestriction: true,
+        requiredRoles: ['manufacturer', 'admin'],
+      });
+
+      filter.catch(roleError, catalogHost);
+      expect(catalogRes.render).toHaveBeenCalledWith(
+        'shared/views/forbidden',
+        expect.objectContaining({
+          heading: 'Managing food listings is for food manufacturers',
+          primaryAction: { label: 'Explore food catalog', href: '/catalog' },
+        }),
+      );
+
+      const { mockHost: queueHost, mockResponse: queueRes } = createMockHost(
+        true,
+        '/community/reports/queue',
+      );
+      filter.catch(roleError, queueHost);
+      expect(queueRes.render).toHaveBeenCalledWith(
+        'shared/views/forbidden',
+        expect.objectContaining({
+          heading: 'This review bench is for safety inspectors',
         }),
       );
     });
