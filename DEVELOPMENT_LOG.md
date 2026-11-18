@@ -844,3 +844,13 @@
 - `src/common/guards/roles.guard.spec.ts` & `src/common/filters/auth-exception.filter.spec.ts`: Added unit tests verifying role metadata and inspector/consumer/route-specific 403 view models.
 
 **Verification**: `npm run build` exit 0; `npm test` 24/24 suites, 228/228 tests passing.
+
+### Entry 040 | 2026-11-18 23:07:50 +06:00 | Added Professional Repository README.md
+
+**What**: Created a comprehensive, GitHub-ready `README.md` at the repository root showcasing TrueLabel's live Railway deployment, brand identity, architecture, features, demo accounts, and developer setup.
+
+**Highlights**:
+- Centered adaptive brand logo header using `<picture>` (`public/images/logo.png` in light mode, `public/images/logo-dark.png` in dark mode) linked to `https://truelabel.up.railway.app/`.
+- Shields.io badges for live Railway deployment, NestJS 10, TypeScript, PostgreSQL/Supabase, TypeORM, Handlebars SSR, Tailwind CSS, and Jest (`228 tests passing`).
+- Live deployment quick-links table, implemented feature breakdown across all domain areas, stakeholder roles matrix, seeded demo credentials, Mermaid MVC architecture diagram, exact project directory tree, environment variables table, setup/seeding/testing instructions, and collapsible route reference.
+- Verified `README.md` is tracked by git (not excluded by `.gitignore`).
