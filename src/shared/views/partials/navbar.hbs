@@ -4,14 +4,41 @@
     <!-- Left: Brand Logo & Primary Navigation -->
     <div class="flex items-center gap-7">
       <!-- Brand Logo -->
-      <a href="/" class="flex items-center gap-2.5 group text-decoration-none">
-        <div class="w-9 h-9 bg-slate-900 text-white rounded-lg flex items-center justify-center font-black text-sm tracking-tighter group-hover:bg-emerald-700 transition-colors shadow-sm relative">
-          TL
-          <span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white"></span>
-        </div>
-        <div>
-          <div class="font-extrabold text-slate-950 tracking-tight leading-none text-lg group-hover:text-emerald-700 transition-colors">TrueLabel</div>
-          <div class="text-[10px] text-slate-500 font-semibold tracking-wider uppercase">Food Safety Standard</div>
+      <a href="/" class="flex items-center gap-2.5 group text-decoration-none shrink-0" aria-label="TrueLabel Home">
+        <img
+          src="/images/logo-mark.png"
+          alt=""
+          aria-hidden="true"
+          width="48"
+          height="36"
+          class="brand-logo-light h-9 sm:h-10 w-auto object-contain transition-transform duration-200 group-hover:scale-[1.03]"
+        />
+        <img
+          src="/images/logo-mark-dark.png"
+          alt=""
+          aria-hidden="true"
+          width="48"
+          height="36"
+          class="brand-logo-dark h-9 sm:h-10 w-auto object-contain transition-transform duration-200 group-hover:scale-[1.03]"
+        />
+        <div class="flex flex-col justify-center">
+          <img
+            src="/images/logo-wordmark.png"
+            alt="TrueLabel"
+            width="124"
+            height="22"
+            class="brand-logo-light h-[20px] sm:h-[22px] w-auto object-contain object-left transition-opacity duration-200 group-hover:opacity-90"
+          />
+          <img
+            src="/images/logo-wordmark-dark.png"
+            alt="TrueLabel"
+            width="124"
+            height="22"
+            class="brand-logo-dark h-[20px] sm:h-[22px] w-auto object-contain object-left transition-opacity duration-200 group-hover:opacity-90"
+          />
+          <div class="text-[8.5px] sm:text-[9px] text-[#20432D]/80 dark:text-slate-300 font-semibold tracking-[0.09em] uppercase leading-none mt-1 whitespace-nowrap">
+            Food Quality &bull; Safety &bull; Diet
+          </div>
         </div>
       </a>
 

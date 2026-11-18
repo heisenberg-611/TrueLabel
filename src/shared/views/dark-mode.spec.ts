@@ -4,6 +4,9 @@ import * as path from 'path';
 describe('Dark Mode System Architecture', () => {
   const mainLayoutPath = path.resolve(__dirname, 'layouts/main.hbs');
   const navbarPartialPath = path.resolve(__dirname, 'partials/navbar.hbs');
+  const footerPartialPath = path.resolve(__dirname, 'partials/footer.hbs');
+  const loginViewPath = path.resolve(process.cwd(), 'src/areas/identity/views/login.hbs');
+  const registerViewPath = path.resolve(process.cwd(), 'src/areas/identity/views/register.hbs');
   const styleCssPath = path.resolve(process.cwd(), 'public/css/style.css');
 
   describe('Main Layout (main.hbs)', () => {
@@ -83,6 +86,51 @@ describe('Dark Mode System Architecture', () => {
     it('should define dark mode rules for allergen and additive indicators', () => {
       expect(cssContent).toContain('html.dark .allergen-pill');
       expect(cssContent).toContain('html.dark .additive-pill');
+    });
+
+    it('should define anti-FOUC dark/light brand logo visibility rules', () => {
+      expect(cssContent).toContain('.brand-logo-light');
+      expect(cssContent).toContain('.brand-logo-dark');
+      expect(cssContent).toContain('html.dark .brand-logo-light');
+      expect(cssContent).toContain('html.dark .brand-logo-dark');
+    });
+  });
+
+  describe('Brand Logo & Favicon Integration', () => {
+    it('should provide optimized light, dark, mark, wordmark, and favicon assets in public/', () => {
+      const expectedAssets = [
+        'public/favicon.png',
+        'public/images/logo.png',
+        'public/images/logo-dark.png',
+        'public/images/logo-mark.png',
+        'public/images/logo-mark-dark.png',
+        'public/images/logo-wordmark.png',
+        'public/images/logo-wordmark-dark.png',
+      ];
+      for (const relPath of expectedAssets) {
+        expect(fs.existsSync(path.resolve(process.cwd(), relPath))).toBe(true);
+      }
+    });
+
+    it('should declare favicon links in main layout', () => {
+      const mainLayoutContent = fs.readFileSync(mainLayoutPath, 'utf-8');
+      expect(mainLayoutContent).toContain('href="/favicon.png"');
+    });
+
+    it('should render light and dark emblem marks and logo wordmarks in navbar', () => {
+      const navbarContent = fs.readFileSync(navbarPartialPath, 'utf-8');
+      expect(navbarContent).toContain('/images/logo-mark.png');
+      expect(navbarContent).toContain('/images/logo-mark-dark.png');
+      expect(navbarContent).toContain('/images/logo-wordmark.png');
+      expect(navbarContent).toContain('/images/logo-wordmark-dark.png');
+    });
+
+    it('should render light and dark full logos in footer and auth views', () => {
+      for (const viewPath of [footerPartialPath, loginViewPath, registerViewPath]) {
+        const content = fs.readFileSync(viewPath, 'utf-8');
+        expect(content).toContain('/images/logo.png');
+        expect(content).toContain('/images/logo-dark.png');
+      }
     });
   });
 });

@@ -776,3 +776,40 @@
 - **Verification**:
   - `npm run build`: Compiled cleanly (exit code 0).
   - `npm test`: **24 passed test suites, 220 unit tests passing (100% green)**.
+
+---
+
+### Entry 035 | 2026-11-18 21:26:00 +06:00 | Removed Duplicate Success/Error Banners in Community Views (F11, F13)
+- **Problem**: Updating a complaint status in Inspector mode rendered the green confirmation banner twice on `/community/reports/queue`.
+- **Root Cause**: The global layout (`src/shared/views/layouts/main.hbs`) already renders `{{#if success}}` and `{{#if error}}` banners above `{{{body}}}`, while `report-queue.hbs`, `reviews.hbs`, and `report-form.hbs` also rendered redundant local `success`/`error` banners.
+- **Fix**: Removed the duplicate local alert blocks from `src/areas/community/views/report-queue.hbs`, `src/areas/community/views/reviews.hbs`, and `src/areas/community/views/report-form.hbs` so only the single global layout notification renders.
+- **Verification**: `npm run build` and `npm test` (24/24 suites, 220/220 tests passing).
+
+---
+
+### Entry 036 | 2026-11-18 21:33:20 +06:00 | TrueLabel Brand Logo & Favicon Integration (Light + Dark Mode)
+- **Action**: Integrated the uploaded `public/TrueLabel Food Quality Logo.png` across the website with web-optimized, tightly cropped light/dark assets and browser favicon.
+- **Assets Generated** (source file preserved intact):
+  - `public/images/logo.png` & `public/images/logo-dark.png`: 640×431 optimized full lockups (light mode and dark-mode adapted with crisp white `"True"`, luminous green `"Label"`, and high-contrast tagline).
+  - `public/images/logo-mark.png` & `public/images/logo-mark-dark.png`: 256×190 tightly cropped emblem marks for compact navigation surfaces.
+  - `public/favicon.png`: 128×128 square transparent favicon.
+- **Views & Styles Updated**:
+  - `src/shared/views/layouts/main.hbs`: Added `<link rel="icon">` and `<link rel="apple-touch-icon">` pointing to `/favicon.png`.
+  - `src/shared/views/partials/navbar.hbs`: Replaced the placeholder `TL` box with the TrueLabel emblem mark alongside the `TrueLabel` wordmark.
+  - `src/shared/views/partials/footer.hbs`: Replaced the placeholder `T` badge with the full TrueLabel brand lockup.
+  - `src/areas/identity/views/login.hbs` & `src/areas/identity/views/register.hbs`: Added the centered full TrueLabel brand lockup at the top of the auth cards.
+  - `public/css/style.css`: Added anti-FOUC `.brand-logo-light` / `.brand-logo-dark` theme visibility rules.
+- **Verification**:
+  - Updated `src/shared/views/dark-mode.spec.ts` with 5 brand logo & favicon integration tests.
+  - `npm test`: 24 passed test suites, 225 unit tests passing (100% green).
+  - `npm run build`: Compiled cleanly (exit code 0).
+
+---
+
+### Entry 037 | 2026-11-18 21:40:25 +06:00 | Matched Navbar Brand Wordmark & Subtitle to Logo Typography
+- **Action**: Replaced the plain text `TrueLabel` navbar heading with the exact cropped italic two-tone logo wordmark (`public/images/logo-wordmark.png` and `public/images/logo-wordmark-dark.png`) and updated the subtitle to `Food Quality • Safety • Diet` matching the logo lockup.
+- **Files Updated**:
+  - `public/images/logo-wordmark.png` & `public/images/logo-wordmark-dark.png` (`460×82`, retina-sharp light & dark wordmarks).
+  - `src/shared/views/partials/navbar.hbs`: Swapped plain text heading for the light/dark logo wordmark images + matching tagline.
+  - `src/shared/views/dark-mode.spec.ts`: Added assertions for both wordmark assets and navbar references.
+- **Verification**: `npm test` (24/24 suites, 225/225 tests passing) and `npm run build` (exit code 0).

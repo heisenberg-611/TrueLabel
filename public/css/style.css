@@ -590,6 +590,23 @@ html.dark a.bg-slate-950:hover {
   border-color: #475569 !important;
 }
 
+/* Brand Logo Theme Switching (Anti-FOUC) */
+.brand-logo-light {
+  display: block;
+}
+
+.brand-logo-dark {
+  display: none;
+}
+
+html.dark .brand-logo-light {
+  display: none;
+}
+
+html.dark .brand-logo-dark {
+  display: block;
+}
+
 /* Exceptions: Preserve Viva Dock persona switcher active badge */
 #viva-dock .bg-white {
   background-color: #ffffff !important;
