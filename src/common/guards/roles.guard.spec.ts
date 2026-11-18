@@ -40,11 +40,27 @@ describe('RolesGuard', () => {
     expect(guard.canActivate(context)).toBe(true);
   });
 
-  it('should throw ForbiddenException if user lacks required role', () => {
+  it('should throw ForbiddenException with friendly role metadata if user lacks required role', () => {
     reflector.getAllAndOverride.mockReturnValue(['manufacturer', 'admin']);
     const context = createMockContext({ id: 2, role: 'consumer' });
 
-    expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
+    let caughtError: any;
+    try {
+      guard.canActivate(context);
+    } catch (err) {
+      caughtError = err;
+    }
+
+    expect(caughtError).toBeInstanceOf(ForbiddenException);
+    expect(caughtError.message).toBe(
+      'This page is only available to Food Manufacturer or Administrator accounts.',
+    );
+    expect(caughtError.getResponse()).toEqual(
+      expect.objectContaining({
+        isRoleRestriction: true,
+        requiredRoles: ['manufacturer', 'admin'],
+      }),
+    );
   });
 
   it('should throw ForbiddenException if user is not authenticated (guest)', () => {
