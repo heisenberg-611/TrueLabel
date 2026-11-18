@@ -104,7 +104,7 @@ export class AuthController {
 
   // Quick Switch for CSE470 Evaluation / Demo Viva (Gated in production)
   @Get('switch-role/:role')
-  demoSwitchRole(
+  async demoSwitchRole(
     @Param('role') role: UserRole,
     @Req() req: Request,
     @Res() res: Response,
@@ -121,15 +121,7 @@ export class AuthController {
     const validRoles: UserRole[] = ['consumer', 'manufacturer', 'inspector', 'admin'];
     const chosenRole = validRoles.includes(role) ? role : 'consumer';
 
-    req.session.user = {
-      id: 99,
-      name: `Demo ${chosenRole.charAt(0).toUpperCase() + chosenRole.slice(1)}`,
-      email: `${chosenRole}@truelabel.demo`,
-      role: chosenRole,
-      isVerified: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    req.session.user = await this.authService.findOrCreateDemoUser(chosenRole);
 
     return res.redirect('/');
   }

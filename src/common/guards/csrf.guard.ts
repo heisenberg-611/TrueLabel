@@ -18,10 +18,13 @@ export class CsrfGuard implements CanActivate {
       return true;
     }
 
+    const queryToken =
+      typeof request.query?._csrf === 'string' ? request.query._csrf : undefined;
     const clientToken =
       request.body?._csrf ||
       request.headers['x-csrf-token'] ||
-      request.headers['x-xsrf-token'];
+      request.headers['x-xsrf-token'] ||
+      queryToken;
 
     if (!clientToken || clientToken !== sessionToken) {
       throw new ForbiddenException(

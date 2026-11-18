@@ -202,6 +202,7 @@
                 </td>
                 <td class="px-6 py-4 text-right space-x-3">
                   <a href="/catalog/product/{{this.id}}" class="text-slate-600 hover:text-slate-900 font-semibold underline">View</a>
+                  <a href="/community/products/{{this.id}}/reviews" class="text-slate-700 hover:text-slate-950 font-semibold underline">Reviews</a>
                   <a href="/catalog/manage/{{this.id}}/edit" class="text-emerald-700 hover:text-emerald-900 font-semibold underline">Edit</a>
                 </td>
               </tr>
@@ -221,6 +222,40 @@
         >
           Register first product
         </a>
+      </div>
+    {{/if}}
+  </div>
+
+  <!-- Feature F11: Consumer Reviews on Your Products -->
+  <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+    <div class="p-6 border-b border-slate-200 flex items-center justify-between gap-4">
+      <div>
+        <h2 class="text-base font-bold text-slate-900">Recent consumer reviews on your products (F11)</h2>
+        <p class="text-xs text-slate-500 mt-0.5">Respond officially to customer questions about label accuracy, packaging, or taste</p>
+      </div>
+      <span class="text-xs font-mono font-semibold text-slate-500">{{totalProductReviews}} visible</span>
+    </div>
+    {{#if productReviews.length}}
+      <div class="divide-y divide-slate-100">
+        {{#each productReviews}}
+          <div class="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
+            <div class="space-y-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="font-bold text-slate-900">{{this.productName}}</span>
+                <span class="font-mono font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-900 border border-emerald-200">{{this.rating}} / 5</span>
+                <span class="text-slate-500">by {{this.authorName}} ({{this.weightFormatted}})</span>
+              </div>
+              <p class="text-slate-600 max-w-2xl">{{this.comment}}</p>
+            </div>
+            <a href="/community/products/{{this.productId}}/reviews" class="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-md font-semibold flex-shrink-0 transition-colors">
+              {{#if this.manufacturerReply}}Update reply{{else}}Reply to review{{/if}}
+            </a>
+          </div>
+        {{/each}}
+      </div>
+    {{else}}
+      <div class="p-8 text-center text-xs text-slate-500">
+        No consumer reviews have been posted on your registered products yet.
       </div>
     {{/if}}
   </div>

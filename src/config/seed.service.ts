@@ -9,6 +9,8 @@ import { NutritionFact } from '../areas/food-catalog/models/nutrition-fact.entit
 import { PreferenceProfile } from '../areas/personal-food/models/preference-profile.entity';
 import { FoodSafetyDocument } from '../areas/food-safety/models/food-safety-document.entity';
 import { ManufacturerLicence } from '../areas/food-safety/models/manufacturer-licence.entity';
+import { FoodReview } from '../areas/community/models/food-review.entity';
+import { FoodReport } from '../areas/community/models/food-report.entity';
 
 interface SeedProductDefinition {
   name: string;
@@ -58,6 +60,10 @@ export class SeedService {
     private readonly documentRepo: Repository<FoodSafetyDocument>,
     @InjectRepository(ManufacturerLicence)
     private readonly licenceRepo: Repository<ManufacturerLicence>,
+    @InjectRepository(FoodReview)
+    private readonly reviewRepo: Repository<FoodReview>,
+    @InjectRepository(FoodReport)
+    private readonly reportRepo: Repository<FoodReport>,
   ) {}
 
   /**
@@ -72,6 +78,7 @@ export class SeedService {
     await this.seedPreferenceProfile();
     await this.seedManufacturerLicences();
     await this.seedFoodSafetyDocuments();
+    await this.seedCommunityReviewsAndReports();
     this.logger.log('TrueLabel seed synchronization completed successfully.');
   }
 
@@ -93,6 +100,7 @@ export class SeedService {
 
     const demoUsers = [
       { name: 'Sharah Consumer', email: 'consumer@truelabel.demo', role: 'consumer' as const },
+      { name: 'Tariq Rahman', email: 'tariq.consumer@truelabel.demo', role: 'consumer' as const },
       { name: 'PureHarvest & Aarong Dairy', email: 'manufacturer@truelabel.demo', role: 'manufacturer' as const },
       { name: 'Dr. Marcus Vance (Inspector)', email: 'inspector@truelabel.demo', role: 'inspector' as const },
       { name: 'Lead System Admin', email: 'admin@truelabel.demo', role: 'admin' as const },
@@ -871,6 +879,144 @@ export class SeedService {
       const existing = await this.documentRepo.findOne({ where: { certificateNumber: doc.certificateNumber } });
       if (!existing) {
         await this.documentRepo.save(this.documentRepo.create(doc));
+      }
+    }
+  }
+
+  /**
+   * Feature F11 & F13: Seed authentic credibility-weighted reviews and safety complaints (idempotent).
+   */
+  private async seedCommunityReviewsAndReports() {
+    const sharah = await this.userRepo.findOne({ where: { email: 'consumer@truelabel.demo' } });
+    const tariq = await this.userRepo.findOne({ where: { email: 'tariq.consumer@truelabel.demo' } });
+    if (!sharah || !tariq) return;
+
+    const oatly = await this.productRepo.findOne({ where: { barcode: '7394376311482' } });
+    const chobani = await this.productRepo.findOne({ where: { barcode: '089470001382' } });
+    const frooto = await this.productRepo.findOne({ where: { barcode: '0831730009403' } });
+    const cola = await this.productRepo.findOne({ where: { barcode: '5449000000996' } });
+
+    const seedReviews = [
+      oatly && {
+        productId: oatly.id,
+        userId: sharah.id,
+        tasteRating: 5,
+        labelAccuracyRating: 5,
+        packagingRating: 5,
+        purchaseExperienceRating: 4,
+        rating: 5,
+        credibilityWeight: 1.14,
+        visibility: 'visible' as const,
+        title: 'Clean oat flavor and very clear allergen disclosure',
+        comment:
+          'Steams cleanly for espresso without separating. The nutrition table and oat percentage printed on the carton match TrueLabel exactly, and the cap seal was completely intact.',
+        manufacturerReply:
+          'Thank you for the detailed feedback, Sharah. Every Oatly Barista carton undergoes seal-integrity testing before dispatch.',
+        repliedAt: '2026-11-16T10:30:00.000Z',
+      },
+      oatly && {
+        productId: oatly.id,
+        userId: tariq.id,
+        tasteRating: 4,
+        labelAccuracyRating: 5,
+        packagingRating: 4,
+        purchaseExperienceRating: 4,
+        rating: 4,
+        credibilityWeight: 1.06,
+        visibility: 'visible' as const,
+        title: 'Good dairy-free alternative, slightly pricey locally',
+        comment:
+          'Ingredient panel is straightforward with zero hidden dairy allergens. Packaging arrived unbruised, though stock sells out quickly at neighborhood supermarkets.',
+        manufacturerReply: null,
+        repliedAt: null,
+      },
+      chobani && {
+        productId: chobani.id,
+        userId: tariq.id,
+        tasteRating: 5,
+        labelAccuracyRating: 5,
+        packagingRating: 4,
+        purchaseExperienceRating: 5,
+        rating: 5,
+        credibilityWeight: 1.08,
+        visibility: 'visible' as const,
+        title: 'Thick texture and transparent protein count',
+        comment:
+          'High protein per serving with zero added refined sugar. The foil lid seal was tight and cold-chain storage at the store kept it fresh.',
+        manufacturerReply: null,
+        repliedAt: null,
+      },
+      cola && {
+        productId: cola.id,
+        userId: sharah.id,
+        tasteRating: 4,
+        labelAccuracyRating: 3,
+        packagingRating: 5,
+        purchaseExperienceRating: 4,
+        rating: 4,
+        credibilityWeight: 1.14,
+        visibility: 'visible' as const,
+        title: 'Familiar taste, but sugar and E150d additives stand out',
+        comment:
+          'Can seal and carbonation were consistent, but checking the nutrition breakdown here highlighted 10.6g sugar per 100ml and caramel color E150d which is easy to miss on the small printed panel.',
+        manufacturerReply: null,
+        repliedAt: null,
+      },
+    ].filter(Boolean);
+
+    for (const item of seedReviews) {
+      if (!item) continue;
+      const existing = await this.reviewRepo.findOne({
+        where: { productId: item.productId, userId: item.userId },
+      });
+      if (!existing) {
+        await this.reviewRepo.save(this.reviewRepo.create(item));
+      }
+    }
+
+    const seedReports = [
+      frooto && {
+        productId: frooto.id,
+        userId: sharah.id,
+        category: 'damaged' as const,
+        batchCode: 'BATCH-FRT-2026-09',
+        purchasePlace: 'Banani Road 11 Supermart, Dhaka',
+        referenceNumber: 'TL-20261116-FRT001A1',
+        description:
+          'Purchased a 250ml mango drink pack from the chilled shelf; the bottom corner seam was visibly bulging and leaking sticky residue despite expiry date reading May 2027.',
+        status: 'pending' as const,
+      },
+      frooto && {
+        productId: frooto.id,
+        userId: tariq.id,
+        category: 'spoiled' as const,
+        batchCode: 'BATCH-FRT-2026-09',
+        purchasePlace: 'Gulshan 2 Convenience Store, Dhaka',
+        referenceNumber: 'TL-20261117-FRT002B2',
+        description:
+          'Opened a carton from batch BATCH-FRT-2026-09 and noticed a strong fermented sour smell immediately upon piercing the seal. Did not consume the drink.',
+        status: 'investigating' as const,
+      },
+      cola && {
+        productId: cola.id,
+        userId: sharah.id,
+        category: 'mislabelled' as const,
+        batchCode: 'CC-26-4412',
+        purchasePlace: 'Dhanmondi Satmasjid Rd Grocer, Dhaka',
+        referenceNumber: 'TL-20261117-CC003C3',
+        description:
+          'The printed best-before date stamp on the bottle neck was heavily smudged and unreadable, and the secondary import sticker partially covered the nutrition per 100ml column.',
+        status: 'pending' as const,
+      },
+    ].filter(Boolean);
+
+    for (const rep of seedReports) {
+      if (!rep) continue;
+      const existing = await this.reportRepo.findOne({
+        where: { referenceNumber: rep.referenceNumber },
+      });
+      if (!existing) {
+        await this.reportRepo.save(this.reportRepo.create(rep));
       }
     }
   }

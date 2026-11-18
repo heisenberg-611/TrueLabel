@@ -8,6 +8,7 @@ import { DashboardController } from './controllers/dashboard.controller';
 import { FoodCatalogModule } from '../food-catalog/food-catalog.module';
 import { FoodSafetyModule } from '../food-safety/food-safety.module';
 import { PersonalFoodModule } from '../personal-food/personal-food.module';
+import { CommunityModule } from '../community/community.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { PersonalFoodModule } from '../personal-food/personal-food.module';
     FoodCatalogModule,
     FoodSafetyModule,
     PersonalFoodModule,
+    CommunityModule,
   ],
   controllers: [AuthController, DashboardController],
   providers: [AuthService, DashboardService],

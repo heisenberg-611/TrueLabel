@@ -73,4 +73,32 @@ export class AuthService {
     const { passwordHash: _, ...result } = user;
     return result;
   }
+
+  // Viva Demo Role Switcher: Resolve a real persisted database user so FK constraints (F11/F13/F16) always succeed.
+  async findOrCreateDemoUser(role: UserRole): Promise<Omit<User, 'passwordHash'>> {
+    const validRoles: UserRole[] = ['consumer', 'manufacturer', 'inspector', 'admin'];
+    const chosenRole: UserRole = validRoles.includes(role) ? role : 'consumer';
+    const demoEmail = `${chosenRole}@truelabel.demo`;
+
+    let user =
+      (await this.userRepository.findOne({ where: { email: demoEmail } })) ||
+      (await this.userRepository.findOne({ where: { role: chosenRole }, order: { id: 'ASC' } }));
+
+    if (!user) {
+      const salt = await bcrypt.genSalt(10);
+      const passwordHash = await bcrypt.hash('password123', salt);
+      user = await this.userRepository.save(
+        this.userRepository.create({
+          name: `Demo ${chosenRole.charAt(0).toUpperCase() + chosenRole.slice(1)}`,
+          email: demoEmail,
+          role: chosenRole,
+          passwordHash,
+          isVerified: true,
+        }),
+      );
+    }
+
+    const { passwordHash: _, ...result } = user;
+    return result;
+  }
 }

@@ -1,0 +1,370 @@
+<!-- Feature F11: Credibility-Weighted Consumer Product Reviews -->
+<div class="max-w-6xl mx-auto space-y-8 pb-12">
+
+  <!-- Breadcrumb & Return Navigation -->
+  <div class="flex items-center justify-between gap-4 border-b border-slate-200 pb-3">
+    <a href="/catalog/product/{{product.id}}" class="text-xs font-semibold text-slate-600 hover:text-slate-950 transition-colors">
+      Back to {{product.name}} dossier
+    </a>
+    {{#if (eq user.role "consumer")}}
+      <a href="/community/products/{{product.id}}/report" class="text-xs font-semibold text-rose-700 hover:text-rose-900 underline">
+        Report a food safety issue
+      </a>
+    {{/if}}
+  </div>
+
+  <!-- Feedback Alerts -->
+  {{#if success}}
+    <div class="bg-emerald-50 border border-emerald-200 text-emerald-900 px-4 py-3 rounded-lg text-sm font-medium">
+      {{success}}
+    </div>
+  {{/if}}
+  {{#if error}}
+    <div class="bg-rose-50 border border-rose-200 text-rose-900 px-4 py-3 rounded-lg text-sm font-medium">
+      {{error}}
+    </div>
+  {{/if}}
+
+  <!-- Asymmetric Editorial Header: Aggregate Credibility Seal + 4-Dimension Breakdown -->
+  <section class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+    <!-- Left: Product Identity & Four-Dimension Breakdown (8 cols) -->
+    <div class="lg:col-span-8 bg-white border border-slate-200 rounded-xl p-6 sm:p-8 flex flex-col justify-between space-y-6">
+      <div>
+        <div class="text-xs font-semibold text-emerald-700">{{product.brand}}</div>
+        <h1 class="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight mt-1">
+          Consumer reviews for {{product.name}}
+        </h1>
+        <p class="text-sm text-slate-600 mt-2 max-w-2xl leading-relaxed">
+          Structured consumer evaluations across four practical dimensions, weighted by reviewer account credibility.
+        </p>
+      </div>
+
+      {{#if dimensionAverages.length}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 pt-4 border-t border-slate-100">
+          {{#each dimensionAverages}}
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-semibold text-slate-700">{{this.label}}</span>
+                <span class="font-mono font-bold text-slate-950">{{this.score}} / 5</span>
+              </div>
+              <div class="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div class="h-full bg-emerald-700 rounded-full" style="width: {{this.percent}}%"></div>
+              </div>
+            </div>
+          {{/each}}
+        </div>
+      {{else}}
+        <div class="pt-4 border-t border-slate-100 text-sm text-slate-500">
+          No consumer ratings have been submitted for this product yet. Dimension averages will appear once the first review is posted.
+        </div>
+      {{/if}}
+    </div>
+
+    <!-- Right: Credibility-Weighted Rating Seal & Formula Transparency (4 cols) -->
+    <aside class="lg:col-span-4 bg-white border-2 border-slate-900 rounded-xl p-6 flex flex-col justify-between space-y-5">
+      <div>
+        <div class="text-xs font-semibold text-slate-500">Credibility-weighted rating</div>
+        {{#if averageRating}}
+          <div class="mt-2 flex items-baseline gap-2">
+            <span class="text-4xl sm:text-5xl font-black font-mono text-slate-950 tracking-tight">{{averageRating}}</span>
+            <span class="text-sm font-mono font-semibold text-slate-500">/ 5.0</span>
+          </div>
+          <p class="text-xs text-slate-600 mt-1">
+            Computed from {{reviewCount}} visible consumer {{#if (eq reviewCount 1)}}review{{else}}reviews{{/if}}.
+          </p>
+        {{else}}
+          <div class="mt-2 text-2xl font-black text-slate-400 font-mono">Unrated</div>
+          <p class="text-xs text-slate-500 mt-1">Awaiting initial consumer feedback.</p>
+        {{/if}}
+      </div>
+
+      <!-- Documented Credibility Formula -->
+      <div class="pt-4 border-t border-slate-200 space-y-2 text-xs text-slate-600">
+        <div class="font-bold text-slate-900">Weighting formula (1.00x to 1.50x)</div>
+        <p class="leading-relaxed">
+          Base weight <span class="font-mono font-semibold text-slate-900">1.00</span> plus up to
+          <span class="font-mono font-semibold text-slate-900">+0.20</span> for account tenure (up to 365 days),
+          <span class="font-mono font-semibold text-slate-900">+0.15</span> verified batch, and
+          <span class="font-mono font-semibold text-slate-900">+0.15</span> verified purchase.
+        </p>
+        <p class="text-[11px] text-slate-500">
+          Verified purchase and batch bonuses are currently set to 0.00 until batch verification (F07) is linked.
+        </p>
+      </div>
+    </aside>
+  </section>
+
+  <!-- Mandatory Non-Medical / Non-Lab Safety Disclaimer (Rule 4.3) -->
+  <div class="bg-slate-50 border-l-4 border-slate-400 px-4 py-3 text-xs text-slate-600 leading-relaxed">
+    <strong class="text-slate-800">Informational notice:</strong> Consumer reviews reflect personal taste and purchasing experiences. They are independent of the lab-based Food Quality Score and do not replace accredited safety inspection or laboratory testing.
+  </div>
+
+  <!-- Main Content Split: Review Ledger (Left 7 cols) + Submission / Status Column (Right 5 cols) -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+    <!-- Review Ledger -->
+    <section class="lg:col-span-7 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+        <h2 class="text-lg font-bold text-slate-950">Published consumer reviews</h2>
+        <span class="text-xs font-mono font-semibold text-slate-500">{{reviewCount}} visible</span>
+      </div>
+
+      {{#if reviews.length}}
+        <div class="divide-y divide-slate-200 bg-white border border-slate-200 rounded-xl">
+          {{#each reviews}}
+            <article class="p-6 space-y-4">
+              <!-- Reviewer Header -->
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div class="text-sm font-bold text-slate-950">{{this.authorName}}</div>
+                  <div class="text-xs text-slate-500 mt-0.5">
+                    Posted {{this.postedOn}}
+                    <span class="ml-2 inline-block px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-mono text-[11px] font-semibold">
+                      Weight {{this.weightFormatted}}
+                    </span>
+                  </div>
+                </div>
+                <div class="px-3 py-1 rounded-md bg-emerald-50 border border-emerald-200 font-mono text-sm font-black text-emerald-900">
+                  {{this.rating}} / 5
+                </div>
+              </div>
+
+              <!-- Four Dimension Scores -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                <div class="bg-slate-50 rounded px-2.5 py-1.5 border border-slate-100">
+                  <span class="text-slate-500 block text-[11px]">Taste & quality</span>
+                  <span class="font-mono font-bold text-slate-900">{{this.tasteRating}}/5</span>
+                </div>
+                <div class="bg-slate-50 rounded px-2.5 py-1.5 border border-slate-100">
+                  <span class="text-slate-500 block text-[11px]">Label accuracy</span>
+                  <span class="font-mono font-bold text-slate-900">{{this.labelAccuracyRating}}/5</span>
+                </div>
+                <div class="bg-slate-50 rounded px-2.5 py-1.5 border border-slate-100">
+                  <span class="text-slate-500 block text-[11px]">Packaging</span>
+                  <span class="font-mono font-bold text-slate-900">{{this.packagingRating}}/5</span>
+                </div>
+                <div class="bg-slate-50 rounded px-2.5 py-1.5 border border-slate-100">
+                  <span class="text-slate-500 block text-[11px]">Purchase</span>
+                  <span class="font-mono font-bold text-slate-900">{{this.purchaseExperienceRating}}/5</span>
+                </div>
+              </div>
+
+              <!-- Title & Body -->
+              <div class="space-y-1.5 max-w-[72ch]">
+                {{#if this.title}}
+                  <h3 class="text-base font-bold text-slate-900">{{this.title}}</h3>
+                {{/if}}
+                <p class="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{{this.comment}}</p>
+              </div>
+
+              <!-- Official Manufacturer Response -->
+              {{#if this.manufacturerReply}}
+                <div class="bg-slate-50 border-l-4 border-emerald-700 px-4 py-3 rounded-r-md space-y-1">
+                  <div class="flex items-center justify-between text-xs">
+                    <span class="font-bold text-slate-900">Official manufacturer response</span>
+                    {{#if this.repliedOn}}
+                      <span class="text-slate-500">{{this.repliedOn}}</span>
+                    {{/if}}
+                  </div>
+                  <p class="text-sm text-slate-700 leading-relaxed">{{this.manufacturerReply}}</p>
+                </div>
+              {{/if}}
+
+              <!-- Author Controls (Edit / Delete) -->
+              {{#if this.isMine}}
+                <div class="pt-3 border-t border-slate-100 space-y-3">
+                  <div class="flex items-center gap-4">
+                    <details class="w-full">
+                      <summary class="text-xs font-bold text-slate-800 hover:text-emerald-700 cursor-pointer select-none">
+                        Edit your review
+                      </summary>
+                      <form method="POST" action="/community/reviews/{{this.id}}/edit" class="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-4">
+                        <input type="hidden" name="_csrf" value="{{../csrfToken}}">
+                        <div class="grid grid-cols-2 gap-3 text-xs">
+                          <label class="font-semibold text-slate-700">
+                            Taste & quality (1 to 5)
+                            <select name="tasteRating" required class="mt-1 block w-full border border-slate-300 rounded-md p-2 bg-white text-sm">
+                              <option value="5" {{#if (eq this.tasteRating 5)}}selected{{/if}}>5 - Excellent</option>
+                              <option value="4" {{#if (eq this.tasteRating 4)}}selected{{/if}}>4 - Good</option>
+                              <option value="3" {{#if (eq this.tasteRating 3)}}selected{{/if}}>3 - Fair</option>
+                              <option value="2" {{#if (eq this.tasteRating 2)}}selected{{/if}}>2 - Poor</option>
+                              <option value="1" {{#if (eq this.tasteRating 1)}}selected{{/if}}>1 - Very poor</option>
+                            </select>
+                          </label>
+                          <label class="font-semibold text-slate-700">
+                            Label accuracy (1 to 5)
+                            <select name="labelAccuracyRating" required class="mt-1 block w-full border border-slate-300 rounded-md p-2 bg-white text-sm">
+                              <option value="5" {{#if (eq this.labelAccuracyRating 5)}}selected{{/if}}>5 - Exact match</option>
+                              <option value="4" {{#if (eq this.labelAccuracyRating 4)}}selected{{/if}}>4 - Mostly clear</option>
+                              <option value="3" {{#if (eq this.labelAccuracyRating 3)}}selected{{/if}}>3 - Acceptable</option>
+                              <option value="2" {{#if (eq this.labelAccuracyRating 2)}}selected{{/if}}>2 - Unclear</option>
+                              <option value="1" {{#if (eq this.labelAccuracyRating 1)}}selected{{/if}}>1 - Misleading</option>
+                            </select>
+                          </label>
+                          <label class="font-semibold text-slate-700">
+                            Packaging condition (1 to 5)
+                            <select name="packagingRating" required class="mt-1 block w-full border border-slate-300 rounded-md p-2 bg-white text-sm">
+                              <option value="5" {{#if (eq this.packagingRating 5)}}selected{{/if}}>5 - Intact seal</option>
+                              <option value="4" {{#if (eq this.packagingRating 4)}}selected{{/if}}>4 - Solid</option>
+                              <option value="3" {{#if (eq this.packagingRating 3)}}selected{{/if}}>3 - Minor wear</option>
+                              <option value="2" {{#if (eq this.packagingRating 2)}}selected{{/if}}>2 - Weak seal</option>
+                              <option value="1" {{#if (eq this.packagingRating 1)}}selected{{/if}}>1 - Damaged</option>
+                            </select>
+                          </label>
+                          <label class="font-semibold text-slate-700">
+                            Purchase experience (1 to 5)
+                            <select name="purchaseExperienceRating" required class="mt-1 block w-full border border-slate-300 rounded-md p-2 bg-white text-sm">
+                              <option value="5" {{#if (eq this.purchaseExperienceRating 5)}}selected{{/if}}>5 - Smooth</option>
+                              <option value="4" {{#if (eq this.purchaseExperienceRating 4)}}selected{{/if}}>4 - Good</option>
+                              <option value="3" {{#if (eq this.purchaseExperienceRating 3)}}selected{{/if}}>3 - Average</option>
+                              <option value="2" {{#if (eq this.purchaseExperienceRating 2)}}selected{{/if}}>2 - Difficult</option>
+                              <option value="1" {{#if (eq this.purchaseExperienceRating 1)}}selected{{/if}}>1 - Problematic</option>
+                            </select>
+                          </label>
+                        </div>
+                        <label class="block text-xs font-semibold text-slate-700">
+                          Review headline (optional)
+                          <input name="title" maxlength="120" value="{{this.title}}" class="mt-1 block w-full border border-slate-300 rounded-md p-2 text-sm bg-white">
+                        </label>
+                        <label class="block text-xs font-semibold text-slate-700">
+                          Your experience
+                          <textarea name="comment" minlength="10" maxlength="2000" rows="3" required class="mt-1 block w-full border border-slate-300 rounded-md p-2 text-sm bg-white">{{this.comment}}</textarea>
+                        </label>
+                        <button type="submit" class="px-4 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-md transition-colors">
+                          Save review changes
+                        </button>
+                      </form>
+                    </details>
+                  </div>
+                  <form action="/community/reviews/{{this.id}}/delete" method="POST" onsubmit="return confirm('Remove your review permanently? Product ratings will recalculate immediately.');">
+                    <input type="hidden" name="_csrf" value="{{../csrfToken}}">
+                    <button class="text-xs text-rose-700 hover:text-rose-900 font-semibold underline" type="submit">
+                      Delete my review
+                    </button>
+                  </form>
+                </div>
+              {{/if}}
+
+              <!-- Manufacturer / Admin Reply Form -->
+              {{#if this.canReply}}
+                <form method="POST" action="/community/reviews/{{this.id}}/reply" class="pt-3 border-t border-slate-100 space-y-2">
+                  <input type="hidden" name="_csrf" value="{{../csrfToken}}">
+                  <label class="text-xs font-semibold text-slate-700 block">
+                    {{#if this.manufacturerReply}}Update manufacturer response{{else}}Post official manufacturer response{{/if}}
+                    <textarea name="reply" required minlength="2" maxlength="1000" rows="2" class="block w-full p-2.5 border border-slate-300 rounded-md mt-1 text-sm bg-white" placeholder="Address packaging, sourcing, or label clarification clearly.">{{this.manufacturerReply}}</textarea>
+                  </label>
+                  <button type="submit" class="text-xs font-bold px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-md transition-colors">
+                    Save response
+                  </button>
+                </form>
+              {{/if}}
+            </article>
+          {{/each}}
+        </div>
+      {{else}}
+        <div class="bg-white border border-slate-200 rounded-xl p-8 text-center space-y-2">
+          <h3 class="text-base font-bold text-slate-900">No consumer reviews yet</h3>
+          <p class="text-sm text-slate-500 max-w-md mx-auto">
+            Be the first consumer to evaluate this product's taste, label accuracy, packaging condition, and purchase experience.
+          </p>
+        </div>
+      {{/if}}
+    </section>
+
+    <!-- Right Column: Write a Review Form or Account Status -->
+    <aside class="lg:col-span-5">
+      {{#if canReview}}
+        <form method="POST" action="/community/products/{{product.id}}/reviews" class="bg-white border border-slate-200 rounded-xl p-6 space-y-5">
+          <input type="hidden" name="_csrf" value="{{csrfToken}}">
+          <div class="border-b border-slate-100 pb-3">
+            <h2 class="text-base font-bold text-slate-950">Write a structured review</h2>
+            <p class="text-xs text-slate-500 mt-1">
+              One review per consumer per product. Overall rating is calculated as the rounded average of all four criteria.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
+            <label class="font-semibold text-slate-700">
+              Taste & quality
+              <select name="tasteRating" required class="mt-1 block w-full border border-slate-300 rounded-md p-2 text-sm bg-white">
+                <option value="5">5 - Excellent</option>
+                <option value="4" selected>4 - Good</option>
+                <option value="3">3 - Fair</option>
+                <option value="2">2 - Poor</option>
+                <option value="1">1 - Very poor</option>
+              </select>
+            </label>
+            <label class="font-semibold text-slate-700">
+              Label accuracy
+              <select name="labelAccuracyRating" required class="mt-1 block w-full border border-slate-300 rounded-md p-2 text-sm bg-white">
+                <option value="5">5 - Exact match</option>
+                <option value="4" selected>4 - Mostly clear</option>
+                <option value="3">3 - Acceptable</option>
+                <option value="2">2 - Unclear</option>
+                <option value="1">1 - Misleading</option>
+              </select>
+            </label>
+            <label class="font-semibold text-slate-700">
+              Packaging condition
+              <select name="packagingRating" required class="mt-1 block w-full border border-slate-300 rounded-md p-2 text-sm bg-white">
+                <option value="5">5 - Intact seal</option>
+                <option value="4" selected>4 - Solid</option>
+                <option value="3">3 - Minor wear</option>
+                <option value="2">2 - Weak seal</option>
+                <option value="1">1 - Damaged</option>
+              </select>
+            </label>
+            <label class="font-semibold text-slate-700">
+              Purchase experience
+              <select name="purchaseExperienceRating" required class="mt-1 block w-full border border-slate-300 rounded-md p-2 text-sm bg-white">
+                <option value="5">5 - Smooth</option>
+                <option value="4" selected>4 - Good</option>
+                <option value="3">3 - Average</option>
+                <option value="2">2 - Difficult</option>
+                <option value="1">1 - Problematic</option>
+              </select>
+            </label>
+          </div>
+
+          <label class="block text-xs font-semibold text-slate-700">
+            Headline (optional)
+            <input name="title" maxlength="120" class="mt-1 block w-full border border-slate-300 rounded-md p-2.5 text-sm bg-white" placeholder="Summarize your experience briefly">
+          </label>
+
+          <label class="block text-xs font-semibold text-slate-700">
+            Detailed experience (minimum 10 characters)
+            <textarea name="comment" minlength="10" maxlength="2000" rows="4" required class="mt-1 block w-full border border-slate-300 rounded-md p-2.5 text-sm bg-white" placeholder="Describe taste, packaging seal integrity, and whether the printed label matched expectations."></textarea>
+          </label>
+
+          <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-lg px-4 py-2.5 text-xs transition-colors">
+            Publish review
+          </button>
+        </form>
+      {{else}}
+        <div class="bg-white border border-slate-200 rounded-xl p-6 space-y-3">
+          {{#if alreadyReviewed}}
+            <h2 class="text-base font-bold text-slate-950">You have reviewed this product</h2>
+            <p class="text-sm text-slate-600 leading-relaxed">
+              TrueLabel limits accounts to one review per product to prevent rating manipulation. Use the edit or delete controls on your review entry to update it.
+            </p>
+          {{else}}
+            {{#unless user}}
+              <h2 class="text-base font-bold text-slate-950">Sign in to review</h2>
+              <p class="text-sm text-slate-600 leading-relaxed">
+                Consumer accounts can publish one credibility-weighted review per food product.
+              </p>
+              <a href="/auth/login" class="inline-block px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold hover:bg-slate-800 transition-colors">
+                Sign in as consumer
+              </a>
+            {{else}}
+              <h2 class="text-base font-bold text-slate-950">Consumer reviews only</h2>
+              <p class="text-sm text-slate-600 leading-relaxed">
+                Signed in as <strong class="text-slate-900">{{user.role}}</strong>. Only consumer accounts may submit product reviews. Product owners and admins may reply directly beneath customer reviews.
+              </p>
+            {{/unless}}
+          {{/if}}
+        </div>
+      {{/if}}
+    </aside>
+  </div>
+</div>

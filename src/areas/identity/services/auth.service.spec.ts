@@ -193,4 +193,43 @@ describe('AuthService (Unit Tests)', () => {
       await expect(service.findById(999)).rejects.toThrow(NotFoundException);
     });
   });
+
+  describe('findOrCreateDemoUser', () => {
+    it('should return existing seeded demo user with real database ID', async () => {
+      // Arrange
+      (userRepository.findOne as jest.Mock).mockResolvedValueOnce({
+        id: 1,
+        name: 'Sharah Consumer',
+        email: 'consumer@truelabel.demo',
+        role: 'consumer',
+        passwordHash: 'hash',
+        isVerified: true,
+      } as User);
+
+      // Act
+      const result = await service.findOrCreateDemoUser('consumer');
+
+      // Assert
+      expect(result.id).toBe(1);
+      expect(result.email).toBe('consumer@truelabel.demo');
+      expect((result as any).passwordHash).toBeUndefined();
+      expect(userRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('should create and persist a demo user when none exists yet', async () => {
+      // Arrange
+      (userRepository.findOne as jest.Mock).mockResolvedValue(null);
+      (userRepository.create as jest.Mock).mockImplementation((u) => ({ id: 42, ...u }));
+      (userRepository.save as jest.Mock).mockImplementation(async (u) => u);
+
+      // Act
+      const result = await service.findOrCreateDemoUser('inspector');
+
+      // Assert
+      expect(result.id).toBe(42);
+      expect(result.role).toBe('inspector');
+      expect(result.email).toBe('inspector@truelabel.demo');
+      expect(userRepository.save).toHaveBeenCalledTimes(1);
+    });
+  });
 });

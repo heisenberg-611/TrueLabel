@@ -7,6 +7,9 @@ import { NutritionFact } from '../areas/food-catalog/models/nutrition-fact.entit
 import { PreferenceProfile } from '../areas/personal-food/models/preference-profile.entity';
 import { FoodSafetyDocument } from '../areas/food-safety/models/food-safety-document.entity';
 import { ManufacturerLicence } from '../areas/food-safety/models/manufacturer-licence.entity';
+import { FoodReview } from '../areas/community/models/food-review.entity';
+import { FoodReport } from '../areas/community/models/food-report.entity';
+import { ReportEvidence } from '../areas/community/models/report-evidence.entity';
 
 dotenv.config();
 
@@ -18,6 +21,9 @@ const ALL_ENTITIES = [
   PreferenceProfile,
   FoodSafetyDocument,
   ManufacturerLicence,
+  FoodReview,
+  FoodReport,
+  ReportEvidence,
 ];
 
 export const getDatabaseConfig = (): TypeOrmModuleOptions => {
@@ -43,7 +49,7 @@ export const getDatabaseConfig = (): TypeOrmModuleOptions => {
       ssl: process.env.DB_SSL === 'false' ? false : { rejectUnauthorized: false },
       entities: ALL_ENTITIES,
       autoLoadEntities: true,
-      synchronize: true, // Creates tables and syncs schema automatically
+      synchronize: process.env.DB_SYNC !== 'false', // Enabled by default; set DB_SYNC=false to use manual migrations
       extra: {
         max: 10,
         connectionTimeoutMillis: 10000,
@@ -62,7 +68,7 @@ export const getDatabaseConfig = (): TypeOrmModuleOptions => {
       ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
       entities: ALL_ENTITIES,
       autoLoadEntities: true,
-      synchronize: true,
+      synchronize: process.env.DB_SYNC !== 'false',
       extra: {
         max: 10,
         connectionTimeoutMillis: 10000,

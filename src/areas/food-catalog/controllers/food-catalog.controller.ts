@@ -14,11 +14,13 @@ import {
   ParseIntPipe,
   ForbiddenException,
   BadRequestException,
+  Optional,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { CatalogService } from '../services/catalog.service';
 import { PreferenceService } from '../../personal-food/services/preference.service';
 import { DocumentService } from '../../food-safety/services/document.service';
+import { ReviewService } from '../../community/services/review.service';
 import { CreateFoodProductDto } from '../models/dto/create-food-product.dto';
 import { SearchFoodProductDto } from '../models/dto/search-food-product.dto';
 import { AuthenticatedGuard } from '../../../common/guards/authenticated.guard';
@@ -31,6 +33,7 @@ export class FoodCatalogController {
     private readonly catalogService: CatalogService,
     private readonly preferenceService: PreferenceService,
     private readonly documentService: DocumentService,
+    @Optional() private readonly reviewService?: ReviewService,
   ) {}
 
   /**
@@ -266,6 +269,11 @@ export class FoodCatalogController {
       );
     }
 
+    // Feature F11: Credibility-weighted community review summary on product dossier
+    const reviewSummary = this.reviewService
+      ? await this.reviewService.getProductSummary(id)
+      : { reviewCount: 0, averageRating: null, dimensionAverages: [], recentReviews: [] };
+
     return {
       title: `${product.name} (${product.brand}) — TrueLabel`,
       activeNav: 'catalog',
@@ -274,6 +282,7 @@ export class FoodCatalogController {
       additives,
       conflictEvaluation,
       userProfile,
+      reviewSummary,
       isOwner:
         req.session?.user?.role === 'admin' ||
         (req.session?.user?.role === 'manufacturer' &&

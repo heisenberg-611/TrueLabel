@@ -1,0 +1,182 @@
+<!-- Feature F13: Inspector & Admin Food Complaint Docket -->
+<div class="max-w-7xl mx-auto space-y-6 pb-12">
+
+  <!-- Docket Header -->
+  <div class="bg-white border border-slate-200 rounded-xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div class="space-y-1">
+      <div class="inline-flex items-center gap-2">
+        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-900 border border-rose-200">
+          Confidential complaint docket
+        </span>
+        <span class="text-xs font-mono text-slate-500">F13 regulatory queue</span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight">
+        Food safety complaint queue
+      </h1>
+      <p class="text-sm text-slate-600 max-w-2xl">
+        Review consumer reports of suspected counterfeit, spoiled, contaminated, damaged, or mislabelled products. Reports sharing the same product and batch code are automatically grouped.
+      </p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2.5">
+      <a href="/dashboard" class="px-4 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold transition-colors">
+        Return to dashboard
+      </a>
+      <a href="/safety/documents" class="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold transition-colors">
+        Safety documents registry
+      </a>
+    </div>
+  </div>
+
+  {{#if success}}
+    <div class="bg-emerald-50 border border-emerald-200 text-emerald-900 px-4 py-3 rounded-lg text-sm font-medium">
+      {{success}}
+    </div>
+  {{/if}}
+
+  <!-- Connected 4-Metric Telemetry Bar -->
+  <div class="grid grid-cols-2 md:grid-cols-4 bg-white border border-slate-200 rounded-xl divide-y md:divide-y-0 md:divide-x divide-slate-100 overflow-hidden">
+    <div class="p-5">
+      <span class="text-xs font-medium text-slate-500 block">Pending triage</span>
+      <div class="text-2xl sm:text-3xl font-black text-amber-800 font-mono mt-1">{{stats.pending}}</div>
+      <span class="text-[11px] text-slate-400 block mt-0.5">Awaiting initial review</span>
+    </div>
+    <div class="p-5">
+      <span class="text-xs font-medium text-slate-500 block">Under investigation</span>
+      <div class="text-2xl sm:text-3xl font-black text-blue-800 font-mono mt-1">{{stats.investigating}}</div>
+      <span class="text-[11px] text-slate-400 block mt-0.5">Active inspector review</span>
+    </div>
+    <div class="p-5">
+      <span class="text-xs font-medium text-slate-500 block">Linked batch clusters</span>
+      <div class="text-2xl sm:text-3xl font-black text-rose-800 font-mono mt-1">{{stats.batchClusters}}</div>
+      <span class="text-[11px] text-slate-400 block mt-0.5">Same food &amp; batch (2+ reports)</span>
+    </div>
+    <div class="p-5">
+      <span class="text-xs font-medium text-slate-500 block">Total docket entries</span>
+      <div class="text-2xl sm:text-3xl font-black text-slate-900 font-mono mt-1">{{stats.total}}</div>
+      <span class="text-[11px] text-slate-400 block mt-0.5">{{stats.resolved}} resolved, {{stats.dismissed}} dismissed</span>
+    </div>
+  </div>
+
+  <!-- Filter Controls -->
+  <form method="GET" action="/community/reports/queue" class="bg-white border border-slate-200 rounded-xl p-4 flex flex-wrap items-end gap-4 text-xs">
+    <div>
+      <label for="filter-status" class="block font-semibold text-slate-700 mb-1">Status</label>
+      <select id="filter-status" name="status" class="border border-slate-300 rounded-md px-3 py-2 text-xs bg-white">
+        <option value="all" {{#if (eq selectedStatus 'all')}}selected{{/if}}>All statuses</option>
+        <option value="pending" {{#if (eq selectedStatus 'pending')}}selected{{/if}}>Pending review</option>
+        <option value="investigating" {{#if (eq selectedStatus 'investigating')}}selected{{/if}}>Investigating</option>
+        <option value="resolved" {{#if (eq selectedStatus 'resolved')}}selected{{/if}}>Resolved</option>
+        <option value="dismissed" {{#if (eq selectedStatus 'dismissed')}}selected{{/if}}>Dismissed</option>
+      </select>
+    </div>
+    <div>
+      <label for="filter-category" class="block font-semibold text-slate-700 mb-1">Category</label>
+      <select id="filter-category" name="category" class="border border-slate-300 rounded-md px-3 py-2 text-xs bg-white">
+        <option value="all" {{#if (eq selectedCategory 'all')}}selected{{/if}}>All categories</option>
+        <option value="counterfeit" {{#if (eq selectedCategory 'counterfeit')}}selected{{/if}}>Suspected counterfeit</option>
+        <option value="spoiled" {{#if (eq selectedCategory 'spoiled')}}selected{{/if}}>Spoiled food</option>
+        <option value="contaminated" {{#if (eq selectedCategory 'contaminated')}}selected{{/if}}>Suspected contamination</option>
+        <option value="damaged" {{#if (eq selectedCategory 'damaged')}}selected{{/if}}>Damaged packaging</option>
+        <option value="mislabelled" {{#if (eq selectedCategory 'mislabelled')}}selected{{/if}}>Misleading label</option>
+      </select>
+    </div>
+    <button type="submit" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-md transition-colors">
+      Apply filters
+    </button>
+    {{#if (or (ne selectedStatus 'all') (ne selectedCategory 'all'))}}
+      <a href="/community/reports/queue" class="py-2 text-slate-600 hover:text-slate-950 font-semibold underline">
+        Clear filters
+      </a>
+    {{/if}}
+  </form>
+
+  <!-- High-Density Regulatory Docket Table -->
+  <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+    {{#if reports.length}}
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold text-[11px]">
+            <tr>
+              <th class="px-5 py-3.5">Reference &amp; date</th>
+              <th class="px-5 py-3.5">Product &amp; batch</th>
+              <th class="px-5 py-3.5">Category &amp; location</th>
+              <th class="px-5 py-3.5">Report summary &amp; evidence</th>
+              <th class="px-5 py-3.5 text-right">Status decision</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 align-top">
+            {{#each reports}}
+              <tr class="hover:bg-slate-50/70 transition-colors">
+                <td class="px-5 py-4 whitespace-nowrap">
+                  <div class="font-mono font-bold text-slate-900">{{this.referenceNumber}}</div>
+                  <div class="text-[11px] text-slate-500 mt-0.5">{{this.submittedOn}}</div>
+                  <div class="text-[11px] text-slate-500 mt-0.5">Reporter: {{this.author.name}}</div>
+                </td>
+                <td class="px-5 py-4">
+                  <a href="/catalog/product/{{this.productId}}" class="font-bold text-slate-900 hover:text-emerald-700 text-sm block">
+                    {{this.product.name}}
+                  </a>
+                  <div class="text-[11px] text-slate-500">{{this.product.brand}}</div>
+                  <div class="mt-1.5 font-mono text-[11px] text-slate-700">
+                    Batch: {{#if this.batchCode}}{{this.batchCode}}{{else}}Not specified{{/if}}
+                  </div>
+                  {{#if this.hasLinkedBatchCluster}}
+                    <span class="inline-block mt-1 px-2 py-0.5 rounded bg-amber-50 border border-amber-300 text-amber-900 font-semibold text-[11px]">
+                      {{this.linkedCount}} linked reports on this batch
+                    </span>
+                  {{/if}}
+                </td>
+                <td class="px-5 py-4">
+                  <span class="inline-block px-2 py-0.5 rounded bg-rose-50 border border-rose-200 text-rose-900 font-semibold text-[11px]">
+                    {{this.categoryLabel}}
+                  </span>
+                  <div class="text-slate-700 mt-1.5">{{this.purchasePlace}}</div>
+                </td>
+                <td class="px-5 py-4 max-w-md">
+                  <p class="text-slate-700 whitespace-pre-wrap leading-relaxed">{{this.description}}</p>
+                  {{#if this.evidence.length}}
+                    <a
+                      href="/community/reports/{{this.id}}/evidence"
+                      target="_blank"
+                      class="inline-block mt-2 font-semibold text-emerald-700 hover:text-emerald-900 underline"
+                    >
+                      Inspect private photo evidence
+                    </a>
+                  {{else}}
+                    <span class="inline-block mt-1.5 text-[11px] text-slate-400">No photo attached</span>
+                  {{/if}}
+                </td>
+                <td class="px-5 py-4 text-right whitespace-nowrap">
+                  <div class="mb-2">
+                    <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-semibold border {{#if (eq this.status 'resolved')}}bg-emerald-50 text-emerald-800 border-emerald-200{{else}}{{#if (eq this.status 'investigating')}}bg-blue-50 text-blue-800 border-blue-200{{else}}{{#if (eq this.status 'dismissed')}}bg-slate-100 text-slate-600 border-slate-200{{else}}bg-amber-50 text-amber-800 border-amber-200{{/if}}{{/if}}{{/if}}">
+                      {{this.statusLabel}}
+                    </span>
+                  </div>
+                  <form action="/community/reports/{{this.id}}/status" method="POST" class="inline-flex items-center gap-1.5">
+                    <input type="hidden" name="_csrf" value="{{../csrfToken}}">
+                    <label for="report-{{this.id}}" class="sr-only">Update status</label>
+                    <select id="report-{{this.id}}" name="status" class="border border-slate-300 rounded px-2 py-1.5 text-xs bg-white">
+                      <option value="investigating" {{#if (eq this.status 'investigating')}}selected{{/if}}>Investigating</option>
+                      <option value="resolved" {{#if (eq this.status 'resolved')}}selected{{/if}}>Resolved</option>
+                      <option value="dismissed" {{#if (eq this.status 'dismissed')}}selected{{/if}}>Dismissed</option>
+                    </select>
+                    <button type="submit" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded text-xs font-semibold transition-colors">
+                      Update
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+    {{else}}
+      <div class="p-10 text-center space-y-2">
+        <h2 class="text-base font-bold text-slate-900">No complaints match the current filter</h2>
+        <p class="text-sm text-slate-500">
+          Consumer food safety reports will appear here as soon as they are filed. All reports remain unverified until inspected.
+        </p>
+      </div>
+    {{/if}}
+  </div>
+</div>

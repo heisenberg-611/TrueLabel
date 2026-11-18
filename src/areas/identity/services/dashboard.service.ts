@@ -3,6 +3,7 @@ import {
   ConflictException,
   NotFoundException,
   BadRequestException,
+  Optional,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -11,6 +12,8 @@ import { User, UserRole } from '../models/user.entity';
 import { CatalogService } from '../../food-catalog/services/catalog.service';
 import { DocumentService } from '../../food-safety/services/document.service';
 import { PreferenceService } from '../../personal-food/services/preference.service';
+import { ReviewService } from '../../community/services/review.service';
+import { ReportService } from '../../community/services/report.service';
 
 export interface AdminDashboardQueryOptions {
   page?: number;
@@ -29,10 +32,12 @@ export class DashboardService {
     private readonly catalogService: CatalogService,
     private readonly documentService: DocumentService,
     private readonly preferenceService: PreferenceService,
+    @Optional() private readonly reviewService?: ReviewService,
+    @Optional() private readonly reportService?: ReportService,
   ) {}
 
   /**
-   * Aggregate Consumer Dashboard Data (Feature F16 & Health Shield)
+   * Aggregate Consumer Dashboard Data (Feature F16 & F13 Personal Reports)
    */
   async getConsumerDashboardData(userId: number) {
     const profile = await this.preferenceService.findOrCreate(userId);
@@ -45,14 +50,18 @@ export class DashboardService {
       conflict: this.preferenceService.evaluateProductConflict(profile, p),
     }));
 
+    const allReports = this.reportService ? await this.reportService.forConsumer(userId) : [];
+
     return {
       profile,
       recentProducts: evaluatedProducts,
+      myReports: allReports.slice(0, 5),
+      myReportsCount: allReports.length,
     };
   }
 
   /**
-   * Aggregate Manufacturer Console Data (Feature F01 & F06 Accreditation Health)
+   * Aggregate Manufacturer Console Data (Feature F01, F06 & F11 Consumer Reviews)
    */
   async getManufacturerDashboardData(user: { id: number; name?: string; email?: string }) {
     const products = await this.catalogService.findByManufacturer(user.id);
@@ -72,6 +81,10 @@ export class DashboardService {
         (user.name && user.name.toLowerCase().includes(l.companyName.toLowerCase())),
     ) || sampleLicences[0] || null;
 
+    const productReviews = this.reviewService
+      ? await this.reviewService.getForManufacturer(user.id)
+      : [];
+
     return {
       products,
       totalProducts: products.length,
@@ -84,11 +97,13 @@ export class DashboardService {
       },
       hasApprovedDocument: approvedDocs.length > 0,
       licence: matchedLicence,
+      productReviews: productReviews.slice(0, 6),
+      totalProductReviews: productReviews.length,
     };
   }
 
   /**
-   * Aggregate Inspector Review Queue Data (Feature F06 Audit & Recall Oversight)
+   * Aggregate Inspector Review Queue Data (Feature F06 Audit & F13 Complaint Queue)
    */
   async getInspectorDashboardData() {
     const stats = await this.documentService.getStatistics();
@@ -101,16 +116,27 @@ export class DashboardService {
       .slice(0, 8);
     const sampleLicences = await this.documentService.getSampleLicences(6);
 
+    const complaintQueue = this.reportService
+      ? await this.reportService.getQueueWithStats()
+      : {
+          reports: [],
+          stats: { total: 0, pending: 0, investigating: 0, resolved: 0, dismissed: 0, batchClusters: 0 },
+        };
+
     return {
       stats,
       pendingDocuments,
       recentDecisions,
       sampleLicences,
+      complaintStats: complaintQueue.stats,
+      openComplaints: complaintQueue.reports
+        .filter((r) => r.status === 'pending' || r.status === 'investigating')
+        .slice(0, 6),
     };
   }
 
   /**
-   * Aggregate Admin Command Center Data (Platform Users, Catalog & Accreditation Health)
+   * Aggregate Admin Command Center Data (Platform Users, Catalog, Accreditation & F13 Complaints)
    */
   async getAdminDashboardData(options?: AdminDashboardQueryOptions) {
     const allUsers = await this.userRepo.find({
@@ -118,6 +144,12 @@ export class DashboardService {
     });
     const docStats = await this.documentService.getStatistics();
     const { total: totalProducts } = await this.catalogService.searchAndFilter({ limit: 1 });
+    const complaintQueue = this.reportService
+      ? await this.reportService.getQueueWithStats()
+      : {
+          reports: [],
+          stats: { total: 0, pending: 0, investigating: 0, resolved: 0, dismissed: 0, batchClusters: 0 },
+        };
 
     const roleBreakdown = {
       consumer: allUsers.filter((u) => u.role === 'consumer').length,
@@ -222,6 +254,7 @@ export class DashboardService {
       userTypesCount: userTypes.length,
       totalProducts,
       docStats,
+      complaintStats: complaintQueue.stats,
       page,
       limit,
       total,

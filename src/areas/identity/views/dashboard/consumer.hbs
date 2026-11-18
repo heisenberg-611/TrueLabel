@@ -22,6 +22,12 @@
         Edit health preferences
       </a>
       <a
+        href="/community/reports/mine"
+        class="px-4 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold transition-colors"
+      >
+        My safety reports ({{myReportsCount}})
+      </a>
+      <a
         href="/catalog"
         class="px-4 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold transition-colors"
       >
@@ -147,5 +153,42 @@
         {{> _food_card this}}
       {{/each}}
     </div>
+  </div>
+
+  <!-- Feature F13: Consumer Submitted Food Complaints -->
+  <div class="bg-white border border-slate-200 rounded-xl p-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 mb-4">
+      <div>
+        <h2 class="text-base font-bold text-slate-900">My submitted food safety complaints</h2>
+        <p class="text-xs text-slate-500 mt-0.5">Private incident reports and inspector triage status</p>
+      </div>
+      <a href="/community/reports/mine" class="text-xs font-semibold text-slate-700 hover:text-slate-900 underline">
+        View all reports
+      </a>
+    </div>
+
+    {{#if myReports.length}}
+      <div class="divide-y divide-slate-100">
+        {{#each myReports}}
+          <div class="py-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div class="space-y-0.5">
+              <div class="flex items-center gap-2">
+                <span class="font-mono font-bold text-slate-800">{{this.referenceNumber}}</span>
+                <span class="text-slate-700 font-semibold">{{this.product.name}}</span>
+                <span class="px-2 py-0.5 rounded bg-rose-50 text-rose-800 border border-rose-200 text-[11px] font-medium">{{this.categoryLabel}}</span>
+              </div>
+              <div class="text-slate-500">{{this.purchasePlace}} — Submitted {{this.submittedOn}}</div>
+            </div>
+            <span class="px-2.5 py-0.5 rounded-full font-semibold border {{#if (eq this.status 'resolved')}}bg-emerald-50 text-emerald-800 border-emerald-200{{else}}{{#if (eq this.status 'investigating')}}bg-blue-50 text-blue-800 border-blue-200{{else}}bg-amber-50 text-amber-800 border-amber-200{{/if}}{{/if}}">
+              {{this.statusLabel}}
+            </span>
+          </div>
+        {{/each}}
+      </div>
+    {{else}}
+      <p class="text-xs text-slate-500">
+        No food safety complaints filed yet. Open any product dossier in the catalog to report a spoiled, damaged, mislabelled, or suspected counterfeit item.
+      </p>
+    {{/if}}
   </div>
 </div>

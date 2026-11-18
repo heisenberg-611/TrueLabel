@@ -10,6 +10,7 @@ describe('AuthController (Unit Tests)', () => {
     authService = {
       validateUser: jest.fn(),
       register: jest.fn(),
+      findOrCreateDemoUser: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -158,23 +159,32 @@ describe('AuthController (Unit Tests)', () => {
   });
 
   describe('demoSwitchRole', () => {
-    it('should switch role and redirect when in non-production mode', () => {
+    it('should switch to persisted demo user and redirect when in non-production mode', async () => {
       const originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'development';
+      (authService.findOrCreateDemoUser as jest.Mock).mockResolvedValue({
+        id: 2,
+        name: 'PureHarvest & Aarong Dairy',
+        email: 'manufacturer@truelabel.demo',
+        role: 'manufacturer',
+        isVerified: true,
+      });
 
       const mockReq = { session: {} } as any;
       const mockRes = { redirect: jest.fn() } as any;
 
-      controller.demoSwitchRole('manufacturer', mockReq, mockRes);
+      await controller.demoSwitchRole('manufacturer', mockReq, mockRes);
 
+      expect(authService.findOrCreateDemoUser).toHaveBeenCalledWith('manufacturer');
       expect(mockReq.session.user).toBeDefined();
+      expect(mockReq.session.user.id).toBe(2);
       expect(mockReq.session.user.role).toBe('manufacturer');
       expect(mockRes.redirect).toHaveBeenCalledWith('/');
 
       process.env.NODE_ENV = originalEnv;
     });
 
-    it('should throw ForbiddenException in production when ENABLE_DEMO_SWITCHER is not true', () => {
+    it('should throw ForbiddenException in production when ENABLE_DEMO_SWITCHER is not true', async () => {
       const originalEnv = process.env.NODE_ENV;
       const originalFlag = process.env.ENABLE_DEMO_SWITCHER;
       process.env.NODE_ENV = 'production';
@@ -183,7 +193,7 @@ describe('AuthController (Unit Tests)', () => {
       const mockReq = { session: {} } as any;
       const mockRes = { redirect: jest.fn() } as any;
 
-      expect(() => controller.demoSwitchRole('admin', mockReq, mockRes)).toThrow();
+      await expect(controller.demoSwitchRole('admin', mockReq, mockRes)).rejects.toThrow();
 
       process.env.NODE_ENV = originalEnv;
       process.env.ENABLE_DEMO_SWITCHER = originalFlag;

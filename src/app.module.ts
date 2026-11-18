@@ -8,6 +8,10 @@ import { FoodSafetyModule } from './areas/food-safety/food-safety.module';
 import { HomeModule } from './areas/home/home.module';
 import { SupabaseModule } from './config/supabase.module';
 import { SeedService } from './config/seed.service';
+import { CommunityModule } from './areas/community/community.module';
+import { FoodReview } from './areas/community/models/food-review.entity';
+import { FoodReport } from './areas/community/models/food-report.entity';
+import { ReportEvidence } from './areas/community/models/report-evidence.entity';
 import { User } from './areas/identity/models/user.entity';
 import { FoodProduct } from './areas/food-catalog/models/food-product.entity';
 import { Ingredient } from './areas/food-catalog/models/ingredient.entity';
@@ -27,12 +31,16 @@ import { ManufacturerLicence } from './areas/food-safety/models/manufacturer-lic
       PreferenceProfile,
       FoodSafetyDocument,
       ManufacturerLicence,
+      FoodReview,
+      FoodReport,
+      ReportEvidence,
     ]),
     SupabaseModule,
     IdentityModule,
     FoodCatalogModule,
     PersonalFoodModule,
     FoodSafetyModule,
+    CommunityModule,
     HomeModule,
   ],
   providers: [SeedService],

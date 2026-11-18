@@ -8,14 +8,20 @@ describe('CsrfGuard', () => {
     guard = new CsrfGuard();
   });
 
-  const createMockContext = (method: string, sessionToken?: string, clientToken?: string, isHeader = false): ExecutionContext => {
+  const createMockContext = (
+    method: string,
+    sessionToken?: string,
+    clientToken?: string,
+    source: 'body' | 'header' | 'query' = 'body',
+  ): ExecutionContext => {
     return {
       switchToHttp: () => ({
         getRequest: () => ({
           method,
           session: sessionToken ? { csrfToken: sessionToken } : {},
-          body: !isHeader && clientToken ? { _csrf: clientToken } : {},
-          headers: isHeader && clientToken ? { 'x-csrf-token': clientToken } : {},
+          body: source === 'body' && clientToken ? { _csrf: clientToken } : {},
+          headers: source === 'header' && clientToken ? { 'x-csrf-token': clientToken } : {},
+          query: source === 'query' && clientToken ? { _csrf: clientToken } : {},
         }),
       }),
     } as unknown as ExecutionContext;
@@ -27,12 +33,17 @@ describe('CsrfGuard', () => {
   });
 
   it('should allow POST when client body token matches session token', () => {
-    const context = createMockContext('POST', 'valid-token-123', 'valid-token-123');
+    const context = createMockContext('POST', 'valid-token-123', 'valid-token-123', 'body');
     expect(guard.canActivate(context)).toBe(true);
   });
 
   it('should allow POST when header x-csrf-token matches session token', () => {
-    const context = createMockContext('POST', 'valid-token-123', 'valid-token-123', true);
+    const context = createMockContext('POST', 'valid-token-123', 'valid-token-123', 'header');
+    expect(guard.canActivate(context)).toBe(true);
+  });
+
+  it('should allow POST when query _csrf matches session token (e.g. multipart uploads)', () => {
+    const context = createMockContext('POST', 'valid-token-123', 'valid-token-123', 'query');
     expect(guard.canActivate(context)).toBe(true);
   });
 
