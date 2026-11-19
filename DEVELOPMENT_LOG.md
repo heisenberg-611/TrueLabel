@@ -866,3 +866,31 @@
 - Added the video link into the Live Deployment & Demonstration resources table and the Academic Context footer.
 
 **Verification**: `git diff README.md`, `npm test` passing (24/24 suites, 228/228 tests).
+
+### Entry 042 | 2026-11-19 09:52:34 +06:00 | Halal, Kosher, Keto Conflict Screening & Mifflin-St Jeor Metabolic Engine (F16 & N4)
+
+**What**: Fixed the active screening gaps in `PreferenceService` by implementing automated conflict detection for Halal, Kosher, and Keto dietary lifestyles. Activated dormant user body metrics by implementing the Mifflin-St Jeor metabolic computation engine (BMR, TDEE, macronutrient distribution, safe daily ceilings) for N4 readiness, displaying personalized blueprints on both the Dietary Profile view and Consumer Dashboard.
+
+**Key Deliverables**:
+1. **Halal Conflict Screening**:
+   - Detects unconditional non-halal ingredients (pork, bacon, ham, lard, swine, pork gelatin, alcohol, wine, beer, rum, brandy, liqueur, ethanol).
+   - Flags generic uncertified gelatin or non-halal animal fats with educational advisories if the product lacks verified Halal certification.
+2. **Kosher Conflict Screening**:
+   - Detects non-kosher pork and shellfish ingredients (shrimp, prawn, crab, lobster, oyster, clam, mussel, scallop, squid, octopus).
+   - Enforces *Basar b'Chalav* prohibition against co-presence of meat and dairy ingredients in the same product formulation.
+3. **Keto Conflict Screening**:
+   - Analyzes nutrition facts to detect carbohydrates exceeding 15g/serving or sugars exceeding 5g/serving.
+   - Flags high-glycemic refined sweeteners and corn syrups (`high fructose corn syrup`, `glucose syrup`, `cane sugar`, `dextrose`, `maltodextrin`).
+4. **Mifflin-St Jeor Metabolic Engine (`calculateMetabolicPlan`)**:
+   - Formula: $\text{BMR} = 10 \times \text{weight(kg)} + 6.25 \times \text{height(cm)} - 5 \times \text{age} + s$ ($s = +5$ male, $-161$ female, $-78$ neutral).
+   - Total Daily Energy Expenditure ($\text{TDEE}$) using verified activity multipliers ($1.2$ to $1.9$).
+   - Clinical macronutrient distribution: 25% Protein, 50% Carbohydrates, 25% Healthy Fats.
+   - Safe daily health limits: Added sugars $\le 10\%$ of daily energy (capped at 25g WHO limit), Sodium $\le 2.0\text{g/day}$.
+   - Safety guardrails: Clinical safe floor alerts ($< 1500\text{ kcal}$ male, $< 1200\text{ kcal}$ female) and pediatric advisory for users $< 18$.
+5. **View & ViewModel Integration**:
+   - `src/areas/personal-food/views/profile.hbs`: Authoritative Mifflin-St Jeor Metabolic Blueprint panel with BMR, TDEE, macro splits, and formula footnote; guidance box if metrics are incomplete.
+   - `src/areas/identity/views/dashboard/consumer.hbs`: Upgraded Card 3 ("Daily nutritional targets") with resting BMR/TDEE and macro splits; added dedicated full-width Personalized Metabolic Blueprint card.
+6. **Testing & Verification**:
+   - Added 13 new unit tests in `preference.service.spec.ts` covering Halal, Kosher, and Keto conflict detection, male/female/underage Mifflin-St Jeor calculations, TDEE multipliers, safe floors, and missing metric handling.
+   - `npm test`: 24/24 suites, 241/241 tests passing (100% pass).
+   - `npm run build`: Exit code 0.

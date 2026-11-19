@@ -328,6 +328,347 @@ describe('PreferenceService (Unit Tests)', () => {
       expect(result.hasNutritionWarning).toBe(true);
       expect(result.conflicts.some((c) => c.title.includes('Protein'))).toBe(true);
     });
+
+    it('should detect critical Halal conflict when product contains pork or bacon', () => {
+      const halalProfile: PreferenceProfile = {
+        ...mockProfile,
+        dietaryPreferences: ['Halal'],
+        allergies: [],
+      };
+      const porkProduct: FoodProduct = {
+        ...baseProduct,
+        dietaryTags: [],
+        ingredients: [
+          {
+            id: 10,
+            name: 'Smoked Bacon Bits',
+            isAllergen: false,
+            allergenType: '',
+            additiveCode: '',
+            hazardLevel: 'safe',
+            explanation: '',
+            product: null as any,
+          },
+        ],
+      };
+
+      const result = service.evaluateProductConflict(halalProfile, porkProduct);
+
+      expect(result.hasDietaryConflict).toBe(true);
+      expect(result.dietaryMismatches).toContain('Halal');
+      expect(result.conflicts.some((c) => c.title.includes('Non-Halal Ingredient'))).toBe(true);
+    });
+
+    it('should detect critical Halal conflict when product contains alcohol', () => {
+      const halalProfile: PreferenceProfile = {
+        ...mockProfile,
+        dietaryPreferences: ['Halal'],
+        allergies: [],
+      };
+      const alcoholProduct: FoodProduct = {
+        ...baseProduct,
+        dietaryTags: [],
+        ingredients: [
+          {
+            id: 11,
+            name: 'Red Wine Vinegar',
+            isAllergen: false,
+            allergenType: '',
+            additiveCode: '',
+            hazardLevel: 'safe',
+            explanation: '',
+            product: null as any,
+          },
+        ],
+      };
+
+      const result = service.evaluateProductConflict(halalProfile, alcoholProduct);
+
+      expect(result.hasDietaryConflict).toBe(true);
+      expect(result.dietaryMismatches).toContain('Halal');
+    });
+
+    it('should flag warning for uncertified gelatin when user prefers Halal', () => {
+      const halalProfile: PreferenceProfile = {
+        ...mockProfile,
+        dietaryPreferences: ['Halal'],
+        allergies: [],
+      };
+      const gelatinProduct: FoodProduct = {
+        ...baseProduct,
+        dietaryTags: [],
+        ingredients: [
+          {
+            id: 12,
+            name: 'Gelatin',
+            isAllergen: false,
+            allergenType: '',
+            additiveCode: '',
+            hazardLevel: 'safe',
+            explanation: '',
+            product: null as any,
+          },
+        ],
+      };
+
+      const result = service.evaluateProductConflict(halalProfile, gelatinProduct);
+
+      expect(result.hasDietaryConflict).toBe(true);
+      expect(result.conflicts.some((c) => c.title.includes('Uncertified Halal Ingredient'))).toBe(
+        true,
+      );
+    });
+
+    it('should detect Kosher conflict when product contains shellfish', () => {
+      const kosherProfile: PreferenceProfile = {
+        ...mockProfile,
+        dietaryPreferences: ['Kosher'],
+        allergies: [],
+      };
+      const shrimpProduct: FoodProduct = {
+        ...baseProduct,
+        dietaryTags: [],
+        ingredients: [
+          {
+            id: 13,
+            name: 'Dried Shrimp Powder',
+            isAllergen: true,
+            allergenType: 'Shellfish',
+            additiveCode: '',
+            hazardLevel: 'safe',
+            explanation: '',
+            product: null as any,
+          },
+        ],
+      };
+
+      const result = service.evaluateProductConflict(kosherProfile, shrimpProduct);
+
+      expect(result.hasDietaryConflict).toBe(true);
+      expect(result.dietaryMismatches).toContain('Kosher');
+    });
+
+    it('should detect Kosher conflict when meat and dairy are mixed in the same product', () => {
+      const kosherProfile: PreferenceProfile = {
+        ...mockProfile,
+        dietaryPreferences: ['Kosher'],
+        allergies: [],
+      };
+      const mixedProduct: FoodProduct = {
+        ...baseProduct,
+        dietaryTags: [],
+        ingredients: [
+          {
+            id: 14,
+            name: 'Cooked Beef Patty',
+            isAllergen: false,
+            allergenType: '',
+            additiveCode: '',
+            hazardLevel: 'safe',
+            explanation: '',
+            product: null as any,
+          },
+          {
+            id: 15,
+            name: 'Cheddar Cheese',
+            isAllergen: true,
+            allergenType: 'Milk',
+            additiveCode: '',
+            hazardLevel: 'safe',
+            explanation: '',
+            product: null as any,
+          },
+        ],
+      };
+
+      const result = service.evaluateProductConflict(kosherProfile, mixedProduct);
+
+      expect(result.hasDietaryConflict).toBe(true);
+      expect(result.dietaryMismatches).toContain('Kosher');
+      expect(result.conflicts.some((c) => c.title.includes('Meat & Dairy'))).toBe(true);
+    });
+
+    it('should detect Keto conflict when sugar or carbohydrates per serving are high', () => {
+      const ketoProfile: PreferenceProfile = {
+        ...mockProfile,
+        dietaryPreferences: ['Keto'],
+        allergies: [],
+      };
+      const sugaryProduct: FoodProduct = {
+        ...baseProduct,
+        dietaryTags: [],
+        nutritionFacts: [
+          {
+            id: 16,
+            nutrient: 'Sugars',
+            amountPer100g: 10,
+            amountPerServing: 8,
+            unit: 'g',
+            dailyValuePercentage: null,
+            product: null as any,
+          },
+        ],
+      };
+
+      const result = service.evaluateProductConflict(ketoProfile, sugaryProduct);
+
+      expect(result.hasDietaryConflict).toBe(true);
+      expect(result.dietaryMismatches).toContain('Keto');
+      expect(result.conflicts.some((c) => c.title.includes('Keto Mismatch: High Sugar'))).toBe(
+        true,
+      );
+    });
+
+    it('should detect Keto conflict when ingredients contain refined sugar or corn syrup', () => {
+      const ketoProfile: PreferenceProfile = {
+        ...mockProfile,
+        dietaryPreferences: ['Keto'],
+        allergies: [],
+      };
+      const syrupProduct: FoodProduct = {
+        ...baseProduct,
+        dietaryTags: [],
+        nutritionFacts: [],
+        ingredients: [
+          {
+            id: 17,
+            name: 'High Fructose Corn Syrup',
+            isAllergen: false,
+            allergenType: '',
+            additiveCode: '',
+            hazardLevel: 'caution',
+            explanation: '',
+            product: null as any,
+          },
+        ],
+      };
+
+      const result = service.evaluateProductConflict(ketoProfile, syrupProduct);
+
+      expect(result.hasDietaryConflict).toBe(true);
+      expect(result.dietaryMismatches).toContain('Keto');
+      expect(result.conflicts.some((c) => c.title.includes('Refined Sweetener'))).toBe(true);
+    });
+  });
+
+  describe('calculateMetabolicPlan (Mifflin-St Jeor Engine)', () => {
+    it('should return uncalculated with missing metrics when profile is null', () => {
+      const plan = service.calculateMetabolicPlan(null);
+
+      expect(plan.isCalculated).toBe(false);
+      expect(plan.bmr).toBeNull();
+      expect(plan.tdee).toBeNull();
+      expect(plan.missingMetrics).toEqual(['age', 'gender', 'height', 'weight', 'activity level']);
+    });
+
+    it('should return uncalculated with missing metrics when required body fields are incomplete', () => {
+      const incompleteProfile: PreferenceProfile = {
+        ...mockProfile,
+        age: 25,
+        heightCm: 170,
+        weightKg: null,
+        gender: null,
+        activityLevel: null,
+      };
+
+      const plan = service.calculateMetabolicPlan(incompleteProfile);
+
+      expect(plan.isCalculated).toBe(false);
+      expect(plan.missingMetrics).toContain('gender');
+      expect(plan.missingMetrics).toContain('weight');
+      expect(plan.missingMetrics).toContain('activity level');
+    });
+
+    it('should compute correct Mifflin-St Jeor BMR, TDEE, and macro splits for a male user', () => {
+      // Male, 70kg, 175cm, 30 years old, moderate activity (multiplier 1.55)
+      // BMR = 10(70) + 6.25(175) - 5(30) + 5 = 700 + 1093.75 - 150 + 5 = 1648.75 -> 1649 kcal
+      // TDEE = 1649 * 1.55 = 2555.95 -> 2556 kcal
+      const maleProfile: PreferenceProfile = {
+        ...mockProfile,
+        gender: 'male',
+        weightKg: 70,
+        heightCm: 175,
+        age: 30,
+        activityLevel: 'moderate',
+        calorieGoal: null,
+        maxSodiumPerServing: null,
+      };
+
+      const plan = service.calculateMetabolicPlan(maleProfile);
+
+      expect(plan.isCalculated).toBe(true);
+      expect(plan.bmr).toBe(1649);
+      expect(plan.tdee).toBe(2556);
+      expect(plan.dailyCalorieTarget).toBe(2556);
+      expect(plan.goalLabel).toContain('Maintenance');
+      expect(plan.macroSplit).toBeDefined();
+      expect(plan.macroSplit?.proteinPercentage).toBe(25);
+      expect(plan.macroSplit?.carbsPercentage).toBe(50);
+      expect(plan.macroSplit?.fatPercentage).toBe(25);
+      expect(plan.dailyCeilings?.maxSugarGrams).toBeLessThanOrEqual(25);
+      expect(plan.dailyCeilings?.maxSodiumGrams).toBe(2.0);
+    });
+
+    it('should compute correct Mifflin-St Jeor BMR and TDEE for a female user', () => {
+      // Female, 58kg, 168cm, 26 years old, light activity (multiplier 1.375)
+      // BMR = 10(58) + 6.25(168) - 5(26) - 161 = 580 + 1050 - 130 - 161 = 1339 kcal
+      // TDEE = 1339 * 1.375 = 1841.125 -> 1841 kcal
+      const femaleProfile: PreferenceProfile = {
+        ...mockProfile,
+        gender: 'female',
+        weightKg: 58,
+        heightCm: 168,
+        age: 26,
+        activityLevel: 'light',
+        calorieGoal: 1500, // Deficit goal
+        maxSodiumPerServing: 1.5,
+      };
+
+      const plan = service.calculateMetabolicPlan(femaleProfile);
+
+      expect(plan.isCalculated).toBe(true);
+      expect(plan.bmr).toBe(1339);
+      expect(plan.tdee).toBe(1841);
+      expect(plan.dailyCalorieTarget).toBe(1500);
+      expect(plan.calorieGoalSource).toBe('deficit');
+      expect(plan.goalLabel).toContain('Deficit');
+      expect(plan.dailyCeilings?.maxSodiumGrams).toBe(4.5);
+    });
+
+    it('should flag underage users with a pediatric advisory note', () => {
+      const underageProfile: PreferenceProfile = {
+        ...mockProfile,
+        gender: 'female',
+        weightKg: 45,
+        heightCm: 155,
+        age: 15,
+        activityLevel: 'light',
+        calorieGoal: 1600,
+      };
+
+      const plan = service.calculateMetabolicPlan(underageProfile);
+
+      expect(plan.isCalculated).toBe(true);
+      expect(plan.isUnderage).toBe(true);
+      expect(plan.advisoryNote).toContain('under 18');
+    });
+
+    it('should flag calorie targets below the safe floor with a clinical warning', () => {
+      const lowCalorieProfile: PreferenceProfile = {
+        ...mockProfile,
+        gender: 'male',
+        weightKg: 75,
+        heightCm: 180,
+        age: 25,
+        activityLevel: 'sedentary',
+        calorieGoal: 1100, // Far below male safe floor of 1500 kcal
+      };
+
+      const plan = service.calculateMetabolicPlan(lowCalorieProfile);
+
+      expect(plan.isCalculated).toBe(true);
+      expect(plan.advisoryNote).toContain('safe floor');
+    });
   });
 });
 

@@ -64,6 +64,14 @@ describe('DashboardService (Unit Tests)', () => {
         hasConflicts: false,
         isSafeForUser: true,
       }),
+      calculateMetabolicPlan: jest.fn().mockReturnValue({
+        isCalculated: true,
+        bmr: 1330,
+        tdee: 2000,
+        dailyCalorieTarget: 2000,
+        macroSplit: { proteinGrams: 125, carbsGrams: 250, fatGrams: 56 },
+        dailyCeilings: { maxSugarGrams: 25, maxSodiumGrams: 2.0 },
+      }),
     };
 
     const module: TestingModule = await Test.createTestingModule({

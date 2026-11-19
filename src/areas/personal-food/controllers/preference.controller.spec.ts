@@ -33,6 +33,12 @@ describe('PreferenceController (Unit Tests)', () => {
       updateProfile: jest.fn(),
       findByUserId: jest.fn(),
       evaluateProductConflict: jest.fn(),
+      calculateMetabolicPlan: jest.fn().mockReturnValue({
+        isCalculated: false,
+        bmr: null,
+        tdee: null,
+        missingMetrics: ['age', 'gender', 'height', 'weight', 'activity level'],
+      }),
     };
 
     const module: TestingModule = await Test.createTestingModule({

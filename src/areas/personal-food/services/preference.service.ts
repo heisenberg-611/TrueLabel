@@ -26,6 +26,48 @@ export interface ConflictEvaluationResult {
   profileConfigured: boolean;
 }
 
+export interface MacroSplit {
+  proteinGrams: number;
+  proteinCalories: number;
+  proteinPercentage: number;
+  carbsGrams: number;
+  carbsCalories: number;
+  carbsPercentage: number;
+  fatGrams: number;
+  fatCalories: number;
+  fatPercentage: number;
+}
+
+export interface DailyCeilings {
+  maxSugarGrams: number;
+  maxSodiumGrams: number;
+}
+
+export interface MetabolicProfileResult {
+  isCalculated: boolean;
+  bmr: number | null;
+  tdee: number | null;
+  activityMultiplier: number | null;
+  activityLabel: string | null;
+  dailyCalorieTarget: number | null;
+  calorieGoalSource: 'custom' | 'tdee_maintenance' | 'deficit' | 'surplus' | null;
+  goalLabel: string | null;
+  macroSplit: MacroSplit | null;
+  dailyCeilings: DailyCeilings | null;
+  missingMetrics: string[];
+  isUnderage: boolean;
+  advisoryNote: string | null;
+  formulaDescription: string | null;
+}
+
+export const ACTIVITY_MULTIPLIERS: Record<string, { factor: number; label: string }> = {
+  sedentary: { factor: 1.2, label: 'Sedentary (Little/no exercise)' },
+  light: { factor: 1.375, label: 'Lightly Active (1–3 days/week)' },
+  moderate: { factor: 1.55, label: 'Moderately Active (3–5 days/week)' },
+  active: { factor: 1.725, label: 'Very Active (6–7 days/week)' },
+  very_active: { factor: 1.9, label: 'Extra Active (Physical job or 2x training)' },
+};
+
 export const STANDARD_ALLERGENS = [
   'Peanut',
   'Tree Nuts',
@@ -356,6 +398,221 @@ export class PreferenceService {
           }
         }
       }
+
+      // 3.5. HALAL EVALUATION
+      if (diet === 'halal') {
+        const isTaggedHalal = productTags.includes('halal');
+        const porkKeywords = [
+          'pork',
+          'bacon',
+          'ham',
+          'lard',
+          'prosciutto',
+          'pancetta',
+          'swine',
+          'pork fat',
+          'pork gelatin',
+          'pepperoni',
+        ];
+        const alcoholKeywords = [
+          'alcohol',
+          'wine',
+          'beer',
+          'rum',
+          'brandy',
+          'liqueur',
+          'ethanol',
+          'spirit',
+        ];
+
+        const forbiddenIng = ingredients.find((i) => {
+          const n = i.name.toLowerCase();
+          return (
+            porkKeywords.some((p) => n.includes(p)) ||
+            alcoholKeywords.some((a) => n.includes(a))
+          );
+        });
+
+        if (forbiddenIng) {
+          dietaryMismatches.push('Halal');
+          conflicts.push({
+            category: 'dietary',
+            severity: 'critical',
+            title: `Non-Halal Ingredient: ${forbiddenIng.name}`,
+            description: `Contains "${forbiddenIng.name}", which is strictly prohibited under Halal dietary standards.`,
+            source: forbiddenIng.name,
+          });
+        } else if (!isTaggedHalal) {
+          // If not certified halal, check for generic commercial gelatin or non-halal animal fats
+          const questionableIng = ingredients.find((i) => {
+            const n = i.name.toLowerCase();
+            return (
+              n === 'gelatin' ||
+              n.includes('beef gelatin') ||
+              n.includes('animal fat')
+            );
+          });
+          if (questionableIng) {
+            dietaryMismatches.push('Halal');
+            conflicts.push({
+              category: 'dietary',
+              severity: 'warning',
+              title: `Uncertified Halal Ingredient: ${questionableIng.name}`,
+              description: `Contains "${questionableIng.name}" without certified Halal verification. Commercial gelatin is commonly porcine-derived.`,
+              source: questionableIng.name,
+            });
+          }
+        }
+      }
+
+      // 3.6. KOSHER EVALUATION
+      if (diet === 'kosher') {
+        const porkKeywords = ['pork', 'bacon', 'ham', 'lard', 'swine'];
+        const shellfishKeywords = [
+          'shrimp',
+          'prawn',
+          'crab',
+          'lobster',
+          'oyster',
+          'clam',
+          'mussel',
+          'scallop',
+          'squid',
+          'octopus',
+        ];
+
+        const nonKosherIng = ingredients.find((i) => {
+          const n = i.name.toLowerCase();
+          return (
+            porkKeywords.some((p) => n.includes(p)) ||
+            shellfishKeywords.some((s) => n.includes(s))
+          );
+        });
+
+        if (nonKosherIng) {
+          dietaryMismatches.push('Kosher');
+          conflicts.push({
+            category: 'dietary',
+            severity: 'warning',
+            title: `Non-Kosher Ingredient: ${nonKosherIng.name}`,
+            description: `Contains non-kosher ingredient "${nonKosherIng.name}" (pork or shellfish).`,
+            source: nonKosherIng.name,
+          });
+        }
+
+        // Basar b'Chalav: Prohibition against mixing meat and dairy in the same product
+        const meatIng = ingredients.find((i) => {
+          const n = i.name.toLowerCase();
+          return (
+            n.includes('beef') ||
+            n.includes('chicken') ||
+            n.includes('turkey') ||
+            n.includes('lamb') ||
+            n.includes('pork') ||
+            n.includes('meat')
+          );
+        });
+        const dairyIng = ingredients.find((i) => {
+          const n = i.name.toLowerCase();
+          return (
+            n.includes('milk') ||
+            n.includes('cheese') ||
+            n.includes('butter') ||
+            n.includes('whey') ||
+            n.includes('casein') ||
+            n.includes('cream') ||
+            n.includes('yogurt')
+          );
+        });
+
+        if (meatIng && dairyIng) {
+          dietaryMismatches.push('Kosher');
+          conflicts.push({
+            category: 'dietary',
+            severity: 'warning',
+            title: 'Kosher Meat & Dairy Conflict',
+            description: `Contains both meat ("${meatIng.name}") and dairy ("${dairyIng.name}"), violating kosher rules prohibiting mixing meat and milk.`,
+            source: `${meatIng.name} + ${dairyIng.name}`,
+          });
+        }
+      }
+
+      // 3.7. KETO EVALUATION
+      if (diet === 'keto') {
+        const isTaggedKeto = productTags.includes('keto') || productTags.includes('low-carb');
+        if (!isTaggedKeto) {
+          let highCarbDetected = false;
+          if (product.nutritionFacts && product.nutritionFacts.length > 0) {
+            const sugarFact = product.nutritionFacts.find((n) =>
+              n.nutrient.toLowerCase().includes('sugar'),
+            );
+            const carbFact = product.nutritionFacts.find(
+              (n) =>
+                n.nutrient.toLowerCase().includes('carbohydrate') ||
+                n.nutrient.toLowerCase() === 'carbs',
+            );
+
+            if (sugarFact) {
+              const servingSugar =
+                sugarFact.amountPerServing !== null && sugarFact.amountPerServing !== undefined
+                  ? sugarFact.amountPerServing
+                  : (sugarFact.amountPer100g * (product.servingSize || 100)) / 100;
+              if (servingSugar > 5) {
+                highCarbDetected = true;
+                dietaryMismatches.push('Keto');
+                conflicts.push({
+                  category: 'dietary',
+                  severity: 'warning',
+                  title: 'Keto Mismatch: High Sugar',
+                  description: `Contains ${servingSugar.toFixed(1)}g sugar per serving, which exceeds standard ketogenic limits (≤5g/serving).`,
+                  source: 'Nutrition Facts',
+                });
+              }
+            }
+
+            if (!highCarbDetected && carbFact) {
+              const servingCarbs =
+                carbFact.amountPerServing !== null && carbFact.amountPerServing !== undefined
+                  ? carbFact.amountPerServing
+                  : (carbFact.amountPer100g * (product.servingSize || 100)) / 100;
+              if (servingCarbs > 15) {
+                highCarbDetected = true;
+                dietaryMismatches.push('Keto');
+                conflicts.push({
+                  category: 'dietary',
+                  severity: 'warning',
+                  title: 'Keto Mismatch: High Carbohydrates',
+                  description: `Contains ${servingCarbs.toFixed(1)}g carbohydrates per serving, exceeding ketogenic net-carb thresholds (≤15g/serving).`,
+                  source: 'Nutrition Facts',
+                });
+              }
+            }
+          }
+
+          const refinedSweetener = ingredients.find((i) => {
+            const n = i.name.toLowerCase();
+            return (
+              n.includes('high fructose corn syrup') ||
+              n.includes('corn syrup') ||
+              n.includes('glucose syrup') ||
+              n.includes('cane sugar') ||
+              n.includes('dextrose') ||
+              n.includes('maltodextrin')
+            );
+          });
+
+          if (refinedSweetener && !highCarbDetected) {
+            dietaryMismatches.push('Keto');
+            conflicts.push({
+              category: 'dietary',
+              severity: 'warning',
+              title: `Keto Mismatch: Refined Sweetener (${refinedSweetener.name})`,
+              description: `Contains refined glycemic ingredient "${refinedSweetener.name}", which disrupts ketosis.`,
+              source: refinedSweetener.name,
+            });
+          }
+        }
+      }
     }
 
     // 4. NUTRITION THRESHOLD EVALUATION
@@ -437,6 +694,165 @@ export class PreferenceService {
       dietaryMismatches,
       isSafeForUser: !hasAllergenConflict && !hasDietaryConflict,
       profileConfigured: true,
+    };
+  }
+
+  /**
+   * Feature N4 Preparation: Mifflin-St Jeor Metabolic Calculation Engine
+   * Computes BMR, TDEE, and Recommended Caloric/Macronutrient Blueprint from body metrics
+   */
+  calculateMetabolicPlan(profile: PreferenceProfile | null): MetabolicProfileResult {
+    const missingMetrics: string[] = [];
+
+    if (!profile) {
+      return {
+        isCalculated: false,
+        bmr: null,
+        tdee: null,
+        activityMultiplier: null,
+        activityLabel: null,
+        dailyCalorieTarget: null,
+        calorieGoalSource: null,
+        goalLabel: null,
+        macroSplit: null,
+        dailyCeilings: null,
+        missingMetrics: ['age', 'gender', 'height', 'weight', 'activity level'],
+        isUnderage: false,
+        advisoryNote:
+          'Configure your body metrics to calculate your personalized metabolic rate and daily nutrition targets.',
+        formulaDescription: null,
+      };
+    }
+
+    if (!profile.age || profile.age <= 0) missingMetrics.push('age');
+    if (!profile.gender) missingMetrics.push('gender');
+    if (!profile.heightCm || profile.heightCm <= 0) missingMetrics.push('height');
+    if (!profile.weightKg || profile.weightKg <= 0) missingMetrics.push('weight');
+    if (!profile.activityLevel) missingMetrics.push('activity level');
+
+    if (missingMetrics.length > 0) {
+      return {
+        isCalculated: false,
+        bmr: null,
+        tdee: null,
+        activityMultiplier: null,
+        activityLabel: null,
+        dailyCalorieTarget: null,
+        calorieGoalSource: null,
+        goalLabel: null,
+        macroSplit: null,
+        dailyCeilings: null,
+        missingMetrics,
+        isUnderage: false,
+        advisoryNote: `Please provide your ${missingMetrics.join(', ')} in the body metrics section to calculate your personalized metabolic rate.`,
+        formulaDescription: null,
+      };
+    }
+
+    const age = Number(profile.age);
+    const weight = Number(profile.weightKg);
+    const height = Number(profile.heightCm);
+    const gender = String(profile.gender).toLowerCase();
+    const isUnderage = age < 18;
+
+    // Mifflin-St Jeor Equation:
+    // BMR = 10 * weight(kg) + 6.25 * height(cm) - 5 * age(y) + s
+    // s = +5 for male, -161 for female, -78 for other/neutral
+    let s = -78;
+    if (gender === 'male') {
+      s = 5;
+    } else if (gender === 'female') {
+      s = -161;
+    }
+
+    const bmr = Math.round(10 * weight + 6.25 * height - 5 * age + s);
+
+    const activityInfo =
+      ACTIVITY_MULTIPLIERS[profile.activityLevel] || {
+        factor: 1.2,
+        label: 'Sedentary (Little/no exercise)',
+      };
+    const tdee = Math.round(bmr * activityInfo.factor);
+
+    // Target Calorie Determination
+    let dailyCalorieTarget = tdee;
+    let calorieGoalSource: 'custom' | 'tdee_maintenance' | 'deficit' | 'surplus' =
+      'tdee_maintenance';
+    let goalLabel = 'Weight Maintenance (TDEE)';
+
+    if (profile.calorieGoal && profile.calorieGoal >= 800) {
+      dailyCalorieTarget = Math.round(profile.calorieGoal);
+      calorieGoalSource = 'custom';
+      const diff = dailyCalorieTarget - tdee;
+      if (diff <= -250) {
+        goalLabel = `Calorie Deficit (${Math.abs(diff)} kcal/day below TDEE)`;
+        calorieGoalSource = 'deficit';
+      } else if (diff >= 250) {
+        goalLabel = `Calorie Surplus (+${diff} kcal/day above TDEE)`;
+        calorieGoalSource = 'surplus';
+      } else {
+        goalLabel = 'Maintenance Target';
+      }
+    }
+
+    // Clinical Safe Floor Advisory (1500 kcal for male, 1200 kcal for female/other)
+    const safeFloor = gender === 'male' ? 1500 : 1200;
+    let advisoryNote: string | null = null;
+    if (dailyCalorieTarget < safeFloor) {
+      advisoryNote = `Your daily calorie target (${dailyCalorieTarget} kcal) is below the clinical safe floor (${safeFloor} kcal). Low energy intake should be monitored by a healthcare professional.`;
+    } else if (isUnderage) {
+      advisoryNote =
+        'Nutritional requirements for individuals under 18 should be guided by a pediatrician or dietitian. Calculations are provided for educational reference only.';
+    }
+
+    // Balanced Macronutrient Distribution (25% Protein, 50% Carbohydrates, 25% Healthy Fats)
+    const proteinCalories = Math.round(dailyCalorieTarget * 0.25);
+    const carbsCalories = Math.round(dailyCalorieTarget * 0.5);
+    const fatCalories = Math.round(dailyCalorieTarget * 0.25);
+
+    const macroSplit: MacroSplit = {
+      proteinGrams: Math.round(proteinCalories / 4),
+      proteinCalories,
+      proteinPercentage: 25,
+      carbsGrams: Math.round(carbsCalories / 4),
+      carbsCalories,
+      carbsPercentage: 50,
+      fatGrams: Math.round(fatCalories / 9),
+      fatCalories,
+      fatPercentage: 25,
+    };
+
+    // Safe Daily Ceilings:
+    // WHO: Added sugars <= 10% total calories capped at 25g/day; Sodium <= 2.0g/day
+    const maxSugarGrams = profile.maxSugarPerServing
+      ? Math.round(profile.maxSugarPerServing * 3)
+      : Math.min(25, Math.round((dailyCalorieTarget * 0.1) / 4));
+
+    const maxSodiumGrams = profile.maxSodiumPerServing
+      ? Number(profile.maxSodiumPerServing * 3)
+      : 2.0;
+
+    const genderSNotation = s >= 0 ? `+${s}` : `${s}`;
+    const formulaDescription = `BMR = (10×${weight}kg) + (6.25×${height}cm) - (5×${age}y) ${genderSNotation} = ${bmr} kcal/day · TDEE = ${bmr} × ${activityInfo.factor} = ${tdee} kcal/day`;
+
+    return {
+      isCalculated: true,
+      bmr,
+      tdee,
+      activityMultiplier: activityInfo.factor,
+      activityLabel: activityInfo.label,
+      dailyCalorieTarget,
+      calorieGoalSource,
+      goalLabel,
+      macroSplit,
+      dailyCeilings: {
+        maxSugarGrams,
+        maxSodiumGrams: Number(maxSodiumGrams.toFixed(1)),
+      },
+      missingMetrics: [],
+      isUnderage,
+      advisoryNote,
+      formulaDescription,
     };
   }
 }

@@ -51,9 +51,11 @@ export class DashboardService {
     }));
 
     const allReports = this.reportService ? await this.reportService.forConsumer(userId) : [];
+    const metabolicPlan = this.preferenceService.calculateMetabolicPlan(profile);
 
     return {
       profile,
+      metabolicPlan,
       recentProducts: evaluatedProducts,
       myReports: allReports.slice(0, 5),
       myReportsCount: allReports.length,
