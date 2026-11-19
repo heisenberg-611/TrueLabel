@@ -854,3 +854,15 @@
 - Shields.io badges for live Railway deployment, NestJS 10, TypeScript, PostgreSQL/Supabase, TypeORM, Handlebars SSR, Tailwind CSS, and Jest (`228 tests passing`).
 - Live deployment quick-links table, implemented feature breakdown across all domain areas, stakeholder roles matrix, seeded demo credentials, Mermaid MVC architecture diagram, exact project directory tree, environment variables table, setup/seeding/testing instructions, and collapsible route reference.
 - Verified `README.md` is tracked by git (not excluded by `.gitignore`).
+
+### Entry 041 | 2026-11-19 09:34:15 +06:00 | Embedded Sprint 1 Video Demonstration in README.md
+
+**What**: Integrated the YouTube Sprint 1 video demonstration (`https://youtu.be/E8ALHdqVbfQ`) throughout the repository `README.md`.
+
+**Highlights**:
+- Added YouTube Sprint 1 Demo badge next to the Live Demo badge in the hero header.
+- Added a top navigation anchor link directly to the video section.
+- Added a dedicated `## Sprint 1 Video Demonstration` section featuring a high-resolution preview banner, quick YouTube action badge, and direct link.
+- Added the video link into the Live Deployment & Demonstration resources table and the Academic Context footer.
+
+**Verification**: `git diff README.md`, `npm test` passing (24/24 suites, 228/228 tests).
