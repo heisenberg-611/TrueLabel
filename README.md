@@ -12,6 +12,7 @@
 
 <p>
   <a href="https://truelabel.up.railway.app/"><img src="https://img.shields.io/badge/Live_Demo-truelabel.up.railway.app-059669?style=for-the-badge&logo=railway&logoColor=white" alt="Live Demo on Railway" /></a>
+  <a href="https://youtu.be/E8ALHdqVbfQ"><img src="https://img.shields.io/badge/Sprint_1_Demo-YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="Sprint 1 Video Walkthrough" /></a>
 </p>
 
 <p>
@@ -21,11 +22,12 @@
   <img src="https://img.shields.io/badge/TypeORM-0.3-FE0803?style=flat-square" alt="TypeORM" />
   <img src="https://img.shields.io/badge/Handlebars-SSR-F0772B?style=flat-square&logo=handlebarsdotjs&logoColor=white" alt="Handlebars SSR" />
   <img src="https://img.shields.io/badge/Tailwind_CSS-Light%20%2F%20Dark-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
-  <img src="https://img.shields.io/badge/Jest-228_tests_passing-C21325?style=flat-square&logo=jest&logoColor=white" alt="Jest Tests" />
+  <img src="https://img.shields.io/badge/Jest-248_tests_passing-C21325?style=flat-square&logo=jest&logoColor=white" alt="Jest Tests" />
 </p>
 
 <p>
   <a href="https://truelabel.up.railway.app/">Live App</a> &middot;
+  <a href="#sprint-1-video-demonstration">Sprint 1 Video</a> &middot;
   <a href="#core-features">Features</a> &middot;
   <a href="#stakeholder-roles">Roles</a> &middot;
   <a href="#demo-accounts">Demo Accounts</a> &middot;
@@ -38,17 +40,41 @@
 
 ---
 
-## Live Deployment
+## Live Deployment & Demonstration
 
-**Production URL:** [https://truelabel.up.railway.app/](https://truelabel.up.railway.app/)
+- **Live Application URL:** [https://truelabel.up.railway.app/](https://truelabel.up.railway.app/)
+- **Sprint 1 Video Walkthrough:** [https://youtu.be/E8ALHdqVbfQ](https://youtu.be/E8ALHdqVbfQ)
 
-| Quick Links | Path | Description |
+| Resource | Link | Description |
 | :--- | :--- | :--- |
+| **Live Platform** | [`truelabel.up.railway.app`](https://truelabel.up.railway.app/) | Live production deployment hosted on Railway |
+| **Sprint 1 Video** | [`youtu.be/E8ALHdqVbfQ`](https://youtu.be/E8ALHdqVbfQ) | End-to-end video walkthrough demonstrating all Sprint 1 features |
 | **Food Catalog** | [`/catalog`](https://truelabel.up.railway.app/catalog) | Search packaged foods, inspect nutrition facts, and view 0–100 quality scores |
 | **Safety Documents Registry** | [`/safety/documents`](https://truelabel.up.railway.app/safety/documents) | Browse verified lab reports and compliance certificates |
 | **Verify Manufacturer Licence** | [`/safety/licence/verify`](https://truelabel.up.railway.app/safety/licence/verify) | Cross-check BSTI, BFSA, FDA, and Halal licences |
 | **Standards & Methodology** | [`/about`](https://truelabel.up.railway.app/about) | Platform scoring methodology and transparency standards |
 | **Sign In** | [`/auth/login`](https://truelabel.up.railway.app/auth/login) | Access role-specific dashboards using the [demo accounts](#demo-accounts) |
+
+---
+
+## Sprint 1 Video Demonstration
+
+Comprehensive video demonstration walking through TrueLabel's multi-stakeholder workflows, role-tailored dashboards, explainable 0–100 food quality scoring, Big-9 allergen profiling, compliance certificate verification, and community incident reporting:
+
+<div align="center">
+  <a href="https://youtu.be/E8ALHdqVbfQ" target="_blank" rel="noopener noreferrer">
+    <img src="https://img.youtube.com/vi/E8ALHdqVbfQ/maxresdefault.jpg" alt="TrueLabel Sprint 1 Demonstration Video Walkthrough" width="760" style="max-width: 100%; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);" />
+  </a>
+  <br /><br />
+  <p>
+    <a href="https://youtu.be/E8ALHdqVbfQ" target="_blank" rel="noopener noreferrer">
+      <img src="https://img.shields.io/badge/▶_Watch_Walkthrough_on_YouTube-E8ALHdqVbfQ-red?style=for-the-badge&logo=youtube&logoColor=white" alt="Watch Sprint 1 Walkthrough on YouTube" />
+    </a>
+  </p>
+  <p>
+    <strong>Direct Link:</strong> <a href="https://youtu.be/E8ALHdqVbfQ">https://youtu.be/E8ALHdqVbfQ</a>
+  </p>
+</div>
 
 ---
 
@@ -274,8 +300,8 @@ TrueLabel maintains a comprehensive unit test suite covering controllers, domain
 npm test
 ```
 
-- **24 test suites** passing
-- **228 unit tests** passing
+- **26 test suites** passing
+- **248 unit tests** passing
 
 ---
 
@@ -305,7 +331,10 @@ npm test
 
 Developed as part of **CSE470 — Software Engineering** at **BRAC University (Group 7)**, strictly adhering to MVC architectural discipline, role-based access boundaries, and automated verification.
 
+- **Sprint 1 Video Walkthrough:** [https://youtu.be/E8ALHdqVbfQ](https://youtu.be/E8ALHdqVbfQ)
+- **Live Deployment:** [https://truelabel.up.railway.app/](https://truelabel.up.railway.app/)
+
 <div align="center">
   <br />
-  <sub>Built with care by Team TrueLabel &middot; <a href="https://truelabel.up.railway.app/">truelabel.up.railway.app</a></sub>
+  <sub>Built with care by Team TrueLabel &middot; <a href="https://truelabel.up.railway.app/">truelabel.up.railway.app</a> &middot; <a href="https://youtu.be/E8ALHdqVbfQ">Sprint 1 Video</a></sub>
 </div>

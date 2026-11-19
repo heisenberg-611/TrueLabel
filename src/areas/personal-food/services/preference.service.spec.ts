@@ -1,16 +1,19 @@
-// Feature F16: Food Preference & Allergen Profile
+// Feature F16: Food Preference & Allergen Profile Orchestrator Unit Tests
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PreferenceService } from './preference.service';
+import { ConflictEvaluatorService } from './conflict-evaluator.service';
+import { MetabolicCalculatorService } from './metabolic-calculator.service';
 import { PreferenceProfile } from '../models/preference-profile.entity';
 import { FoodProduct } from '../../food-catalog/models/food-product.entity';
-import { Ingredient } from '../../food-catalog/models/ingredient.entity';
-import { NutritionFact } from '../../food-catalog/models/nutrition-fact.entity';
+import { UpdatePreferenceProfileDto } from '../models/dto/update-preference-profile.dto';
 
-describe('PreferenceService (Unit Tests)', () => {
+describe('PreferenceService (Orchestrator Unit Tests)', () => {
   let service: PreferenceService;
   let repo: jest.Mocked<Repository<PreferenceProfile>>;
+  let conflictEvaluator: jest.Mocked<ConflictEvaluatorService>;
+  let metabolicCalculator: jest.Mocked<MetabolicCalculatorService>;
 
   const mockProfile: PreferenceProfile = {
     id: 1,
@@ -38,6 +41,14 @@ describe('PreferenceService (Unit Tests)', () => {
       save: jest.fn(),
     };
 
+    const mockConflictEvaluator = {
+      evaluateProductConflict: jest.fn(),
+    };
+
+    const mockMetabolicCalculator = {
+      calculateMetabolicPlan: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PreferenceService,
@@ -45,11 +56,21 @@ describe('PreferenceService (Unit Tests)', () => {
           provide: getRepositoryToken(PreferenceProfile),
           useValue: mockRepo,
         },
+        {
+          provide: ConflictEvaluatorService,
+          useValue: mockConflictEvaluator,
+        },
+        {
+          provide: MetabolicCalculatorService,
+          useValue: mockMetabolicCalculator,
+        },
       ],
     }).compile();
 
     service = module.get<PreferenceService>(PreferenceService);
     repo = module.get(getRepositoryToken(PreferenceProfile));
+    conflictEvaluator = module.get(ConflictEvaluatorService);
+    metabolicCalculator = module.get(MetabolicCalculatorService);
   });
 
   describe('findByUserId', () => {
@@ -61,8 +82,8 @@ describe('PreferenceService (Unit Tests)', () => {
       const result = await service.findByUserId(10);
 
       // Assert
-      expect(result).toEqual(mockProfile);
       expect(repo.findOne).toHaveBeenCalledWith({ where: { userId: 10 } });
+      expect(result).toEqual(mockProfile);
     });
 
     it('should return null when profile does not exist', async () => {
@@ -73,6 +94,7 @@ describe('PreferenceService (Unit Tests)', () => {
       const result = await service.findByUserId(99);
 
       // Assert
+      expect(repo.findOne).toHaveBeenCalledWith({ where: { userId: 99 } });
       expect(result).toBeNull();
     });
   });
@@ -88,22 +110,34 @@ describe('PreferenceService (Unit Tests)', () => {
       // Assert
       expect(result).toEqual(mockProfile);
       expect(repo.create).not.toHaveBeenCalled();
+      expect(repo.save).not.toHaveBeenCalled();
     });
 
     it('should create and save a new profile if not found', async () => {
       // Arrange
       repo.findOne.mockResolvedValue(null);
-      const newProfile = { ...mockProfile, id: 2, userId: 20, allergies: [] };
-      repo.create.mockReturnValue(newProfile);
-      repo.save.mockResolvedValue(newProfile);
+      const defaultNewProfile = {
+        userId: 25,
+        allergies: [],
+        dietaryPreferences: [],
+        dislikedIngredients: [],
+        calorieGoal: null,
+        maxSugarPerServing: null,
+        maxSodiumPerServing: null,
+        minProteinPerServing: null,
+      };
+      repo.create.mockReturnValue(defaultNewProfile as any);
+      repo.save.mockResolvedValue({ id: 2, ...defaultNewProfile } as any);
 
       // Act
-      const result = await service.findOrCreate(20);
+      const result = await service.findOrCreate(25);
 
       // Assert
-      expect(result).toEqual(newProfile);
-      expect(repo.create).toHaveBeenCalled();
-      expect(repo.save).toHaveBeenCalled();
+      expect(repo.findOne).toHaveBeenCalledWith({ where: { userId: 25 } });
+      expect(repo.create).toHaveBeenCalledWith(defaultNewProfile);
+      expect(repo.save).toHaveBeenCalledWith(defaultNewProfile);
+      expect(result.id).toBe(2);
+      expect(result.userId).toBe(25);
     });
   });
 
@@ -113,221 +147,97 @@ describe('PreferenceService (Unit Tests)', () => {
       repo.findOne.mockResolvedValue({ ...mockProfile });
       repo.save.mockImplementation(async (entity) => entity as PreferenceProfile);
 
-      const updateDto = {
+      const dto: UpdatePreferenceProfileDto = {
         allergies: ['Gluten', 'Soy'],
-        dietaryPreferences: ['Keto'],
-        maxSugarPerServing: 2,
+        dietaryPreferences: ['Vegetarian', 'Halal'],
+        dislikedIngredients: ['Mushrooms'],
+        calorieGoal: 2200,
+        maxSugarPerServing: 8,
+        maxSodiumPerServing: 2.0,
+        minProteinPerServing: 15,
+        age: 30,
+        gender: 'male',
+        heightCm: 180,
+        weightKg: 75,
+        activityLevel: 'active',
       };
 
       // Act
-      const result = await service.updateProfile(10, updateDto);
+      const result = await service.updateProfile(10, dto);
 
       // Assert
-      expect(result.allergies).toEqual(['Gluten', 'Soy']);
-      expect(result.dietaryPreferences).toEqual(['Keto']);
-      expect(result.maxSugarPerServing).toBe(2);
       expect(repo.save).toHaveBeenCalled();
+      expect(result.allergies).toEqual(['Gluten', 'Soy']);
+      expect(result.dietaryPreferences).toEqual(['Vegetarian', 'Halal']);
+      expect(result.dislikedIngredients).toEqual(['Mushrooms']);
+      expect(result.calorieGoal).toBe(2200);
+      expect(result.maxSugarPerServing).toBe(8);
+      expect(result.maxSodiumPerServing).toBe(2.0);
+      expect(result.minProteinPerServing).toBe(15);
+      expect(result.age).toBe(30);
+      expect(result.gender).toBe('male');
+      expect(result.heightCm).toBe(180);
+      expect(result.weightKg).toBe(75);
+      expect(result.activityLevel).toBe('active');
+    });
+
+    it('should gracefully handle null and undefined numeric body metric inputs', async () => {
+      repo.findOne.mockResolvedValue({ ...mockProfile });
+      repo.save.mockImplementation(async (entity) => entity as PreferenceProfile);
+
+      const dto: UpdatePreferenceProfileDto = {
+        age: null,
+        heightCm: null,
+        weightKg: null,
+        calorieGoal: null,
+      };
+
+      const result = await service.updateProfile(10, dto);
+      expect(result.age).toBeNull();
+      expect(result.heightCm).toBeNull();
+      expect(result.weightKg).toBeNull();
+      expect(result.calorieGoal).toBeNull();
     });
   });
 
-  describe('evaluateProductConflict', () => {
-    const baseProduct: FoodProduct = {
-      id: 1,
-      name: 'Organic Oat Milk',
-      brand: 'PureHarvest',
-      category: 'Dairy & Plant Milks',
-      barcode: '1234567890123',
-      imageUrl: '',
-      description: 'Clean oat milk',
-      servingSize: 200,
-      servingUnit: 'ml',
-      status: 'active',
-      qualityScore: 90,
-      manufacturerId: 1,
-      dietaryTags: ['Vegan', 'Gluten-Free'],
-      ingredients: [
-        {
-          id: 1,
-          name: 'Filtered Water',
-          isAllergen: false,
-          allergenType: '',
-          additiveCode: '',
-          hazardLevel: 'safe',
-          explanation: '',
-          product: null as any,
-        },
-        {
-          id: 2,
-          name: 'Organic Whole Oats',
-          isAllergen: false,
-          allergenType: '',
-          additiveCode: '',
-          hazardLevel: 'safe',
-          explanation: '',
-          product: null as any,
-        },
-      ],
-      nutritionFacts: [
-        {
-          id: 1,
-          nutrient: 'Sugars',
-          amountPer100g: 2.0,
-          amountPerServing: 4.0,
-          unit: 'g',
-          dailyValuePercentage: 4,
-          product: null as any,
-        },
-      ],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    it('should return unconfigured status when profile is null', () => {
-      // Act
-      const result = service.evaluateProductConflict(null, baseProduct);
-
-      // Assert
-      expect(result.profileConfigured).toBe(false);
-      expect(result.isSafeForUser).toBe(true);
-      expect(result.hasConflicts).toBe(false);
-    });
-
-    it('should detect a critical allergen conflict when product contains declared allergen', () => {
-      // Arrange: Product with peanut allergen
-      const peanutProduct: FoodProduct = {
-        ...baseProduct,
-        name: 'Peanut Butter Granola',
-        dietaryTags: [],
-        ingredients: [
-          {
-            id: 3,
-            name: 'Roasted Peanuts',
-            isAllergen: true,
-            allergenType: 'Peanut',
-            additiveCode: '',
-            hazardLevel: 'warning',
-            explanation: 'Known allergen',
-            product: null as any,
-          },
-        ],
+  describe('evaluateProductConflict (Delegation)', () => {
+    it('should delegate evaluation to ConflictEvaluatorService and return its result', () => {
+      const mockResult: any = {
+        hasConflicts: false,
+        hasAllergenConflict: false,
+        hasDietaryConflict: false,
+        hasNutritionWarning: false,
+        conflicts: [],
+        matchedAllergies: [],
+        dietaryMismatches: [],
+        isSafeForUser: true,
+        profileConfigured: true,
       };
+      conflictEvaluator.evaluateProductConflict.mockReturnValue(mockResult);
 
-      // Act
-      const result = service.evaluateProductConflict(mockProfile, peanutProduct);
+      const mockProduct = { id: 100, name: 'Sample Granola' } as FoodProduct;
+      const result = service.evaluateProductConflict(mockProfile, mockProduct);
 
-      // Assert
-      expect(result.hasAllergenConflict).toBe(true);
-      expect(result.hasConflicts).toBe(true);
-      expect(result.isSafeForUser).toBe(false);
-      expect(result.matchedAllergies).toContain('peanut');
+      expect(conflictEvaluator.evaluateProductConflict).toHaveBeenCalledWith(mockProfile, mockProduct);
+      expect(result).toEqual(mockResult);
     });
+  });
 
-    it('should detect a dietary mismatch when user is Vegan but product contains dairy', () => {
-      // Arrange: Dairy product
-      const dairyProduct: FoodProduct = {
-        ...baseProduct,
-        name: 'Dairy Yogurt',
-        dietaryTags: [],
-        ingredients: [
-          {
-            id: 4,
-            name: 'Pasteurized Whole Milk',
-            isAllergen: true,
-            allergenType: 'Milk',
-            additiveCode: '',
-            hazardLevel: 'caution',
-            explanation: '',
-            product: null as any,
-          },
-        ],
+  describe('calculateMetabolicPlan (Delegation)', () => {
+    it('should delegate calculation to MetabolicCalculatorService and return its result', () => {
+      const mockPlan: any = {
+        isCalculated: true,
+        bmr: 1730,
+        tdee: 2682,
+        dailyCalorieTarget: 2682,
+        macroSplit: { proteinGrams: 168, carbsGrams: 335, fatGrams: 75 },
       };
+      metabolicCalculator.calculateMetabolicPlan.mockReturnValue(mockPlan);
 
-      // Act
-      const result = service.evaluateProductConflict(mockProfile, dairyProduct);
+      const result = service.calculateMetabolicPlan(mockProfile);
 
-      // Assert
-      expect(result.hasDietaryConflict).toBe(true);
-      expect(result.dietaryMismatches).toContain('Vegan');
-      expect(result.isSafeForUser).toBe(false);
-    });
-
-    it('should detect when sugar per serving exceeds user preference limit', () => {
-      // Arrange: High sugar product (12g per serving > user limit of 5g)
-      const highSugarProduct: FoodProduct = {
-        ...baseProduct,
-        dietaryTags: ['Vegan'],
-        nutritionFacts: [
-          {
-            id: 2,
-            nutrient: 'Sugars',
-            amountPer100g: 6,
-            amountPerServing: 12,
-            unit: 'g',
-            dailyValuePercentage: 15,
-            product: null as any,
-          },
-        ],
-      };
-
-      // Act
-      const result = service.evaluateProductConflict(mockProfile, highSugarProduct);
-
-      // Assert
-      expect(result.hasNutritionWarning).toBe(true);
-      expect(result.conflicts.some((c) => c.category === 'nutrition')).toBe(true);
-    });
-
-    it('should return safe clearance for compliant product with zero conflicts', () => {
-      // Act
-      const result = service.evaluateProductConflict(mockProfile, baseProduct);
-
-      // Assert
-      expect(result.isSafeForUser).toBe(true);
-      expect(result.hasConflicts).toBe(false);
-      expect(result.hasAllergenConflict).toBe(false);
-      expect(result.hasDietaryConflict).toBe(false);
-    });
-
-    it('should handle edge cases cleanly (empty ingredients and missing nutrition facts)', () => {
-      // Arrange: Empty product
-      const emptyProduct: FoodProduct = {
-        ...baseProduct,
-        ingredients: [],
-        nutritionFacts: [],
-      };
-
-      // Act
-      const result = service.evaluateProductConflict(mockProfile, emptyProduct);
-
-      // Assert
-      expect(result).toBeDefined();
-      expect(result.hasAllergenConflict).toBe(false);
-    });
-
-    it('should flag conflict when product protein is below user minProteinPerServing limit', () => {
-      // Arrange: Product with 2g protein, user requires 10g
-      const lowProteinProduct: FoodProduct = {
-        ...baseProduct,
-        nutritionFacts: [
-          {
-            id: 2,
-            nutrient: 'Protein',
-            amountPer100g: 1.0,
-            amountPerServing: 2.0,
-            unit: 'g',
-            dailyValuePercentage: null,
-            product: null as any,
-          },
-        ],
-      };
-
-      // Act
-      const result = service.evaluateProductConflict(mockProfile, lowProteinProduct);
-
-      // Assert
-      expect(result.hasNutritionWarning).toBe(true);
-      expect(result.conflicts.some((c) => c.title.includes('Protein'))).toBe(true);
+      expect(metabolicCalculator.calculateMetabolicPlan).toHaveBeenCalledWith(mockProfile);
+      expect(result).toEqual(mockPlan);
     });
   });
 });
-

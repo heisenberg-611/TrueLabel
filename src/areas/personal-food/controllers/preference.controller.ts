@@ -47,11 +47,13 @@ export class PreferenceController {
 
     const userId = user.id;
     const profile = await this.preferenceService.findOrCreate(userId);
+    const metabolicPlan = this.preferenceService.calculateMetabolicPlan(profile);
 
     return {
       title: 'Dietary Profile & Allergen Preferences — TrueLabel',
       activeNav: 'profile',
       profile,
+      metabolicPlan,
       standardAllergens: STANDARD_ALLERGENS,
       standardDiets: STANDARD_DIETS,
       saved: saved === 'true',
@@ -91,10 +93,13 @@ export class PreferenceController {
       return res.redirect('/personal/profile?saved=true');
     } catch (err) {
       const profile = await this.preferenceService.findOrCreate(req.session.user.id);
+      const mergedProfile = { ...profile, ...dto };
+      const metabolicPlan = this.preferenceService.calculateMetabolicPlan(mergedProfile as any);
       return res.render('areas/personal-food/views/profile', {
         title: 'Dietary Profile & Allergen Preferences — TrueLabel',
         activeNav: 'profile',
-        profile: { ...profile, ...dto },
+        profile: mergedProfile,
+        metabolicPlan,
         standardAllergens: STANDARD_ALLERGENS,
         standardDiets: STANDARD_DIETS,
         error: err.message || 'Failed to update dietary profile preferences',

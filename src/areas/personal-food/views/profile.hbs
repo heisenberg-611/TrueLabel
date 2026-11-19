@@ -270,6 +270,117 @@
           </select>
         </div>
       </div>
+
+      {{#if metabolicPlan.isCalculated}}
+        <!-- Mifflin-St Jeor Personalized Metabolic & Daily Nutrition Blueprint -->
+        <div class="mt-6 pt-6 border-t border-slate-200 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
+                <h3 class="text-sm font-black text-slate-900 tracking-tight">Personalized Metabolic & Daily Nutrition Blueprint</h3>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-0.5 font-mono">
+                Engineered via Mifflin-St Jeor Clinical Equation &bull; N4 Architecture
+              </p>
+            </div>
+            <span class="px-2.5 py-1 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold self-start sm:self-auto">
+              {{metabolicPlan.goalLabel}}
+            </span>
+          </div>
+
+          <!-- 4-Stat Grid: BMR, Multiplier, TDEE, Target -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Basal Metabolic Rate</span>
+              <div class="text-lg font-black font-mono text-slate-900">{{metabolicPlan.bmr}} <span class="text-xs font-normal text-slate-500">kcal/day</span></div>
+              <div class="text-[10px] text-slate-400">Resting baseline burn</div>
+            </div>
+            <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Activity Factor</span>
+              <div class="text-lg font-black font-mono text-slate-900">&times;{{metabolicPlan.activityMultiplier}}</div>
+              <div class="text-[10px] text-slate-400 truncate">{{metabolicPlan.activityLabel}}</div>
+            </div>
+            <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Daily Maintenance (TDEE)</span>
+              <div class="text-lg font-black font-mono text-slate-900">{{metabolicPlan.tdee}} <span class="text-xs font-normal text-slate-500">kcal/day</span></div>
+              <div class="text-[10px] text-slate-400">Total daily expenditure</div>
+            </div>
+            <div class="p-3.5 rounded-lg bg-emerald-50/70 border border-emerald-200 space-y-1">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-800">Target Energy Budget</span>
+              <div class="text-lg font-black font-mono text-emerald-950">{{metabolicPlan.dailyCalorieTarget}} <span class="text-xs font-normal text-emerald-700">kcal/day</span></div>
+              <div class="text-[10px] text-emerald-700">{{#if (eq metabolicPlan.calorieGoalSource 'custom')}}Custom user ceiling{{else}}Maintenance intake{{/if}}</div>
+            </div>
+          </div>
+
+          <!-- Macro Split Breakdown -->
+          <div class="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-3">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-bold text-slate-800">Recommended Daily Macronutrient Split</span>
+              <span class="font-mono text-slate-500 text-[11px]">25% Protein · 50% Carbs · 25% Healthy Fats</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="p-2.5 rounded bg-white border border-slate-200 text-xs">
+                <div class="flex items-center justify-between text-slate-600">
+                  <span class="font-semibold text-blue-700">Protein</span>
+                  <span class="font-mono text-slate-400">4 kcal/g</span>
+                </div>
+                <div class="mt-1 flex items-baseline justify-between">
+                  <span class="text-base font-black font-mono text-slate-900">{{metabolicPlan.macroSplit.proteinGrams}}g</span>
+                  <span class="text-[11px] font-mono text-slate-500">{{metabolicPlan.macroSplit.proteinCalories}} kcal</span>
+                </div>
+              </div>
+              <div class="p-2.5 rounded bg-white border border-slate-200 text-xs">
+                <div class="flex items-center justify-between text-slate-600">
+                  <span class="font-semibold text-amber-700">Carbohydrates</span>
+                  <span class="font-mono text-slate-400">4 kcal/g</span>
+                </div>
+                <div class="mt-1 flex items-baseline justify-between">
+                  <span class="text-base font-black font-mono text-slate-900">{{metabolicPlan.macroSplit.carbsGrams}}g</span>
+                  <span class="text-[11px] font-mono text-slate-500">{{metabolicPlan.macroSplit.carbsCalories}} kcal</span>
+                </div>
+              </div>
+              <div class="p-2.5 rounded bg-white border border-slate-200 text-xs">
+                <div class="flex items-center justify-between text-slate-600">
+                  <span class="font-semibold text-emerald-700">Healthy Fats</span>
+                  <span class="font-mono text-slate-400">9 kcal/g</span>
+                </div>
+                <div class="mt-1 flex items-baseline justify-between">
+                  <span class="text-base font-black font-mono text-slate-900">{{metabolicPlan.macroSplit.fatGrams}}g</span>
+                  <span class="text-[11px] font-mono text-slate-500">{{metabolicPlan.macroSplit.fatCalories}} kcal</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Ceilings & Formula Footnote -->
+            <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-200/80 text-[11px] text-slate-600">
+              <div class="flex items-center gap-3">
+                <span>Added Sugar Cap: <strong class="text-slate-900 font-mono">&le; {{metabolicPlan.dailyCeilings.maxSugarGrams}}g/day</strong></span>
+                <span>Sodium Limit: <strong class="text-slate-900 font-mono">&le; {{metabolicPlan.dailyCeilings.maxSodiumGrams}}g/day</strong></span>
+              </div>
+              <div class="font-mono text-[10px] text-slate-400 truncate max-w-full">
+                {{metabolicPlan.formulaDescription}}
+              </div>
+            </div>
+          </div>
+
+          {{#if metabolicPlan.advisoryNote}}
+            <div class="p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-2">
+              <span class="font-bold text-amber-700">Notice:</span>
+              <span>{{metabolicPlan.advisoryNote}}</span>
+            </div>
+          {{/if}}
+        </div>
+      {{else}}
+        <!-- Pending Metrics Guidance Box -->
+        <div class="mt-6 pt-4 border-t border-slate-100 flex items-start gap-3 p-3.5 rounded-lg bg-slate-50 border border-slate-200 text-xs">
+          <span class="text-slate-400 text-base leading-none">💡</span>
+          <div class="text-slate-600">
+            <strong class="text-slate-800">Complete your body metrics:</strong>
+            <span>Provide your age, gender, height, weight, and activity level above to generate your Basal Metabolic Rate (BMR), maintenance energy expenditure (TDEE), and daily macro breakdown.</span>
+          </div>
+        </div>
+      {{/if}}
     </div>
 
     <!-- Actions Bar -->

@@ -854,3 +854,77 @@
 - Shields.io badges for live Railway deployment, NestJS 10, TypeScript, PostgreSQL/Supabase, TypeORM, Handlebars SSR, Tailwind CSS, and Jest (`228 tests passing`).
 - Live deployment quick-links table, implemented feature breakdown across all domain areas, stakeholder roles matrix, seeded demo credentials, Mermaid MVC architecture diagram, exact project directory tree, environment variables table, setup/seeding/testing instructions, and collapsible route reference.
 - Verified `README.md` is tracked by git (not excluded by `.gitignore`).
+
+### Entry 041 | 2026-11-19 09:34:15 +06:00 | Embedded Sprint 1 Video Demonstration in README.md
+
+**What**: Integrated the YouTube Sprint 1 video demonstration (`https://youtu.be/E8ALHdqVbfQ`) throughout the repository `README.md`.
+
+**Highlights**:
+- Added YouTube Sprint 1 Demo badge next to the Live Demo badge in the hero header.
+- Added a top navigation anchor link directly to the video section.
+- Added a dedicated `## Sprint 1 Video Demonstration` section featuring a high-resolution preview banner, quick YouTube action badge, and direct link.
+- Added the video link into the Live Deployment & Demonstration resources table and the Academic Context footer.
+
+**Verification**: `git diff README.md`, `npm test` passing (24/24 suites, 228/228 tests).
+
+### Entry 042 | 2026-11-19 09:52:34 +06:00 | Halal, Kosher, Keto Conflict Screening & Mifflin-St Jeor Metabolic Engine (F16 & N4)
+
+**What**: Fixed the active screening gaps in `PreferenceService` by implementing automated conflict detection for Halal, Kosher, and Keto dietary lifestyles. Activated dormant user body metrics by implementing the Mifflin-St Jeor metabolic computation engine (BMR, TDEE, macronutrient distribution, safe daily ceilings) for N4 readiness, displaying personalized blueprints on both the Dietary Profile view and Consumer Dashboard.
+
+**Key Deliverables**:
+1. **Halal Conflict Screening**:
+   - Detects unconditional non-halal ingredients (pork, bacon, ham, lard, swine, pork gelatin, alcohol, wine, beer, rum, brandy, liqueur, ethanol).
+   - Flags generic uncertified gelatin or non-halal animal fats with educational advisories if the product lacks verified Halal certification.
+2. **Kosher Conflict Screening**:
+   - Detects non-kosher pork and shellfish ingredients (shrimp, prawn, crab, lobster, oyster, clam, mussel, scallop, squid, octopus).
+   - Enforces *Basar b'Chalav* prohibition against co-presence of meat and dairy ingredients in the same product formulation.
+3. **Keto Conflict Screening**:
+   - Analyzes nutrition facts to detect carbohydrates exceeding 15g/serving or sugars exceeding 5g/serving.
+   - Flags high-glycemic refined sweeteners and corn syrups (`high fructose corn syrup`, `glucose syrup`, `cane sugar`, `dextrose`, `maltodextrin`).
+4. **Mifflin-St Jeor Metabolic Engine (`calculateMetabolicPlan`)**:
+   - Formula: $\text{BMR} = 10 \times \text{weight(kg)} + 6.25 \times \text{height(cm)} - 5 \times \text{age} + s$ ($s = +5$ male, $-161$ female, $-78$ neutral).
+   - Total Daily Energy Expenditure ($\text{TDEE}$) using verified activity multipliers ($1.2$ to $1.9$).
+   - Clinical macronutrient distribution: 25% Protein, 50% Carbohydrates, 25% Healthy Fats.
+   - Safe daily health limits: Added sugars $\le 10\%$ of daily energy (capped at 25g WHO limit), Sodium $\le 2.0\text{g/day}$.
+   - Safety guardrails: Clinical safe floor alerts ($< 1500\text{ kcal}$ male, $< 1200\text{ kcal}$ female) and pediatric advisory for users $< 18$.
+5. **View & ViewModel Integration**:
+   - `src/areas/personal-food/views/profile.hbs`: Authoritative Mifflin-St Jeor Metabolic Blueprint panel with BMR, TDEE, macro splits, and formula footnote; guidance box if metrics are incomplete.
+   - `src/areas/identity/views/dashboard/consumer.hbs`: Upgraded Card 3 ("Daily nutritional targets") with resting BMR/TDEE and macro splits; added dedicated full-width Personalized Metabolic Blueprint card.
+6. **Testing & Verification**:
+   - Added 13 new unit tests in `preference.service.spec.ts` covering Halal, Kosher, and Keto conflict detection, male/female/underage Mifflin-St Jeor calculations, TDEE multipliers, safe floors, and missing metric handling.
+   - `npm test`: 24/24 suites, 241/241 tests passing (100% pass).
+   - `npm run build`: Exit code 0.
+
+---
+
+### Entry 043 | 2026-11-19 10:04:30 +06:00 | Service Decomposition (SRP) & Architectural Rule Enforcement
+
+**What**: Decomposed the monolithic `PreferenceService` (~859 lines) into specialized, single-responsibility domain engines adhering to the Single Responsibility Principle (SRP). Formally codified the Mandatory Service Decomposition Rule in `PROJECT_RULES.md` to prevent future monolithic god services.
+
+**Key Deliverables**:
+1. **Architectural Governance (`PROJECT_RULES.md`)**:
+   - Added Section 1.2 directive: "Mandatory Service Decomposition & Single Responsibility Principle (SRP)".
+   - Mandated that services must be broken down into specialized modules if they have more than one distinct responsibility.
+   - Banned combining database persistence/CRUD with heavy algorithmic evaluation, forensic screening engines, or scientific calculations.
+   - Mandated extracting pure engines with zero database dependencies for fast, isolated, deterministic unit testing without database mocks.
+2. **Pure Domain Screening Engine (`ConflictEvaluatorService`)**:
+   - Created `src/areas/personal-food/services/conflict-evaluator.service.ts` (~330 lines).
+   - Encapsulates all allergen screening (critical severity), disliked ingredient avoid-lists, 7 lifestyle dietary screenings (Vegan, Vegetarian, Gluten-Free, Dairy-Free, Halal, Kosher, Keto), and nutritional threshold evaluations (sugar, sodium, protein).
+   - Requires zero database repositories or external mocks.
+3. **Pure Scientific Metabolic Engine (`MetabolicCalculatorService`)**:
+   - Created `src/areas/personal-food/services/metabolic-calculator.service.ts` (~160 lines).
+   - Encapsulates the complete Mifflin-St Jeor equation, BMR, activity level TDEE scaling, macronutrient distribution (25/50/25), safe daily nutritional ceilings (WHO guidelines), clinical safe floor guardrails, and pediatric advisories.
+   - Requires zero database repositories or external mocks.
+4. **Lightweight Orchestrator & CRUD Service (`PreferenceService`)**:
+   - Refactored `src/areas/personal-food/services/preference.service.ts` from ~859 lines down to ~125 lines.
+   - Focused strictly on TypeORM repository management (`findByUserId`, `findOrCreate`, `updateProfile`) and delegating domain calculations to `ConflictEvaluatorService` and `MetabolicCalculatorService`.
+   - Re-exported all domain interfaces and constants to maintain 100% backward compatibility for all existing callers across `home.controller`, `dashboard.service`, `food-catalog.controller`, and views.
+5. **Dependency Injection & Registration**:
+   - Registered `ConflictEvaluatorService` and `MetabolicCalculatorService` in `src/areas/personal-food/personal-food.module.ts` as providers and exports.
+6. **Testing & Decoupled Test Suites**:
+   - Followed `PROJECT_RULES.md` requirement for `*.service.ts` and `*.service.spec.ts` naming.
+   - Decoupled `preference.service.spec.ts`: Refactored to test only `PreferenceService`'s own repository orchestration and delegation (6 tests with mocked domain engines), eliminating test duplication.
+   - Created comprehensive domain engine test suites: `conflict-evaluator.service.spec.ts` (14 tests) and `metabolic-calculator.service.spec.ts` (7 tests).
+   - `npm test`: 26/26 suites, 248/248 tests passing (100% pass).
+   - `npm run build`: Exit code 0 with zero compilation warnings.
+
