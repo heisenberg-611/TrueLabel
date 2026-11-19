@@ -894,3 +894,37 @@
    - Added 13 new unit tests in `preference.service.spec.ts` covering Halal, Kosher, and Keto conflict detection, male/female/underage Mifflin-St Jeor calculations, TDEE multipliers, safe floors, and missing metric handling.
    - `npm test`: 24/24 suites, 241/241 tests passing (100% pass).
    - `npm run build`: Exit code 0.
+
+---
+
+### Entry 043 | 2026-11-19 10:04:30 +06:00 | Service Decomposition (SRP) & Architectural Rule Enforcement
+
+**What**: Decomposed the monolithic `PreferenceService` (~859 lines) into specialized, single-responsibility domain engines adhering to the Single Responsibility Principle (SRP). Formally codified the Mandatory Service Decomposition Rule in `PROJECT_RULES.md` to prevent future monolithic god services.
+
+**Key Deliverables**:
+1. **Architectural Governance (`PROJECT_RULES.md`)**:
+   - Added Section 1.2 directive: "Mandatory Service Decomposition & Single Responsibility Principle (SRP)".
+   - Mandated that services must be broken down into specialized modules if they have more than one distinct responsibility.
+   - Banned combining database persistence/CRUD with heavy algorithmic evaluation, forensic screening engines, or scientific calculations.
+   - Mandated extracting pure engines with zero database dependencies for fast, isolated, deterministic unit testing without database mocks.
+2. **Pure Domain Screening Engine (`ConflictEvaluatorService`)**:
+   - Created `src/areas/personal-food/services/conflict-evaluator.service.ts` (~330 lines).
+   - Encapsulates all allergen screening (critical severity), disliked ingredient avoid-lists, 7 lifestyle dietary screenings (Vegan, Vegetarian, Gluten-Free, Dairy-Free, Halal, Kosher, Keto), and nutritional threshold evaluations (sugar, sodium, protein).
+   - Requires zero database repositories or external mocks.
+3. **Pure Scientific Metabolic Engine (`MetabolicCalculatorService`)**:
+   - Created `src/areas/personal-food/services/metabolic-calculator.service.ts` (~160 lines).
+   - Encapsulates the complete Mifflin-St Jeor equation, BMR, activity level TDEE scaling, macronutrient distribution (25/50/25), safe daily nutritional ceilings (WHO guidelines), clinical safe floor guardrails, and pediatric advisories.
+   - Requires zero database repositories or external mocks.
+4. **Lightweight Orchestrator & CRUD Service (`PreferenceService`)**:
+   - Refactored `src/areas/personal-food/services/preference.service.ts` from ~859 lines down to ~125 lines.
+   - Focused strictly on TypeORM repository management (`findByUserId`, `findOrCreate`, `updateProfile`) and delegating domain calculations to `ConflictEvaluatorService` and `MetabolicCalculatorService`.
+   - Re-exported all domain interfaces and constants to maintain 100% backward compatibility for all existing callers across `home.controller`, `dashboard.service`, `food-catalog.controller`, and views.
+5. **Dependency Injection & Registration**:
+   - Registered `ConflictEvaluatorService` and `MetabolicCalculatorService` in `src/areas/personal-food/personal-food.module.ts` as providers and exports.
+6. **Testing & Decoupled Test Suites**:
+   - Followed `PROJECT_RULES.md` requirement for `*.service.ts` and `*.service.spec.ts` naming.
+   - Decoupled `preference.service.spec.ts`: Refactored to test only `PreferenceService`'s own repository orchestration and delegation (6 tests with mocked domain engines), eliminating test duplication.
+   - Created comprehensive domain engine test suites: `conflict-evaluator.service.spec.ts` (14 tests) and `metabolic-calculator.service.spec.ts` (7 tests).
+   - `npm test`: 26/26 suites, 248/248 tests passing (100% pass).
+   - `npm run build`: Exit code 0 with zero compilation warnings.
+

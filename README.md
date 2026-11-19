@@ -22,7 +22,7 @@
   <img src="https://img.shields.io/badge/TypeORM-0.3-FE0803?style=flat-square" alt="TypeORM" />
   <img src="https://img.shields.io/badge/Handlebars-SSR-F0772B?style=flat-square&logo=handlebarsdotjs&logoColor=white" alt="Handlebars SSR" />
   <img src="https://img.shields.io/badge/Tailwind_CSS-Light%20%2F%20Dark-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
-  <img src="https://img.shields.io/badge/Jest-228_tests_passing-C21325?style=flat-square&logo=jest&logoColor=white" alt="Jest Tests" />
+  <img src="https://img.shields.io/badge/Jest-248_tests_passing-C21325?style=flat-square&logo=jest&logoColor=white" alt="Jest Tests" />
 </p>
 
 <p>
@@ -300,8 +300,8 @@ TrueLabel maintains a comprehensive unit test suite covering controllers, domain
 npm test
 ```
 
-- **24 test suites** passing
-- **228 unit tests** passing
+- **26 test suites** passing
+- **248 unit tests** passing
 
 ---
 

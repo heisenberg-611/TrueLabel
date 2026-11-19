@@ -78,9 +78,17 @@ flowchart LR
   2. **DTOs (Data Transfer Objects)**: Strictly type and validate input and output data using `class-validator` and `class-transformer`.
   3. **Domain Services**: Implement algorithms (e.g., 0–100 Food Quality Score, Mifflin-St Jeor diet formulas, retroactive intake scans, allergen detection).
   4. **Data Access**: Perform database queries, transactions, and mutations via injected repositories.
+* **Mandatory Service Decomposition & Single Responsibility Principle (SRP)**:
+  - **Services MUST be broken down into specialized modules if they have more than one distinct job/responsibility.**
+  - A single domain service must not combine database persistence/CRUD with heavy algorithmic evaluation, forensic screening engines, or scientific calculations.
+  - When a feature encompasses persistence along with complex rule evaluation or mathematical modeling:
+    1. **Extract pure algorithms & engines**: Move pure business logic, mathematical engines, and screening algorithms into dedicated domain helper classes or services (e.g., `CredibilityCalculator`, `ConflictEvaluator`, `MetabolicCalculator`).
+    2. **Orchestrator Pattern**: Keep the primary service focused on orchestrating workflows, database transactions, and repository access, delegating pure computations to the extracted engines.
+    3. **Zero DB Dependencies in Pure Engines**: Pure calculation engines must not depend on database repositories, enabling fast, isolated, deterministic unit testing without database mocks.
 * **Prohibitions**:
   - **Zero awareness of HTTP**: Services must never import `@Req()`, `@Res()`, `Request`, or `Response` objects.
   - **Zero awareness of View rendering**: Services return typed plain TypeScript objects/entities, never HTML strings or template names.
+  - **NO monolithic "god" services**: Single service files exceeding multiple distinct feature domains must be decoupled immediately.
 
 ### 1.3. The View Layer (`Views/`)
 * **Role**: Pure presentation layer rendered server-side using Handlebars (`.hbs`).
