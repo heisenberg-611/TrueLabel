@@ -43,9 +43,6 @@ Thumbs.db
 *.swp
 *.swo
 
-# Antigravity / Agent CLI metadata
-.agents/
-skills-lock.json
 
 # Documentation and markdown files (proposal, logs, plans)
 TrueLabel_Project_Proposal.md
