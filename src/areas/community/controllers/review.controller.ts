@@ -107,4 +107,39 @@ export class ReviewController {
       `/community/products/${review.productId}/reviews?success=${encodeURIComponent('Manufacturer response saved.')}`,
     );
   }
+
+  // Feature F12: Admin Moderation - permanently delete review
+  @Post('reviews/:reviewId/admin-delete')
+  @UseGuards(AuthenticatedGuard, RolesGuard)
+  @Roles('admin')
+  async adminRemove(
+    @Param('reviewId', ParseIntPipe) id: number,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    const productId = await this.reviews.adminRemove(id, req.session.user);
+    return res.redirect(
+      `/community/products/${productId}/reviews?success=${encodeURIComponent('The customer review has been permanently deleted by administrator.')}`,
+    );
+  }
+
+  // Feature F12: Admin Moderation - toggle review visibility
+  @Post('reviews/:reviewId/toggle-visibility')
+  @UseGuards(AuthenticatedGuard, RolesGuard)
+  @Roles('admin')
+  async toggleVisibility(
+    @Param('reviewId', ParseIntPipe) id: number,
+    @Body('visibility') visibility: 'visible' | 'hidden',
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    const review = await this.reviews.adminToggleVisibility(
+      id,
+      visibility || 'hidden',
+      req.session.user,
+    );
+    return res.redirect(
+      `/community/products/${review.productId}/reviews?success=${encodeURIComponent(`Review visibility was updated to ${visibility}.`)}`,
+    );
+  }
 }

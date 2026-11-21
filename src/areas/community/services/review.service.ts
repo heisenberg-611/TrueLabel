@@ -157,6 +157,33 @@ export class ReviewService {
     return review.productId;
   }
 
+  // Feature F12: Administrative moderation - permanently delete any review
+  async adminRemove(reviewId: number, user: { id: number; role: string }) {
+    if (user.role !== 'admin') {
+      throw new ForbiddenException('Only system administrators can delete customer reviews');
+    }
+    const review = await this.reviewRepo.findOne({ where: { id: reviewId } });
+    if (!review) throw new NotFoundException('Review not found');
+    const productId = review.productId;
+    await this.reviewRepo.remove(review);
+    return productId;
+  }
+
+  // Feature F12: Administrative moderation - toggle review visibility
+  async adminToggleVisibility(
+    reviewId: number,
+    visibility: 'visible' | 'hidden',
+    user: { id: number; role: string },
+  ) {
+    if (user.role !== 'admin') {
+      throw new ForbiddenException('Only system administrators can moderate review visibility');
+    }
+    const review = await this.reviewRepo.findOne({ where: { id: reviewId } });
+    if (!review) throw new NotFoundException('Review not found');
+    review.visibility = visibility;
+    return this.reviewRepo.save(review);
+  }
+
   // Feature F11: Product owner manufacturer or admin may publish an official response.
   async reply(reviewId: number, message: string, user: { id: number; role: string }) {
     const review = await this.reviewRepo.findOne({

@@ -928,3 +928,139 @@
    - `npm test`: 26/26 suites, 248/248 tests passing (100% pass).
    - `npm run build`: Exit code 0 with zero compilation warnings.
 
+---
+
+### Entry 044 | 2026-11-21 21:18:30 +06:00 | Administrative Entity Governance & Complete Lifecycle Control (F01 & F12)
+
+**What**: Implemented full platform-wide administrative entity lifecycle management, empowering administrators to modify, delete, and control all entities across TrueLabel—including soft banning, unbanning/reinstating, permanently deleting food products, moderating/hiding customer reviews, and managing the entire food catalog directly from the command center.
+
+**Key Deliverables**:
+1. **Data Model & Schema Evolution (`FoodProduct` & DTOs)**:
+   - Extended `FoodProductStatus` to include `'banned'` (`'active' | 'archived' | 'banned'`).
+   - Added persistent regulatory quarantine metadata columns: `banReason` (text), `bannedAt` (varchar), and `bannedBy` (int).
+   - Created `BanFoodProductDto` with `class-validator` rules requiring a substantive regulatory violation reason (min 5, max 1000 chars).
+   - Extended `SearchFoodProductDto` with `status` filter support (`'all' | 'active' | 'archived' | 'banned'`).
+2. **Domain Service Layer (`CatalogService` & `ReviewService`)**:
+   - `CatalogService.ban()`: Enforces `@Roles('admin')`, verifies mandatory reason, sets status to `'banned'`, and stores audit metadata.
+   - `CatalogService.unban()`: Enforces `@Roles('admin')`, restores status to `'active'`, and clears ban metadata.
+   - `CatalogService.delete()`: Enforces `@Roles('admin')`, performs cascading cleanup of declared ingredients and nutrition facts, and permanently removes the food entity.
+   - `CatalogService.adminSearchAll()`: Implemented multi-attribute search across all statuses with comprehensive status counts breakdown (`active`, `archived`, `banned`, `total`).
+   - `CatalogService.findByBarcode()`: Updated to resolve barcodes regardless of active/banned status so barcode scans of recalled/banned items direct consumers to the official public safety warning docket rather than a 404 page.
+   - `ReviewService.adminRemove()`: Enforces `@Roles('admin')` to permanently delete any review and recalculate product ratings.
+   - `ReviewService.adminToggleVisibility()`: Enforces `@Roles('admin')` to toggle review visibility (`'visible'` vs `'hidden'`) without destroying audit evidence.
+3. **Controller Layer (`FoodCatalogController`, `ReviewController`, `DashboardController`)**:
+   - `POST /catalog/manage/:id/ban`: Admin-gated endpoint executing regulatory ban with validation pipe and flash redirect.
+   - `POST /catalog/manage/:id/unban`: Admin-gated endpoint reinstating banned products.
+   - `POST /catalog/manage/:id/delete`: Admin-gated endpoint executing permanent formulation deletion.
+   - `POST /community/reviews/:id/admin-delete`: Admin-gated endpoint permanently removing reviews.
+   - `POST /community/reviews/:id/toggle-visibility`: Admin-gated endpoint toggling review visibility.
+   - `DashboardController.getAdminDashboard`: Enhanced to support tab switching (`tab=users` vs `tab=catalog`) and catalog query filtering (`productQ`, `productStatus`, `productPage`).
+4. **Presentation & Frontend Engineering (`frontend-design` Skill Applied)**:
+   - `src/areas/identity/views/dashboard/admin.hbs`:
+     - Added Platform Governance Dual Tab Switcher: "User accounts directory" and "Food catalog & formulations".
+     - Built the comprehensive Food Catalog & Formulations Governance Table with status badges, score tier pills, listing dates, and quick action buttons (`View`, `Edit`, `Ban`, `Reinstate`, `Archive`, `Delete`).
+     - Implemented interactive Admin Ban Modal with regulatory reason prompt and Admin Delete Modal with mandatory barcode typing confirmation.
+   - `src/areas/food-catalog/views/detail.hbs`:
+     - Injected Administrative Action Ribbon for admins (`Edit details`, `Ban food item`, `Reinstate product`, `Archive`, `Permanently delete`).
+     - Built the authoritative Regulatory Health & Safety Ban Docket: high-contrast crimson emergency panel (`bg-rose-950 border-2 border-rose-700 text-rose-100`) detailing formal violation rationale, action date, issuing authority, and recall advisories.
+     - Added interactive ban and delete confirmation modals with live barcode matching.
+   - `src/areas/community/views/reviews.hbs`:
+     - Injected Admin Moderation Bar beneath every review card allowing 1-click "Hide from feed" / "Restore to feed" and "Delete review".
+   - `src/shared/views/partials/_food_card.hbs`:
+     - Added crimson `Banned` badge indicator on catalog cards.
+5. **Testing & Verification**:
+   - Added unit test suites for `ban`, `unban`, `delete`, and `adminSearchAll` in `catalog.service.spec.ts`.
+   - Added unit test suites for `handleBan`, `handleUnban`, and `handleDelete` in `food-catalog.controller.spec.ts`.
+   - Added unit test suites for `adminRemove` and `adminToggleVisibility` in `review.service.spec.ts` and `review.controller.spec.ts`.
+   - `npm test`: **26/26 test suites passed, 266/266 unit tests passed (100% pass, 0 failed)**.
+   - `npm run build`: Verified clean build with exit code 0.
+
+---
+
+### Entry 045 | 2026-11-21 21:44:00 +06:00 | Admin Dashboard Query Performance Optimization & Tab-Aware Lazy Data Hydration
+
+**What**: Conducted a thorough performance audit and implemented end-to-end query optimizations for the Admin Dashboard tab options ("User accounts directory" and "Food catalog & formulations") to resolve high page latency caused by eager cascades, unindexed full-table fetches, and redundant cross-tab hydration.
+
+**Key Deliverables & Architectural Improvements**:
+1. **Root Cause Analysis & Latency Elimination**:
+   - Identified that switching between or loading either tab executed 11 separate database queries, including eager cascade joins (`ingredients`, `nutritionFacts`), unindexed `find()` calls across all documents and complaints, and duplicate `countAll()` runs.
+   - Identified that `documentService.getStatistics()` and `reportService.getQueueWithStats()` were running heavy multi-table joins on every dashboard request even though the admin view only required basic pending counter badges.
+2. **Tab-Aware Lazy Data Hydration (`DashboardService`)**:
+   - Re-architected `DashboardService.getAdminDashboardData()` to isolate tab requirements:
+     - On the `users` tab: Catalog product entities are completely omitted from querying. Fast SQL counts provide the tab badge (`18`) while avoiding eager joins. User list filtering, sorting, and pagination only format the active page slice.
+     - On the `catalog` tab: User table sorting, date formatting, and slice pagination are completely bypassed (`users: []`), passing the pre-computed status counts directly to `CatalogService.adminSearchAll()` to eliminate duplicate counting queries.
+     - Added column projection (`select: ['id', 'name', 'email', 'role', 'isVerified', 'createdAt']`) to user queries to avoid pulling heavy `passwordHash` columns over TCP network connections.
+3. **Food Catalog Single-Pass SQL Aggregation (`CatalogService`)**:
+   - Refactored `CatalogService.countAll()` to execute a single grouped SQL query (`SELECT status, COUNT(*) ... GROUP BY status`) instead of 3 sequential or concurrent roundtrips.
+   - Enhanced `CatalogService.adminSearchAll()` to accept an optional pre-computed `statusCounts` cache, preventing duplicate count execution when invoked from dashboard aggregation services.
+4. **Telemetry Query Lightweighting (`ReportService` & `DocumentService`)**:
+   - Implemented `ReportService.getQuickStats()` using direct `count()` queries across report statuses, avoiding heavy relations (`['product', 'author', 'evidence']`) when only telemetry totals are required.
+   - Optimized `DocumentService.getStatistics()` with column projection (`select: ['id', 'status', 'expiryDate']`), preventing bulk retrieval of large text columns (rejection reasons, notes).
+5. **Testing & Quality Assurance**:
+   - Added unit test cases in `dashboard.service.spec.ts` asserting that `adminSearchAll` is called with pre-computed `statusCounts` and that user table arrays are omitted on the `catalog` tab.
+   - Verified that all 26 test suites pass (`npm test`: **26/26 passed, 267/267 tests passed, 0 failed**).
+   - Confirmed TypeScript compilation (`npm run build`: exit code 0).
+
+---
+
+### Entry 046 | 2026-11-21 22:30:30 +06:00 | Project Rules Codification: TypeORM Query Optimization & Database Performance Protocol
+
+**What**: Formally codified non-negotiable database and TypeORM query performance standards into `PROJECT_RULES.md`, establishing Section 3 ("Mandatory TypeORM Query Optimization & Database Performance Protocol") and updating Section 1.2 to eliminate eager joins, unindexed table scans, and memory-bound pagination across all current and future service implementations.
+
+**Key Codifications**:
+1. **Section 1.2 Service Responsibilities & Prohibitions Updated**:
+   - Added explicit requirement for all domain service data access to comply with Section 3 standards.
+   - Added prohibition against unoptimized queries, full table scans, and sequential query waterfalls.
+2. **Section 3: Mandatory TypeORM Query Optimization & Database Performance Protocol**:
+   - **§3.1 Strict Prohibition of Eager Relation Cascades**: Forbids `{ eager: true }` on `@OneToMany` and large collections; requires explicit selective joins only when child data is required.
+   - **§3.2 Mandatory Column Projection (Selective Fetching)**: Mandates `select: [...]` / `.select(['entity.id', ...])` to eliminate `SELECT *` over network connections (PostgreSQL/Supabase); explicitly forbids pulling `passwordHash` or heavy blobs in list/table views.
+   - **§3.3 Tab-Aware & Context-Aware Lazy Data Hydration**: Mandates zero cross-tab query leakage; inactive tabs must only execute scalar counts for UI badges and pass pre-computed counts down to child search services.
+   - **§3.4 Database-Level Pagination, Filtering, and Sorting (`LIMIT` & `OFFSET`)**: Forbids loading tables into memory to `.filter()`, `.sort()`, or `.slice()` in JavaScript.
+   - **§3.5 Single-Pass SQL Grouped Aggregations vs Multi-Query Polling**: Replaces multiple sequential count queries with single-pass `GROUP BY` SQL aggregations with test mock fallbacks.
+   - **§3.6 Parallel Telemetry Execution (`Promise.all`)**: Forbids serial `await` waterfalls for independent lookups; requires concurrent execution.
+   - **§3.7 Specialized Telemetry Counters vs Entity Hydration**: Mandates lightweight `count()` methods (`getQuickStats()`) instead of loading multi-table joined entities just to inspect `.length`.
+3. **Verification**:
+   - Verified markdown document integrity and sequential section numbering.
+   - Ran `npm test` to confirm all 26 test suites remain 100% green.
+
+---
+
+### Entry 047 | 2026-11-21 22:36:45 +06:00 | Visual Harmonization: Admin Governance Ribbon Palette Alignment (`frontend-design`)
+
+**What**: Restyled the Admin Governance Action Ribbon on the food product detail view (`src/areas/food-catalog/views/detail.hbs`) to harmonize with TrueLabel's official website aesthetic, replacing the disconnected near-black dark slab with the platform's clean, high-transparency editorial dossier card styling.
+
+**Key Changes**:
+1. **Container Styling**:
+   - Replaced heavy `bg-slate-900 border-slate-800 text-white` with the site's canonical card palette: `bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-sm text-slate-900 dark:text-slate-100`.
+2. **Badge & Status Hierarchy**:
+   - Updated `Admin governance mode` badge to high-contrast authoritative `bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-bold`.
+   - Updated product status pills (`Active`, `Archived`, `Banned`) to match TrueLabel's standard semantic badges:
+     - Active: `bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800`.
+     - Archived: `bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800`.
+     - Banned: `bg-rose-50 text-rose-800 border border-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800`.
+3. **Button Harmonization**:
+   - Replaced dark buttons with standard surface buttons (`bg-white dark:bg-slate-800 hover:bg-slate-50 border border-slate-300 shadow-sm`).
+   - Styled `Ban food item` with TrueLabel's primary hazard accent (`bg-rose-700 hover:bg-rose-800 text-white shadow-sm`).
+   - Styled `Permanently delete` with subtle hover alert styling (`hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300`).
+4. **Verification**:
+   - Tested across all 26 test suites via `npm test` (100% pass, 267/267 tests).
+   - Confirmed full dark mode and light mode visual responsiveness.
+
+---
+
+### Entry 048 | 2026-11-21 22:44:00 +06:00 | Bug Fix: Modal Backdrop Top Gap & Stacking Context Elevation
+
+**What**: Fixed the layout bug on the product detail view (`src/areas/food-catalog/views/detail.hbs`) and admin command center (`src/areas/identity/views/dashboard/admin.hbs`) where opening the Ban Food Product modal caused a visible gap at the top of the browser window and failed to darken/blur the header and floating docks.
+
+**Root Cause & Remediation**:
+1. **Parent `.space-y-6` Margin Infiltration**:
+   - In `detail.hbs`, the modal elements (`#banProductModal` and `#deleteProductModal`) were nested as direct children inside `<div class="space-y-6">`.
+   - When the modal was unhidden (`classList.remove('hidden')`), Tailwind's `.space-y-6 > :not([hidden]) ~ :not([hidden])` rule dynamically injected a `margin-top: 1.5rem` onto the `position: fixed; inset: 0` modal container, shifting its top boundary down and leaving an uncovered gap at the top.
+   - *Fix*: Extracted both modals outside the content container (`space-y-6`), and explicitly added `!m-0` (`margin: 0 !important;`).
+2. **Stacking Context & Z-Index Elevation**:
+   - The sticky navbar header was positioned with `z-40`, and floating docks (`viva-dock`) and dropdowns had `z-50`. Modals configured with `z-50` were rendered behind or level with sibling headers.
+   - *Fix*: Elevated modal backdrop containers across `detail.hbs` and `admin.hbs` to `z-[100]`.
+3. **Outcome**:
+   - The modal backdrop overlay (`bg-slate-900/60 backdrop-blur-sm`) now flawlessly covers 100% of the viewport from edge to edge (`inset-0`) without top gaps, seamlessly blurring the header, body, and docks.
+4. **Verification**:
+   - `npm test`: 26/26 test suites passed (267/267 tests, 0 failed).

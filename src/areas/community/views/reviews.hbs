@@ -246,6 +246,36 @@
                   </button>
                 </form>
               {{/if}}
+
+              <!-- Admin Moderation Bar (Admin Only) -->
+              {{#if (eq ../user.role 'admin')}}
+                <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 text-white font-semibold">Admin moderation</span>
+                    <span class="text-[11px] text-slate-500 font-mono">Review #{{this.id}} (Weight: {{this.credibilityWeight}}x)</span>
+                    {{#if (eq this.visibility 'hidden')}}
+                      <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-900">Visibility: Hidden</span>
+                    {{else}}
+                      <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-900">Visibility: Visible</span>
+                    {{/if}}
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <form action="/community/reviews/{{this.id}}/toggle-visibility" method="POST" class="inline">
+                      <input type="hidden" name="_csrf" value="{{../../csrfToken}}">
+                      <input type="hidden" name="visibility" value="{{#if (eq this.visibility 'hidden')}}visible{{else}}hidden{{/if}}">
+                      <button type="submit" class="text-xs px-2.5 py-1 rounded border border-slate-300 text-slate-700 hover:bg-slate-50 font-medium transition-colors">
+                        {{#if (eq this.visibility 'hidden')}}Restore to feed{{else}}Hide from feed{{/if}}
+                      </button>
+                    </form>
+                    <form action="/community/reviews/{{this.id}}/admin-delete" method="POST" onsubmit="return confirm('Permanently delete review #{{this.id}}? Ratings will be recalculated immediately.');" class="inline">
+                      <input type="hidden" name="_csrf" value="{{../../csrfToken}}">
+                      <button type="submit" class="text-xs px-2.5 py-1 rounded bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 font-medium transition-colors">
+                        Delete review
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              {{/if}}
             </article>
           {{/each}}
         </div>

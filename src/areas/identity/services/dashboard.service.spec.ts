@@ -35,6 +35,19 @@ describe('DashboardService (Unit Tests)', () => {
       findByManufacturer: jest.fn().mockResolvedValue([
         { id: 10, name: 'Oat Drink', qualityScore: 88, manufacturerId: 2 },
       ]),
+      countAll: jest.fn().mockResolvedValue({
+        active: 15,
+        archived: 0,
+        banned: 0,
+        total: 15,
+      }),
+      adminSearchAll: jest.fn().mockResolvedValue({
+        items: [{ id: 10, name: 'Oat Drink', brand: 'Oatly', status: 'active', createdAt: new Date() }],
+        total: 1,
+        page: 1,
+        totalPages: 1,
+        statusCounts: { active: 1, archived: 0, banned: 0, total: 1 },
+      }),
     };
 
     documentService = {
@@ -175,6 +188,25 @@ describe('DashboardService (Unit Tests)', () => {
       expect(searched.users).toHaveLength(1);
       expect(searched.users[0].name).toBe('Inspector C');
       expect(searched.users[0].status).toBe('unverified');
+    });
+
+    it('should optimize query execution based on active tab', async () => {
+      // Act: Catalog tab
+      const catalogData = await service.getAdminDashboardData({ tab: 'catalog' });
+      expect(catalogData.currentTab).toBe('catalog');
+      expect(catalogData.catalogProducts).toHaveLength(1);
+      expect(catalogData.users).toHaveLength(0); // Users list omitted on catalog tab for speed
+      expect(catalogData.totalUsers).toBe(4); // User summary metrics still available
+      expect(catalogService.adminSearchAll).toHaveBeenCalledWith(
+        expect.objectContaining({ statusCounts: expect.any(Object) }),
+      );
+
+      // Act: Users tab
+      catalogService.adminSearchAll.mockClear();
+      const usersData = await service.getAdminDashboardData({ tab: 'users' });
+      expect(usersData.currentTab).toBe('users');
+      expect(usersData.users).toHaveLength(4);
+      expect(catalogService.adminSearchAll).not.toHaveBeenCalled(); // Catalog search skipped on users tab
     });
   });
 

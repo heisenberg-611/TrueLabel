@@ -10,7 +10,7 @@ import {
 import { Ingredient } from './ingredient.entity';
 import { NutritionFact } from './nutrition-fact.entity';
 
-export type FoodProductStatus = 'active' | 'archived';
+export type FoodProductStatus = 'active' | 'archived' | 'banned';
 
 @Entity('food_products')
 export class FoodProduct {
@@ -48,6 +48,16 @@ export class FoodProduct {
     default: 'active',
   })
   status: FoodProductStatus;
+
+  // Regulatory Ban & Quarantine Metadata (Feature F01 Governance)
+  @Column({ type: 'text', nullable: true })
+  banReason: string | null;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  bannedAt: string | null;
+
+  @Column({ type: 'int', nullable: true })
+  bannedBy: number | null;
 
   // Explainable Quality Score (provisional baseline 0-100 until F04 scoring engine computes dynamic updates)
   @Column({ type: 'float', default: 75 })

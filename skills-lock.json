@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "skills": {
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "83485963700bcf11d5bf78118facb301676b69d918fee2e45a95e7f1a2840f6c"
+    },
+    "sql-query-optimizer": {
+      "source": "jeremylongshore/tons-of-skills-marketplace",
+      "commit": "35fc92784294db38f86af963d760a3c49c542ed7",
+      "sourceType": "github",
+      "skillPath": "skills/12-data-analytics/sql-query-optimizer/SKILL.md",
+      "computedHash": "9761f5fe27a1d34d47d500084eb0412e0c056a2eb6298d9ee3a8d62854ac1b9f"
+    }
+  }
+}

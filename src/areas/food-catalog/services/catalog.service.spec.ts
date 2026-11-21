@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ConflictException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { ConflictException, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { CatalogService } from './catalog.service';
 import { FoodProduct } from '../models/food-product.entity';
 import { Ingredient } from '../models/ingredient.entity';
@@ -24,6 +24,9 @@ describe('CatalogService (Unit Tests)', () => {
     servingSize: 200,
     servingUnit: 'ml',
     status: 'active',
+    banReason: null,
+    bannedAt: null,
+    bannedBy: null,
     qualityScore: 88,
     manufacturerId: 10,
     dietaryTags: ['Vegan', 'Gluten-Free'],
@@ -39,17 +42,21 @@ describe('CatalogService (Unit Tests)', () => {
       find: jest.fn(),
       create: jest.fn(),
       save: jest.fn(),
+      delete: jest.fn(),
+      count: jest.fn(),
       createQueryBuilder: jest.fn(),
     };
 
     ingredientRepo = {
       create: jest.fn(),
       save: jest.fn(),
+      delete: jest.fn(),
     };
 
     nutritionRepo = {
       create: jest.fn(),
       save: jest.fn(),
+      delete: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -148,9 +155,22 @@ describe('CatalogService (Unit Tests)', () => {
       // Assert
       expect(result).toEqual(mockProduct);
       expect(productRepo.findOne).toHaveBeenCalledWith({
-        where: { barcode: '8901234567890', status: 'active' },
+        where: { barcode: '8901234567890' },
         relations: ['ingredients', 'nutritionFacts'],
       });
+    });
+
+    it('should return banned product when barcode is scanned so consumer sees regulatory warning', async () => {
+      // Arrange
+      const banned = { ...mockProduct, status: 'banned' as const, banReason: 'Toxic additive' };
+      (productRepo.findOne as jest.Mock).mockResolvedValue(banned);
+
+      // Act
+      const result = await service.findByBarcode('8901234567890');
+
+      // Assert
+      expect(result).toEqual(banned);
+      expect(result?.status).toBe('banned');
     });
 
     it('should return null when barcode does not exist (enables request-to-add page)', async () => {
@@ -428,6 +448,135 @@ describe('CatalogService (Unit Tests)', () => {
       expect(specimen?.allergensSummary.label).toContain('0 Declared');
       expect(specimen?.sugarSummary.status).toBe('hazard');
       expect(specimen?.sugarSummary.label).toContain('High Density / Flagged');
+    });
+  });
+
+  describe('ban (Feature F01: Admin Regulatory Governance)', () => {
+    it('should allow admin to ban a product with valid regulatory reason', async () => {
+      // Arrange
+      (productRepo.findOne as jest.Mock).mockResolvedValue({ ...mockProduct });
+      (productRepo.save as jest.Mock).mockImplementation((prod) => Promise.resolve(prod));
+
+      // Act
+      const result = await service.ban(1, 'Detected unlisted allergen peanut protein', {
+        id: 99,
+        role: 'admin',
+      });
+
+      // Assert
+      expect(result.status).toBe('banned');
+      expect(result.banReason).toBe('Detected unlisted allergen peanut protein');
+      expect(result.bannedBy).toBe(99);
+      expect(result.bannedAt).toBeDefined();
+    });
+
+    it('should throw ForbiddenException when non-admin attempts to ban a product', async () => {
+      // Act & Assert
+      await expect(
+        service.ban(1, 'Contaminated batch', { id: 10, role: 'manufacturer' }),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should throw BadRequestException when ban reason is missing or too short', async () => {
+      // Act & Assert
+      await expect(
+        service.ban(1, 'bad', { id: 99, role: 'admin' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('unban (Feature F01: Admin Regulatory Governance)', () => {
+    it('should allow admin to reinstate a banned product to active status', async () => {
+      // Arrange
+      const bannedProduct = {
+        ...mockProduct,
+        status: 'banned' as const,
+        banReason: 'Under investigation',
+        bannedAt: '2026-11-20T00:00:00.000Z',
+        bannedBy: 99,
+      };
+      (productRepo.findOne as jest.Mock).mockResolvedValue(bannedProduct);
+      (productRepo.save as jest.Mock).mockImplementation((prod) => Promise.resolve(prod));
+
+      // Act
+      const result = await service.unban(1, { id: 99, role: 'admin' });
+
+      // Assert
+      expect(result.status).toBe('active');
+      expect(result.banReason).toBeNull();
+      expect(result.bannedAt).toBeNull();
+      expect(result.bannedBy).toBeNull();
+    });
+
+    it('should throw ForbiddenException when non-admin attempts to unban', async () => {
+      await expect(
+        service.unban(1, { id: 10, role: 'consumer' }),
+      ).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  describe('delete (Feature F01: Admin Regulatory Governance)', () => {
+    it('should permanently delete product and its ingredients and nutrition facts', async () => {
+      // Arrange
+      (productRepo.findOne as jest.Mock).mockResolvedValue({ ...mockProduct });
+      (ingredientRepo.delete as jest.Mock).mockResolvedValue({ affected: 2 });
+      (nutritionRepo.delete as jest.Mock).mockResolvedValue({ affected: 2 });
+      (productRepo.delete as jest.Mock).mockResolvedValue({ affected: 1 });
+
+      // Act
+      await service.delete(1, { id: 99, role: 'admin' });
+
+      // Assert
+      expect(ingredientRepo.delete).toHaveBeenCalledWith({ product: { id: 1 } });
+      expect(nutritionRepo.delete).toHaveBeenCalledWith({ product: { id: 1 } });
+      expect(productRepo.delete).toHaveBeenCalledWith(1);
+    });
+
+    it('should throw ForbiddenException when non-admin attempts to delete product', async () => {
+      await expect(
+        service.delete(1, { id: 10, role: 'manufacturer' }),
+      ).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  describe('adminSearchAll (Feature F01: Admin Regulatory Governance)', () => {
+    it('should return products with full status counts breakdown', async () => {
+      // Arrange
+      const mockList = [
+        { ...mockProduct, status: 'active' },
+        { ...mockProduct, id: 2, status: 'banned' },
+        { ...mockProduct, id: 3, status: 'archived' },
+      ];
+      (productRepo.count as jest.Mock).mockImplementation((opts?: any) => {
+        if (opts?.where?.status === 'active') return Promise.resolve(1);
+        if (opts?.where?.status === 'archived') return Promise.resolve(1);
+        if (opts?.where?.status === 'banned') return Promise.resolve(1);
+        return Promise.resolve(3);
+      });
+
+      const mockQueryBuilder = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([mockList, 3]),
+      };
+      (productRepo.createQueryBuilder as jest.Mock).mockReturnValue(mockQueryBuilder);
+
+      // Act
+      const result = await service.adminSearchAll({ status: 'all', page: 1, limit: 10 });
+
+      // Assert
+      expect(result.items).toHaveLength(3);
+      expect(result.total).toBe(3);
+      expect(result.statusCounts).toEqual({
+        active: 1,
+        archived: 1,
+        banned: 1,
+        total: 3,
+      });
     });
   });
 });

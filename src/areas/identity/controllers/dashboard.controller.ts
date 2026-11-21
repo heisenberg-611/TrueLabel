@@ -106,6 +106,10 @@ export class DashboardController {
     @Query('q') q?: string,
     @Query('success') success?: string,
     @Query('error') error?: string,
+    @Query('tab') tab?: 'users' | 'catalog',
+    @Query('productQ') productQ?: string,
+    @Query('productStatus') productStatus?: string,
+    @Query('productPage') productPage?: string,
   ) {
     const data = await this.dashboardService.getAdminDashboardData({
       page: page ? parseInt(page, 10) : 1,
@@ -114,6 +118,10 @@ export class DashboardController {
       order,
       role,
       search: q,
+      ...(tab ? { tab } : {}),
+      ...(productQ ? { productQ } : {}),
+      ...(productStatus ? { productStatus } : {}),
+      ...(productPage ? { productPage: parseInt(productPage, 10) } : {}),
     });
     return {
       title: 'System Administrator Command Center — TrueLabel',
