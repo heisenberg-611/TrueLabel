@@ -31,6 +31,9 @@ describe('FoodCatalogController (Unit Tests)', () => {
       create: jest.fn(),
       update: jest.fn(),
       archive: jest.fn(),
+      ban: jest.fn(),
+      unban: jest.fn(),
+      delete: jest.fn(),
       getFilterOptions: jest.fn().mockResolvedValue({
         categories: ['Dairy & Plant Milks'],
         dietaryTags: ['Vegan'],
@@ -334,6 +337,56 @@ describe('FoodCatalogController (Unit Tests)', () => {
 
       await controller.handleCreateAlias({ name: 'Alias Test', barcode: '555' } as any, mockReq, mockRes);
       expect(mockRes.redirect).toHaveBeenCalledWith('/catalog/product/99');
+    });
+  });
+
+  describe('Administrative Food Governance Actions (Feature F01)', () => {
+    it('handleBan should call catalogService.ban and redirect to product detail with success message', async () => {
+      // Arrange
+      (catalogService.ban as jest.Mock).mockResolvedValue({ id: 1, name: 'Pure Oat Milk' } as any);
+      const mockReq = { session: { user: { id: 99, role: 'admin' } } } as any;
+      const mockRes = { redirect: jest.fn() } as any;
+
+      // Act
+      await controller.handleBan(1, { reason: 'Undeclared peanut traces' }, mockReq, mockRes);
+
+      // Assert
+      expect(catalogService.ban).toHaveBeenCalledWith(1, 'Undeclared peanut traces', mockReq.session.user);
+      expect(mockRes.redirect).toHaveBeenCalledWith(
+        expect.stringContaining('/catalog/product/1?success='),
+      );
+    });
+
+    it('handleUnban should call catalogService.unban and redirect with success message', async () => {
+      // Arrange
+      (catalogService.unban as jest.Mock).mockResolvedValue({ id: 1, name: 'Pure Oat Milk' } as any);
+      const mockReq = { session: { user: { id: 99, role: 'admin' } } } as any;
+      const mockRes = { redirect: jest.fn() } as any;
+
+      // Act
+      await controller.handleUnban(1, mockReq, mockRes);
+
+      // Assert
+      expect(catalogService.unban).toHaveBeenCalledWith(1, mockReq.session.user);
+      expect(mockRes.redirect).toHaveBeenCalledWith(
+        expect.stringContaining('/catalog/product/1?success='),
+      );
+    });
+
+    it('handleDelete should call catalogService.delete and redirect to admin catalog dashboard', async () => {
+      // Arrange
+      (catalogService.delete as jest.Mock).mockResolvedValue(undefined);
+      const mockReq = { session: { user: { id: 99, role: 'admin' } } } as any;
+      const mockRes = { redirect: jest.fn() } as any;
+
+      // Act
+      await controller.handleDelete(1, mockReq, mockRes);
+
+      // Assert
+      expect(catalogService.delete).toHaveBeenCalledWith(1, mockReq.session.user);
+      expect(mockRes.redirect).toHaveBeenCalledWith(
+        expect.stringContaining('/dashboard/admin?tab=catalog&success='),
+      );
     });
   });
 });

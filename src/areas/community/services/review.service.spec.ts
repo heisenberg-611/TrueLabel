@@ -156,4 +156,43 @@ describe('ReviewService (F11)', () => {
     expect(summary.dimensionAverages).toHaveLength(4);
     expect(summary.recentReviews).toHaveLength(2);
   });
+
+  describe('admin moderation (F12)', () => {
+    it('adminRemove should allow administrator to delete any review', async () => {
+      // Arrange
+      reviews.findOne.mockResolvedValue({ id: 10, productId: 5, userId: 99 });
+
+      // Act
+      const productId = await service.adminRemove(10, { id: 1, role: 'admin' });
+
+      // Assert
+      expect(productId).toBe(5);
+      expect(reviews.remove).toHaveBeenCalled();
+    });
+
+    it('adminRemove should throw ForbiddenException when non-admin attempts removal', async () => {
+      await expect(
+        service.adminRemove(10, { id: 2, role: 'consumer' }),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('adminToggleVisibility should update review visibility when called by admin', async () => {
+      // Arrange
+      const reviewObj = { id: 10, visibility: 'visible' as const };
+      reviews.findOne.mockResolvedValue(reviewObj);
+
+      // Act
+      const updated = await service.adminToggleVisibility(10, 'hidden', { id: 1, role: 'admin' });
+
+      // Assert
+      expect(updated.visibility).toBe('hidden');
+      expect(reviews.save).toHaveBeenCalled();
+    });
+
+    it('adminToggleVisibility should throw ForbiddenException for non-admin', async () => {
+      await expect(
+        service.adminToggleVisibility(10, 'hidden', { id: 2, role: 'consumer' }),
+      ).rejects.toThrow(ForbiddenException);
+    });
+  });
 });

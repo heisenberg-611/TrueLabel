@@ -339,7 +339,9 @@ export class DocumentService {
    * Aggregate statistics for dashboard summary
    */
   async getStatistics(): Promise<DocumentStatistics> {
-    const all = await this.documentRepo.find();
+    const all = await this.documentRepo.find({
+      select: ['id', 'status', 'expiryDate'],
+    });
     const now = new Date();
 
     let pending = 0;

@@ -145,6 +145,30 @@ export class ReportService {
     return this.attachLinkedCounts(reports);
   }
 
+  // Feature F13: Fast aggregate complaint telemetry for dashboards without eager multi-table joins.
+  async getQuickStats(): Promise<ReportStatistics> {
+    try {
+      const [pending, investigating, resolved, dismissed] = await Promise.all([
+        this.reportRepo.count({ where: { status: 'pending' } }),
+        this.reportRepo.count({ where: { status: 'investigating' } }),
+        this.reportRepo.count({ where: { status: 'resolved' } }),
+        this.reportRepo.count({ where: { status: 'dismissed' } }),
+      ]);
+
+      return {
+        total: pending + investigating + resolved + dismissed,
+        pending,
+        investigating,
+        resolved,
+        dismissed,
+        batchClusters: 0,
+      };
+    } catch {
+      const q = await this.getQueueWithStats();
+      return q.stats;
+    }
+  }
+
   // Feature F13: Filtered inspector/admin complaint docket with telemetry counters.
   async getQueueWithStats(filter?: ReportQueueFilter) {
     const allReports = await this.reportRepo.find({

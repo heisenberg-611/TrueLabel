@@ -3,6 +3,7 @@ import {
   ConflictException,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -40,8 +41,16 @@ export class CatalogService {
     const queryBuilder = this.productRepo
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.ingredients', 'ingredients')
-      .leftJoinAndSelect('product.nutritionFacts', 'nutritionFacts')
-      .where('product.status = :status', { status: 'active' });
+      .leftJoinAndSelect('product.nutritionFacts', 'nutritionFacts');
+
+    if (dto.status && dto.status !== 'all') {
+      queryBuilder.where('product.status = :status', { status: dto.status });
+    } else if (dto.status === 'all') {
+      // Include all lifecycle statuses (active, archived, banned)
+    } else {
+      // Default to active for regular consumer discovery
+      queryBuilder.where('product.status = :status', { status: 'active' });
+    }
 
     if (dto.q && dto.q.trim()) {
       const q = `%${dto.q.trim().toLowerCase()}%`;
@@ -85,7 +94,7 @@ export class CatalogService {
   async findByBarcode(barcode: string): Promise<FoodProduct | null> {
     const cleanBarcode = barcode.trim();
     return this.productRepo.findOne({
-      where: { barcode: cleanBarcode, status: 'active' },
+      where: { barcode: cleanBarcode },
       relations: ['ingredients', 'nutritionFacts'],
     });
   }
@@ -267,6 +276,185 @@ export class CatalogService {
 
     product.status = 'archived';
     return this.productRepo.save(product);
+  }
+
+  /**
+   * Ban food product (Feature F01: Administrative Regulatory Governance)
+   * Enforces mandatory regulatory justification; sets status to 'banned' and records audit fields.
+   */
+  async ban(
+    id: number,
+    reason: string,
+    user: { id: number; role: string },
+  ): Promise<FoodProduct> {
+    if (user.role !== 'admin') {
+      throw new ForbiddenException(
+        'Only system administrators are authorized to place a food product under regulatory ban',
+      );
+    }
+
+    if (!reason || !reason.trim() || reason.trim().length < 5) {
+      throw new BadRequestException(
+        'A substantive regulatory reason (minimum 5 characters) is required to ban a food product',
+      );
+    }
+
+    const product = await this.findById(id);
+    product.status = 'banned';
+    product.banReason = reason.trim();
+    product.bannedAt = new Date().toISOString();
+    product.bannedBy = user.id;
+
+    return this.productRepo.save(product);
+  }
+
+  /**
+   * Reinstate / Unban food product (Feature F01: Administrative Regulatory Governance)
+   * Restores status to 'active' and clears ban metadata.
+   */
+  async unban(
+    id: number,
+    user: { id: number; role: string },
+  ): Promise<FoodProduct> {
+    if (user.role !== 'admin') {
+      throw new ForbiddenException(
+        'Only system administrators are authorized to reinstate banned food products',
+      );
+    }
+
+    const product = await this.findById(id);
+    product.status = 'active';
+    product.banReason = null;
+    product.bannedAt = null;
+    product.bannedBy = null;
+
+    return this.productRepo.save(product);
+  }
+
+  /**
+   * Permanently delete food product (Feature F01: Administrative Regulatory Governance)
+   * Removes product and associated formulation data with full administrative authorization check.
+   */
+  async delete(
+    id: number,
+    user: { id: number; role: string },
+  ): Promise<void> {
+    if (user.role !== 'admin') {
+      throw new ForbiddenException(
+        'Only system administrators are authorized to permanently delete food products',
+      );
+    }
+
+    const product = await this.findById(id);
+
+    // Clean up dependent ingredients and nutrition facts
+    await this.ingredientRepo.delete({ product: { id: product.id } });
+    await this.nutritionRepo.delete({ product: { id: product.id } });
+
+    await this.productRepo.delete(id);
+  }
+
+  /**
+   * Fast aggregate counts of product lifecycle statuses via indexed SQL COUNT (Feature F01)
+   */
+  async countAll(): Promise<{ active: number; archived: number; banned: number; total: number }> {
+    try {
+      if (typeof this.productRepo.createQueryBuilder === 'function') {
+        const qb = this.productRepo.createQueryBuilder('product');
+        if (typeof qb.getRawMany === 'function') {
+          const rawCounts = await qb
+            .select('product.status', 'status')
+            .addSelect('COUNT(*)', 'cnt')
+            .groupBy('product.status')
+            .getRawMany();
+
+          if (Array.isArray(rawCounts) && rawCounts.length > 0) {
+            let active = 0;
+            let archived = 0;
+            let banned = 0;
+            for (const row of rawCounts) {
+              const count = parseInt(row.cnt, 10) || 0;
+              if (row.status === 'active') active = count;
+              else if (row.status === 'archived') archived = count;
+              else if (row.status === 'banned') banned = count;
+            }
+            return { active, archived, banned, total: active + archived + banned };
+          }
+        }
+      }
+    } catch {
+      // Graceful fallback to concurrent counts in mock/unsupported environments
+    }
+
+    const [active, archived, banned] = await Promise.all([
+      this.productRepo.count({ where: { status: 'active' } }),
+      this.productRepo.count({ where: { status: 'archived' } }),
+      this.productRepo.count({ where: { status: 'banned' } }),
+    ]);
+    return { active, archived, banned, total: active + archived + banned };
+  }
+
+  /**
+   * Admin-specific multi-attribute product search with full status breakdown (Feature F01)
+   * Highly optimized: uses fast direct SQL counts and avoids eager ingredient/nutrition joins for table view.
+   */
+  async adminSearchAll(options?: {
+    q?: string;
+    status?: string;
+    category?: string;
+    page?: number;
+    limit?: number;
+    statusCounts?: { active: number; archived: number; banned: number; total: number };
+  }): Promise<{
+    items: FoodProduct[];
+    total: number;
+    page: number;
+    totalPages: number;
+    statusCounts: { active: number; archived: number; banned: number; total: number };
+  }> {
+    const page = Math.max(1, Number(options?.page) || 1);
+    const limit = Math.max(1, Number(options?.limit) || 10);
+    const skip = (page - 1) * limit;
+
+    // Use pre-computed status counts if supplied, or compute them concurrently
+    const statusCountsPromise = options?.statusCounts
+      ? Promise.resolve(options.statusCounts)
+      : this.countAll();
+
+    // Query product table directly without eager ingredient/nutrition joins
+    const queryBuilder = this.productRepo.createQueryBuilder('product');
+
+    if (options?.status && options.status !== 'all') {
+      queryBuilder.where('product.status = :status', { status: options.status });
+    }
+
+    if (options?.q && options.q.trim()) {
+      const q = `%${options.q.trim().toLowerCase()}%`;
+      queryBuilder.andWhere(
+        '(LOWER(product.name) LIKE :q OR LOWER(product.brand) LIKE :q OR product.barcode LIKE :barcodeQ)',
+        { q, barcodeQ: `%${options.q.trim()}%` },
+      );
+    }
+
+    if (options?.category && options.category.trim()) {
+      const cat = `%${options.category.trim().toLowerCase()}%`;
+      queryBuilder.andWhere('LOWER(product.category) LIKE :cat', { cat });
+    }
+
+    queryBuilder.orderBy('product.createdAt', 'DESC').skip(skip).take(limit);
+
+    const [[items, total], statusCounts] = await Promise.all([
+      queryBuilder.getManyAndCount(),
+      statusCountsPromise,
+    ]);
+
+    return {
+      items,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit) || 1,
+      statusCounts,
+    };
   }
 
   /**

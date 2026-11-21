@@ -113,6 +113,27 @@
     </div>
   </div>
 
+  <!-- Platform Governance Dual Tab Switcher -->
+  <div class="flex items-center gap-2 border-b border-slate-200 pb-2">
+    <a
+      href="/dashboard/admin?tab=users"
+      class="px-4 py-2.5 rounded-lg text-xs font-bold transition-colors inline-flex items-center gap-2 {{#if (ne currentTab 'catalog')}}bg-slate-900 text-white shadow-sm{{else}}text-slate-600 hover:text-slate-900 hover:bg-slate-100{{/if}}"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+      User accounts directory
+      <span class="text-[10px] px-1.5 py-0.5 rounded font-mono {{#if (ne currentTab 'catalog')}}bg-slate-800 text-slate-300{{else}}bg-slate-200 text-slate-700{{/if}}">{{totalUsers}}</span>
+    </a>
+    <a
+      href="/dashboard/admin?tab=catalog"
+      class="px-4 py-2.5 rounded-lg text-xs font-bold transition-colors inline-flex items-center gap-2 {{#if (eq currentTab 'catalog')}}bg-slate-900 text-white shadow-sm{{else}}text-slate-600 hover:text-slate-900 hover:bg-slate-100{{/if}}"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+      Food catalog & formulations
+      <span class="text-[10px] px-1.5 py-0.5 rounded font-mono {{#if (eq currentTab 'catalog')}}bg-slate-800 text-slate-300{{else}}bg-slate-200 text-slate-700{{/if}}">{{catalogTotal}}</span>
+    </a>
+  </div>
+
+  {{#if (ne currentTab 'catalog')}}
   <!-- Registered Users Directory Table -->
   <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
     <!-- Header with Action -->
@@ -319,12 +340,230 @@
       {{> _pagination baseUrl="/dashboard/admin?" itemName="registered accounts"}}
     </div>
   </div>
+  {{/if}}
+
+  {{#if (eq currentTab 'catalog')}}
+  <!-- Food Catalog & Formulations Governance Table -->
+  <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+    <!-- Header with Action -->
+    <div class="p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <h2 class="text-base font-bold text-slate-900">Food formulations & product registry</h2>
+          <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-semibold">{{catalogTotal}} registered</span>
+        </div>
+        <p class="text-xs text-slate-500">Regulatory governance: modify formulation data, execute statutory bans, archive, or permanently delete items</p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="text-xs font-mono font-semibold px-2.5 py-1 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
+          {{catalogStatusCounts.active}} active
+        </span>
+        <span class="text-xs font-mono font-semibold px-2.5 py-1 rounded bg-amber-50 text-amber-800 border border-amber-200">
+          {{catalogStatusCounts.archived}} archived
+        </span>
+        <span class="text-xs font-mono font-semibold px-2.5 py-1 rounded bg-rose-50 text-rose-800 border border-rose-200">
+          {{catalogStatusCounts.banned}} banned
+        </span>
+        <a
+          href="/catalog/manage/create"
+          class="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold transition-colors inline-flex items-center gap-1.5 ml-1"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          Add food
+        </a>
+      </div>
+    </div>
+
+    <!-- Search & Filter Toolbar -->
+    <form method="GET" action="/dashboard/admin" class="bg-slate-50 border-b border-slate-200 p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+      <input type="hidden" name="tab" value="catalog">
+
+      <div class="relative flex-1 max-w-md">
+        <input
+          type="text"
+          name="productQ"
+          value="{{productQuery}}"
+          placeholder="Search foods by name, brand, or barcode..."
+          class="w-full text-xs rounded-lg border border-slate-300 pl-8 pr-3 py-2 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900"
+        />
+        <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2.5">
+        <select
+          name="productStatus"
+          onchange="this.form.submit()"
+          aria-label="Filter products by status"
+          class="text-xs rounded-lg border border-slate-300 px-3 py-2 bg-white font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900"
+        >
+          <option value="all" {{#if (eq selectedProductStatus 'all')}}selected{{/if}}>All Statuses ({{catalogStatusCounts.total}})</option>
+          <option value="active" {{#if (eq selectedProductStatus 'active')}}selected{{/if}}>Active only ({{catalogStatusCounts.active}})</option>
+          <option value="archived" {{#if (eq selectedProductStatus 'archived')}}selected{{/if}}>Archived only ({{catalogStatusCounts.archived}})</option>
+          <option value="banned" {{#if (eq selectedProductStatus 'banned')}}selected{{/if}}>Banned only ({{catalogStatusCounts.banned}})</option>
+        </select>
+
+        <button
+          type="submit"
+          class="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold transition-colors"
+        >
+          Apply
+        </button>
+
+        {{#if (or productQuery (ne selectedProductStatus 'all'))}}
+          <a
+            href="/dashboard/admin?tab=catalog"
+            class="px-2.5 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 underline"
+          >
+            Clear
+          </a>
+        {{/if}}
+      </div>
+    </form>
+
+    <!-- Table of Catalog Formulations -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold text-[11px]">
+          <tr>
+            <th class="px-6 py-3.5">Barcode</th>
+            <th class="px-6 py-3.5">Product formulation & category</th>
+            <th class="px-6 py-3.5">Brand</th>
+            <th class="px-6 py-3.5">Quality score</th>
+            <th class="px-6 py-3.5">Lifecycle status</th>
+            <th class="px-6 py-3.5">Listing date</th>
+            <th class="px-6 py-3.5 text-right">Governance actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 font-normal">
+          {{#each catalogProducts}}
+            <tr class="hover:bg-slate-50/60 transition-colors {{#if this.isBanned}}bg-rose-50/20{{/if}}">
+              <td class="px-6 py-4 font-mono font-semibold text-slate-600">
+                {{this.barcode}}
+              </td>
+              <td class="px-6 py-4">
+                <div class="font-bold text-slate-900">{{this.name}}</div>
+                <div class="text-[11px] text-slate-500">{{this.category}}</div>
+              </td>
+              <td class="px-6 py-4 text-slate-700 font-medium">
+                {{this.brand}}
+              </td>
+              <td class="px-6 py-4">
+                <span class="inline-flex items-center px-2 py-0.5 rounded font-mono text-xs font-bold {{#if (gte this.qualityScore 80)}}bg-emerald-50 text-emerald-800 border border-emerald-200{{else}}{{#if (gte this.qualityScore 60)}}bg-amber-50 text-amber-800 border border-amber-200{{else}}bg-rose-50 text-rose-800 border border-rose-200{{/if}}{{/if}}">
+                  {{this.qualityScore}}/100
+                </span>
+              </td>
+              <td class="px-6 py-4">
+                {{#if this.isBanned}}
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-100 text-rose-900 border border-rose-300">
+                    <span class="w-1.5 h-1.5 rounded-full bg-rose-700"></span>
+                    Banned
+                  </span>
+                {{else if this.isArchived}}
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
+                    Archived
+                  </span>
+                {{else}}
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                    Active
+                  </span>
+                {{/if}}
+              </td>
+              <td class="px-6 py-4 font-mono text-slate-500 text-[11px]">
+                {{this.formattedDate}}
+              </td>
+              <td class="px-6 py-4 text-right">
+                <div class="flex items-center justify-end gap-1.5">
+                  <a
+                    href="/catalog/product/{{this.id}}"
+                    class="text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded transition-colors"
+                  >
+                    View
+                  </a>
+                  <a
+                    href="/catalog/manage/{{this.id}}/edit"
+                    class="text-xs font-semibold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-2 py-1 rounded transition-colors"
+                  >
+                    Edit
+                  </a>
+
+                  {{#if this.isBanned}}
+                    <form method="POST" action="/catalog/manage/{{this.id}}/unban" class="inline">
+                      <input type="hidden" name="_csrf" value="{{../csrfToken}}">
+                      <button
+                        type="submit"
+                        onclick="return confirm('Reinstate {{this.name}} to active catalog status?');"
+                        class="text-xs font-semibold text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-1 rounded transition-colors"
+                      >
+                        Reinstate
+                      </button>
+                    </form>
+                  {{else}}
+                    <button
+                      type="button"
+                      onclick="openAdminBanModal('{{this.id}}', '{{this.name}}', '{{this.barcode}}')"
+                      class="text-xs font-semibold text-rose-700 hover:text-rose-900 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-2 py-1 rounded transition-colors"
+                    >
+                      Ban
+                    </button>
+                  {{/if}}
+
+                  {{#if (ne this.status 'archived')}}
+                    <form method="POST" action="/catalog/manage/{{this.id}}/archive" class="inline">
+                      <input type="hidden" name="_csrf" value="{{../csrfToken}}">
+                      <button
+                        type="submit"
+                        onclick="return confirm('Archive {{this.name}} from consumer discovery?');"
+                        class="text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded transition-colors"
+                      >
+                        Archive
+                      </button>
+                    </form>
+                  {{/if}}
+
+                  <button
+                    type="button"
+                    onclick="openAdminDeleteModal('{{this.id}}', '{{this.name}}', '{{this.barcode}}')"
+                    class="text-xs font-semibold text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-2 py-1 rounded transition-colors"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </td>
+            </tr>
+          {{/each}}
+
+          {{#if (eq catalogProducts.length 0)}}
+            <tr>
+              <td colspan="7" class="px-6 py-12 text-center text-slate-500">
+                <div class="max-w-sm mx-auto space-y-2">
+                  <p class="text-sm font-semibold text-slate-700">No food formulations found</p>
+                  <p class="text-xs text-slate-400">No products match your search query or status filter.</p>
+                  <a href="/dashboard/admin?tab=catalog" class="inline-block mt-2 text-xs font-semibold text-slate-900 underline">
+                    Clear all filters
+                  </a>
+                </div>
+              </td>
+            </tr>
+          {{/if}}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="p-4 border-t border-slate-200 bg-slate-50/50">
+      {{> _pagination baseUrl="/dashboard/admin?tab=catalog&" itemName="catalog products"}}
+    </div>
+  </div>
+  {{/if}}
 </div>
 
 <!-- Modal: Add New User Account -->
 <div
   id="addUserModal"
-  class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 hidden"
+  class="!m-0 fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden"
   onclick="if (event.target === this) closeAddUserModal()"
 >
   <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden transform transition-all">
@@ -431,7 +670,7 @@
 <!-- Modal: Edit Existing User Account -->
 <div
   id="editUserModal"
-  class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 hidden"
+  class="!m-0 fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden"
   onclick="if (event.target === this) closeEditUserModal()"
 >
   <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden transform transition-all">
@@ -534,6 +773,135 @@
   </div>
 </div>
 
+<!-- Modal: Admin Ban Food Product -->
+<div
+  id="adminBanProductModal"
+  class="!m-0 fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden"
+  onclick="if (event.target === this) closeAdminBanModal()"
+>
+  <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden transform transition-all">
+    <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-rose-50/50">
+      <div class="flex items-center gap-2.5">
+        <span class="w-7 h-7 rounded-lg bg-rose-700 text-white flex items-center justify-center text-xs font-bold">!</span>
+        <div>
+          <h3 class="text-base font-bold text-slate-900">Ban food product from website</h3>
+          <p class="text-xs text-slate-500">Regulatory quarantine & safety alert advisory</p>
+        </div>
+      </div>
+      <button
+        type="button"
+        onclick="closeAdminBanModal()"
+        class="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <form id="adminBanProductForm" method="POST" action="" class="p-6 space-y-4">
+      <input type="hidden" name="_csrf" value="{{csrfToken}}">
+
+      <p class="text-xs text-slate-600">
+        You are executing a regulatory ban on: <strong id="adminBanProductName" class="text-slate-900"></strong> (Barcode: <span id="adminBanProductBarcode" class="font-mono font-semibold text-slate-800"></span>).
+      </p>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 mb-1">
+          Mandatory regulatory violation / ban reason <span class="text-rose-600">*</span>
+        </label>
+        <textarea
+          name="reason"
+          required
+          rows="4"
+          placeholder="Specify laboratory finding, undeclared allergen, toxic additive, counterfeit report reference, or statutory recall directive..."
+          class="w-full text-xs rounded-lg border border-slate-300 p-3 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-700"
+        ></textarea>
+        <p class="text-[11px] text-slate-400 mt-1">Minimum 5 characters. Displayed publicly on the regulatory safety docket.</p>
+      </div>
+
+      <div class="pt-2 flex items-center justify-end gap-2.5">
+        <button
+          type="button"
+          onclick="closeAdminBanModal()"
+          class="px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg text-xs font-semibold transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="px-4 py-2 bg-rose-700 hover:bg-rose-800 text-white rounded-lg text-xs font-semibold transition-colors shadow-sm"
+        >
+          Confirm regulatory ban
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Admin Permanent Product Deletion -->
+<div
+  id="adminDeleteProductModal"
+  class="!m-0 fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden"
+  onclick="if (event.target === this) closeAdminDeleteModal()"
+>
+  <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden transform transition-all">
+    <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-rose-50/50">
+      <div class="flex items-center gap-2.5">
+        <span class="w-7 h-7 rounded-lg bg-rose-700 text-white flex items-center justify-center text-xs font-bold">&times;</span>
+        <div>
+          <h3 class="text-base font-bold text-slate-900">Permanently delete food formulation</h3>
+          <p class="text-xs text-rose-600 font-semibold">Irreversible administrative purge</p>
+        </div>
+      </div>
+      <button
+        type="button"
+        onclick="closeAdminDeleteModal()"
+        class="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <form id="adminDeleteProductForm" method="POST" action="" class="p-6 space-y-4">
+      <input type="hidden" name="_csrf" value="{{csrfToken}}">
+
+      <p class="text-xs text-slate-600 leading-relaxed">
+        You are about to permanently delete <strong id="adminDeleteProductName" class="text-slate-900"></strong>. This deletes all declared ingredients, nutrition facts, and associated records.
+      </p>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 mb-1">
+          Type the barcode <strong id="adminDeleteProductBarcodeLabel" class="font-mono text-slate-900"></strong> to confirm:
+        </label>
+        <input
+          type="text"
+          id="adminConfirmDeleteInput"
+          oninput="checkAdminDeleteInput()"
+          placeholder="Enter barcode exactly"
+          class="w-full text-xs rounded-lg border border-slate-300 px-3 py-2 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-700 font-mono"
+        />
+      </div>
+
+      <div class="pt-2 flex items-center justify-end gap-2.5">
+        <button
+          type="button"
+          onclick="closeAdminDeleteModal()"
+          class="px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg text-xs font-semibold transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          id="adminConfirmDeleteBtn"
+          disabled
+          class="px-4 py-2 bg-rose-700 hover:bg-rose-800 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-xs font-semibold transition-colors shadow-sm"
+        >
+          Delete permanently
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- Modal Control Scripts -->
 <script>
   function openAddUserModal() {
@@ -583,10 +951,59 @@
     if (modal) modal.classList.add('hidden');
   }
 
+  // Admin Catalog Governance Modal Handlers
+  function openAdminBanModal(id, name, barcode) {
+    var form = document.getElementById('adminBanProductForm');
+    if (form) form.action = '/catalog/manage/' + id + '/ban';
+    var nameEl = document.getElementById('adminBanProductName');
+    if (nameEl) nameEl.textContent = name;
+    var barcodeEl = document.getElementById('adminBanProductBarcode');
+    if (barcodeEl) barcodeEl.textContent = barcode;
+    var modal = document.getElementById('adminBanProductModal');
+    if (modal) modal.classList.remove('hidden');
+  }
+
+  function closeAdminBanModal() {
+    var modal = document.getElementById('adminBanProductModal');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  var currentDeleteBarcode = '';
+  function openAdminDeleteModal(id, name, barcode) {
+    currentDeleteBarcode = barcode;
+    var form = document.getElementById('adminDeleteProductForm');
+    if (form) form.action = '/catalog/manage/' + id + '/delete';
+    var nameEl = document.getElementById('adminDeleteProductName');
+    if (nameEl) nameEl.textContent = name;
+    var barcodeEl = document.getElementById('adminDeleteProductBarcodeLabel');
+    if (barcodeEl) barcodeEl.textContent = barcode;
+    var inputEl = document.getElementById('adminConfirmDeleteInput');
+    if (inputEl) inputEl.value = '';
+    var btn = document.getElementById('adminConfirmDeleteBtn');
+    if (btn) btn.disabled = true;
+    var modal = document.getElementById('adminDeleteProductModal');
+    if (modal) modal.classList.remove('hidden');
+  }
+
+  function closeAdminDeleteModal() {
+    var modal = document.getElementById('adminDeleteProductModal');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  function checkAdminDeleteInput() {
+    var input = document.getElementById('adminConfirmDeleteInput');
+    var btn = document.getElementById('adminConfirmDeleteBtn');
+    if (input && btn) {
+      btn.disabled = (input.value.trim() !== currentDeleteBarcode);
+    }
+  }
+
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
       closeAddUserModal();
       closeEditUserModal();
+      closeAdminBanModal();
+      closeAdminDeleteModal();
     }
   });
 </script>

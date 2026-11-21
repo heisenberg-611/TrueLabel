@@ -23,6 +23,7 @@ import { DocumentService } from '../../food-safety/services/document.service';
 import { ReviewService } from '../../community/services/review.service';
 import { CreateFoodProductDto } from '../models/dto/create-food-product.dto';
 import { SearchFoodProductDto } from '../models/dto/search-food-product.dto';
+import { BanFoodProductDto } from '../models/dto/ban-food-product.dto';
 import { AuthenticatedGuard } from '../../../common/guards/authenticated.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
 import { Roles } from '../../../common/decorators/roles.decorator';
@@ -251,7 +252,12 @@ export class FoodCatalogController {
    */
   @Get('product/:id')
   @Render('areas/food-catalog/views/detail')
-  async getProductDetail(@Param('id', ParseIntPipe) id: number, @Req() req: Request) {
+  async getProductDetail(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: Request,
+    @Query('success') success?: string,
+    @Query('error') error?: string,
+  ) {
     const product = await this.catalogService.findById(id);
 
     // Group ingredients by hazard level for clear presentation
@@ -288,6 +294,8 @@ export class FoodCatalogController {
         (req.session?.user?.role === 'manufacturer' &&
           req.session?.user?.id === product.manufacturerId),
       user: req.session?.user || null,
+      success: success ? decodeURIComponent(success) : null,
+      error: error ? decodeURIComponent(error) : null,
     };
   }
 
@@ -382,6 +390,77 @@ export class FoodCatalogController {
   ) {
     await this.catalogService.archive(id, req.session.user);
     return res.redirect('/catalog');
+  }
+
+  /**
+   * Process Product Ban (Feature F01: Administrative Regulatory Governance)
+   */
+  @Post('manage/:id/ban')
+  @UseGuards(AuthenticatedGuard, RolesGuard)
+  @Roles('admin')
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  async handleBan(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: BanFoodProductDto,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    try {
+      const product = await this.catalogService.ban(id, dto.reason, req.session.user);
+      return res.redirect(
+        `/catalog/product/${id}?success=${encodeURIComponent(`Product "${product.name}" has been placed under regulatory ban.`)}`,
+      );
+    } catch (err: any) {
+      return res.redirect(
+        `/catalog/product/${id}?error=${encodeURIComponent(err.message || 'Failed to ban food product')}`,
+      );
+    }
+  }
+
+  /**
+   * Process Product Reinstatement / Unban (Feature F01: Administrative Regulatory Governance)
+   */
+  @Post('manage/:id/unban')
+  @UseGuards(AuthenticatedGuard, RolesGuard)
+  @Roles('admin')
+  async handleUnban(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    try {
+      const product = await this.catalogService.unban(id, req.session.user);
+      return res.redirect(
+        `/catalog/product/${id}?success=${encodeURIComponent(`Product "${product.name}" has been reinstated to active status.`)}`,
+      );
+    } catch (err: any) {
+      return res.redirect(
+        `/catalog/product/${id}?error=${encodeURIComponent(err.message || 'Failed to reinstate product')}`,
+      );
+    }
+  }
+
+  /**
+   * Process Permanent Product Deletion (Feature F01: Administrative Regulatory Governance)
+   */
+  @Post('manage/:id/delete')
+  @UseGuards(AuthenticatedGuard, RolesGuard)
+  @Roles('admin')
+  async handleDelete(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    try {
+      await this.catalogService.delete(id, req.session.user);
+      return res.redirect(
+        `/dashboard/admin?tab=catalog&success=${encodeURIComponent(`Product #${id} has been permanently deleted from the catalog.`)}`,
+      );
+    } catch (err: any) {
+      return res.redirect(
+        `/dashboard/admin?tab=catalog&error=${encodeURIComponent(err.message || 'Failed to delete food product')}`,
+      );
+    }
   }
 }
 

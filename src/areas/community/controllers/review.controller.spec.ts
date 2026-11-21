@@ -11,6 +11,8 @@ describe('ReviewController (F11)', () => {
     update: jest.fn(),
     remove: jest.fn(),
     reply: jest.fn(),
+    adminRemove: jest.fn(),
+    adminToggleVisibility: jest.fn(),
   };
   const consumer = { session: { user: { id: 3, role: 'consumer' } } } as any;
   const dto = {
@@ -113,5 +115,44 @@ describe('ReviewController (F11)', () => {
 
     // Assert
     expect(service.reply).toHaveBeenCalledWith(2, 'Thank you', expect.any(Object));
+  });
+
+  it('adminRemove deletes review and redirects with success message', async () => {
+    // Arrange
+    service.adminRemove.mockResolvedValue(5);
+    const res = { redirect: jest.fn() } as any;
+
+    // Act
+    await controller.adminRemove(2, { session: { user: { id: 1, role: 'admin' } } } as any, res);
+
+    // Assert
+    expect(service.adminRemove).toHaveBeenCalledWith(2, expect.objectContaining({ role: 'admin' }));
+    expect(res.redirect).toHaveBeenCalledWith(
+      expect.stringContaining('/community/products/5/reviews?success='),
+    );
+  });
+
+  it('toggleVisibility changes review visibility and redirects with success message', async () => {
+    // Arrange
+    service.adminToggleVisibility.mockResolvedValue({ productId: 5, visibility: 'hidden' });
+    const res = { redirect: jest.fn() } as any;
+
+    // Act
+    await controller.toggleVisibility(
+      2,
+      'hidden',
+      { session: { user: { id: 1, role: 'admin' } } } as any,
+      res,
+    );
+
+    // Assert
+    expect(service.adminToggleVisibility).toHaveBeenCalledWith(
+      2,
+      'hidden',
+      expect.objectContaining({ role: 'admin' }),
+    );
+    expect(res.redirect).toHaveBeenCalledWith(
+      expect.stringContaining('/community/products/5/reviews?success='),
+    );
   });
 });

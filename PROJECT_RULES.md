@@ -78,6 +78,7 @@ flowchart LR
   2. **DTOs (Data Transfer Objects)**: Strictly type and validate input and output data using `class-validator` and `class-transformer`.
   3. **Domain Services**: Implement algorithms (e.g., 0–100 Food Quality Score, Mifflin-St Jeor diet formulas, retroactive intake scans, allergen detection).
   4. **Data Access**: Perform database queries, transactions, and mutations via injected repositories.
+  5. **Optimized Data Access**: Perform all database queries in accordance with Section 3 (Mandatory TypeORM Query Optimization & Database Performance Protocol).
 * **Mandatory Service Decomposition & Single Responsibility Principle (SRP)**:
   - **Services MUST be broken down into specialized modules if they have more than one distinct job/responsibility.**
   - A single domain service must not combine database persistence/CRUD with heavy algorithmic evaluation, forensic screening engines, or scientific calculations.
@@ -89,6 +90,7 @@ flowchart LR
   - **Zero awareness of HTTP**: Services must never import `@Req()`, `@Res()`, `Request`, or `Response` objects.
   - **Zero awareness of View rendering**: Services return typed plain TypeScript objects/entities, never HTML strings or template names.
   - **NO monolithic "god" services**: Single service files exceeding multiple distinct feature domains must be decoupled immediately.
+  - **NO unoptimized queries or eager cascades**: Full table scans, unindexed count loops, memory-bound table slicing, and sequential query waterfalls are strictly forbidden.
 
 ### 1.3. The View Layer (`Views/`)
 * **Role**: Pure presentation layer rendered server-side using Handlebars (`.hbs`).
@@ -207,11 +209,84 @@ Each Area directory **must** contain an `<area-name>.module.ts` that acts as the
 
 ---
 
-## 3. Mandatory Unit Testing & Verification Rules
+## 3. Mandatory TypeORM Query Optimization & Database Performance Protocol
+
+All database access in the TrueLabel platform must be engineered for high throughput, minimal memory footprint, and sub-100ms dashboard/view responsiveness, especially across remote PostgreSQL (Supabase) connections over TCP. Inefficient ORM queries, unindexed table scans, and memory-bound pagination are strictly prohibited.
+
+### 3.1. Strict Prohibition of Eager Relation Cascades
+- **No Unconstrained Eager Loading**: Never configure `@OneToMany`, `@ManyToMany`, or large `@OneToOne` relations with `{ eager: true }` on core domain entities.
+  - *Risk*: TypeORM automatically executes full outer joins for all eager relations on every single `find()`, `findOne()`, or `count()` operation, generating Cartesian explosive result sets and transferring multi-megabyte payloads over the wire.
+  - *Rule*: Use explicit lazy/selective joins (`.leftJoinAndSelect('entity.relation', 'alias')` or `relations: ['relationName']`) strictly and only when the child entities are genuinely required for domain computations or the rendered view.
+  - *For Table Views & Lists*: Never join child collections (e.g., declared ingredients, full nutrition panels, comment threads) when populating index lists, directories, or governance management tables.
+
+### 3.2. Mandatory Column Projection (Selective Fetching)
+- **Eliminate `SELECT *` Over the Wire**: Always specify the exact scalar fields required by the operation using `select: [...]` in repository `find()` / `findOne()` or `.select(['entity.id', ...])` in `createQueryBuilder`.
+- **Sensitive & Heavy Payload Defense**:
+  - Never retrieve sensitive credentials (`passwordHash`) or large text blobs (audit notes, rejection reasons, raw JSON dumps) when rendering directory tables, summary listings, or metric counters.
+  - Example:
+    ```typescript
+    // Correct: Explicit column projection
+    await this.userRepo.find({
+      select: ['id', 'name', 'email', 'role', 'isVerified', 'createdAt'],
+      order: { createdAt: 'DESC' },
+    });
+    ```
+
+### 3.3. Tab-Aware & Context-Aware Lazy Data Hydration
+- **Zero Cross-Tab Leakage**: In multi-tab interfaces (e.g., Admin Command Center with "User accounts directory" and "Food catalog & formulations", or Consumer Profile tabs), **only query datasets belonging to the active tab (`currentTab`)**.
+- **Badge & Metric Isolation**: Inactive tabs must only execute lightweight scalar counts for tab header badges (e.g., `countAll()`), completely bypassing entity fetching, sorting, memory filtering, and Handlebars view-formatting for hidden tables.
+- **Passing Pre-Computed Counts**: When a parent aggregator resolves status counts for UI badges, pass those counts into child search methods (e.g., `statusCounts: precomputedCounts`) to prevent redundant duplicate queries within the same request lifecycle.
+
+### 3.4. Database-Level Pagination, Filtering, and Sorting (`LIMIT` & `OFFSET`)
+- **Prohibition of In-Memory Table Slicing**: Never execute `repo.find()` to load all records into Node.js memory and subsequently run JavaScript `.filter()`, `.sort()`, and `.slice()`.
+- **Push Execution to SQL**:
+  - Always utilize database-level pagination via `.skip(offset).take(limit)` or `findAndCount({ skip, take, where, order })`.
+  - Push text search and filtering to the database via `LIKE` / `ILIKE` or parameterized `where` clauses with indexed columns.
+
+### 3.5. Single-Pass SQL Grouped Aggregations vs Multi-Query Polling
+- **Prohibition of N-Pass Count Polling**: Never execute multiple consecutive count queries (e.g., `count({ where: { status: 'active' } })`, `count({ where: { status: 'archived' } })`, `count({ where: { status: 'banned' } })`) to assemble status distribution counters.
+- **Single-Pass Grouping**:
+  - Group status counters in a single SQL query:
+    ```typescript
+    const rawCounts = await this.repo
+      .createQueryBuilder('entity')
+      .select('entity.status', 'status')
+      .addSelect('COUNT(*)', 'cnt')
+      .groupBy('entity.status')
+      .getRawMany();
+    ```
+  - Maintain defensive fallback to `Promise.all` count arrays to preserve Jest mock isolation in unit test environments.
+
+### 3.6. Parallel Telemetry Execution (`Promise.all`)
+- **Eliminate Serial Await Waterfalls**: Never chain independent database lookups sequentially:
+  ```typescript
+  // VIOLATION: Serial waterfall adds RTT latency for every call
+  const users = await this.userRepo.find();
+  const docStats = await this.documentService.getStatistics();
+  const complaints = await this.reportService.getQueueWithStats();
+  ```
+- **Concurrent Execution**: Execute all independent telemetry, metric, and lookup queries concurrently:
+  ```typescript
+  // CORRECT: Executed in parallel in a single event loop tick
+  const [users, docStats, complaints, catalogCounts] = await Promise.all([
+    this.userRepo.find({ select: [...], take: 10 }),
+    this.documentService.getStatistics(),
+    this.reportService.getQuickStats(),
+    this.catalogService.countAll(),
+  ]);
+  ```
+
+### 3.7. Specialized Telemetry Counters vs Entity Hydration
+- **Telemetry Query Separation**: When a dashboard or navigation header only requires a status badge count (e.g., "12 pending complaints"), provide a dedicated lightweight counter method (e.g., `getQuickStats()`) using `repo.count()`.
+- **Prohibition**: Never invoke full-entity methods that join multiple tables (e.g., `find({ relations: ['product', 'author', 'evidence'] })`) simply to inspect `.length` or filter statuses in JavaScript.
+
+---
+
+## 4. Mandatory Unit Testing & Verification Rules
 
 Every single function and service written for this project **MUST** be accompanied by unit tests. No code is considered done without passing tests.
 
-### 3.1. Testing Rules & Standards
+### 4.1. Testing Rules & Standards
 1. **Collocated Test Files**:
    - Every service file `foo.service.ts` must have a corresponding `foo.service.spec.ts` in the same directory.
    - Every controller file `foo.controller.ts` must have a corresponding `foo.controller.spec.ts`.
@@ -235,7 +310,7 @@ Every single function and service written for this project **MUST** be accompani
 
 ---
 
-## 4. Documentation & Traceability Protocol
+## 5. Documentation & Traceability Protocol
 
 1. **Chronological Tracking with Mandatory Timestamps**: Maintain `DEVELOPMENT_LOG.md` recording all architectural choices, feature implementations, and test outcomes. **Every entry MUST include the exact date, time, and timezone** (e.g., `YYYY-MM-DD HH:MM:SS +06:00`). Entries must record:
    - Timestamp (Date and Time)
@@ -247,7 +322,7 @@ Every single function and service written for this project **MUST** be accompani
 
 ---
 
-## 5. Sprint 1 Business Value Prioritization
+## 6. Sprint 1 Business Value Prioritization
 
 In accordance with user directives, development begins with **High Business Value Features First**:
 

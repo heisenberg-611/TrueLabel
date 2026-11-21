@@ -9,6 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { User, UserRole } from '../models/user.entity';
+import { FoodProduct } from '../../food-catalog/models/food-product.entity';
 import { CatalogService } from '../../food-catalog/services/catalog.service';
 import { DocumentService } from '../../food-safety/services/document.service';
 import { PreferenceService } from '../../personal-food/services/preference.service';
@@ -16,12 +17,16 @@ import { ReviewService } from '../../community/services/review.service';
 import { ReportService } from '../../community/services/report.service';
 
 export interface AdminDashboardQueryOptions {
+  tab?: 'users' | 'catalog';
   page?: number;
   limit?: number;
   sort?: string;
   order?: 'ASC' | 'DESC';
   role?: string;
   search?: string;
+  productQ?: string;
+  productStatus?: string;
+  productPage?: number;
 }
 
 @Injectable()
@@ -139,19 +144,43 @@ export class DashboardService {
 
   /**
    * Aggregate Admin Command Center Data (Platform Users, Catalog, Accreditation & F13 Complaints)
+   * Highly optimized: executes global vitals in parallel via Promise.all, avoids unindexed eager joins,
+   * and implements tab-aware lazy loading so catalog formulations are only queried when on the catalog tab.
    */
   async getAdminDashboardData(options?: AdminDashboardQueryOptions) {
-    const allUsers = await this.userRepo.find({
-      order: { createdAt: 'DESC' },
-    });
-    const docStats = await this.documentService.getStatistics();
-    const { total: totalProducts } = await this.catalogService.searchAndFilter({ limit: 1 });
-    const complaintQueue = this.reportService
-      ? await this.reportService.getQueueWithStats()
-      : {
-          reports: [],
-          stats: { total: 0, pending: 0, investigating: 0, resolved: 0, dismissed: 0, batchClusters: 0 },
-        };
+    const currentTab = options?.tab === 'catalog' ? 'catalog' : 'users';
+
+    // 1. Concurrent telemetry: resolve users, document stats, complaint stats, and catalog counts in parallel
+    const [allUsers, docStats, complaintStats, rawCatalogCounts] = await Promise.all([
+      this.userRepo.find({
+        order: { createdAt: 'DESC' },
+        select: ['id', 'name', 'email', 'role', 'isVerified', 'createdAt'],
+      }),
+      this.documentService.getStatistics(),
+      this.reportService
+        ? (typeof (this.reportService as any).getQuickStats === 'function'
+            ? (this.reportService as any).getQuickStats()
+            : this.reportService.getQueueWithStats().then((q) => q.stats))
+        : Promise.resolve({ total: 0, pending: 0, investigating: 0, resolved: 0, dismissed: 0, batchClusters: 0 }),
+      typeof this.catalogService.countAll === 'function'
+        ? this.catalogService.countAll()
+        : Promise.resolve(null),
+    ]);
+
+    let catalogCounts = rawCatalogCounts;
+    let totalProducts = catalogCounts ? catalogCounts.active : 0;
+
+    // Fallback if countAll is not implemented in mock or environment
+    if (!catalogCounts) {
+      const searchRes = await this.catalogService.searchAndFilter({ limit: 1 });
+      totalProducts = searchRes.total;
+      catalogCounts = {
+        active: searchRes.total,
+        archived: 0,
+        banned: 0,
+        total: searchRes.total,
+      };
+    }
 
     const roleBreakdown = {
       consumer: allUsers.filter((u) => u.role === 'consumer').length,
@@ -191,56 +220,96 @@ export class DashboardService {
       },
     ];
 
-    // Filter by role
-    let filtered = [...allUsers];
-    if (options?.role && options.role !== 'all') {
-      filtered = filtered.filter((u) => u.role === options.role);
-    }
-
-    // Filter by search query (name or email)
-    if (options?.search && options.search.trim()) {
-      const q = options.search.trim().toLowerCase();
-      filtered = filtered.filter(
-        (u) =>
-          (u.name && u.name.toLowerCase().includes(q)) ||
-          (u.email && u.email.toLowerCase().includes(q)),
-      );
-    }
-
-    // Sorting
+    // Tab-Aware Lazy Data Hydration:
+    // When on the catalog tab, omit user list sorting/formatting entirely for maximum performance.
+    let formattedUsers: any[] = [];
+    const page = Math.max(1, Number(options?.page) || 1);
+    const limit = Math.max(1, Number(options?.limit) || 10);
+    let total = allUsers.length;
+    let totalPages = Math.ceil(total / limit) || 1;
     const sortField = options?.sort || 'createdAt';
     const sortOrder = options?.order?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
-    filtered.sort((a: any, b: any) => {
-      let valA = a[sortField];
-      let valB = b[sortField];
-
-      if (sortField === 'createdAt') {
-        valA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        valB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      } else if (typeof valA === 'string') {
-        valA = valA.toLowerCase();
-        valB = (valB || '').toLowerCase();
+    if (currentTab !== 'catalog') {
+      // Filter by role
+      let filtered = [...allUsers];
+      if (options?.role && options.role !== 'all') {
+        filtered = filtered.filter((u) => u.role === options.role);
       }
 
-      if (valA < valB) return sortOrder === 'ASC' ? -1 : 1;
-      if (valA > valB) return sortOrder === 'ASC' ? 1 : -1;
-      return 0;
-    });
+      // Filter by search query (name or email)
+      if (options?.search && options.search.trim()) {
+        const q = options.search.trim().toLowerCase();
+        filtered = filtered.filter(
+          (u) =>
+            (u.name && u.name.toLowerCase().includes(q)) ||
+            (u.email && u.email.toLowerCase().includes(q)),
+        );
+      }
 
-    const page = Math.max(1, Number(options?.page) || 1);
-    const limit = Math.max(1, Number(options?.limit) || 10);
-    const total = filtered.length;
-    const totalPages = Math.ceil(total / limit) || 1;
-    const startIndex = (page - 1) * limit;
-    const paginated = filtered.slice(startIndex, startIndex + limit);
+      // Sorting
+      filtered.sort((a: any, b: any) => {
+        let valA = a[sortField];
+        let valB = b[sortField];
 
-    const formattedUsers = paginated.map((u) => ({
-      ...u,
-      status: u.isVerified !== false ? 'active' : 'unverified',
-      isVerified: u.isVerified !== false,
-      formattedDate: u.createdAt
-        ? new Date(u.createdAt).toLocaleDateString('en-US', {
+        if (sortField === 'createdAt') {
+          valA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          valB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        } else if (typeof valA === 'string') {
+          valA = valA.toLowerCase();
+          valB = (valB || '').toLowerCase();
+        }
+
+        if (valA < valB) return sortOrder === 'ASC' ? -1 : 1;
+        if (valA > valB) return sortOrder === 'ASC' ? 1 : -1;
+        return 0;
+      });
+
+      total = filtered.length;
+      totalPages = Math.ceil(total / limit) || 1;
+      const startIndex = (page - 1) * limit;
+      const paginated = filtered.slice(startIndex, startIndex + limit);
+
+      formattedUsers = paginated.map((u) => ({
+        ...u,
+        status: u.isVerified !== false ? 'active' : 'unverified',
+        isVerified: u.isVerified !== false,
+        formattedDate: u.createdAt
+          ? new Date(u.createdAt).toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+            })
+          : '—',
+      }));
+    }
+
+    // Food Catalog Governance Data - Tab-Aware Lazy Query Execution
+    let productSearchResult = {
+      items: [] as FoodProduct[],
+      total: catalogCounts.total,
+      page: 1,
+      totalPages: 1,
+      statusCounts: catalogCounts,
+    };
+
+    if (currentTab === 'catalog') {
+      productSearchResult = await this.catalogService.adminSearchAll({
+        q: options?.productQ,
+        status: options?.productStatus,
+        page: options?.productPage || 1,
+        limit: 10,
+        statusCounts: catalogCounts,
+      });
+    }
+
+    const formattedProducts = productSearchResult.items.map((p) => ({
+      ...p,
+      isBanned: p.status === 'banned',
+      isArchived: p.status === 'archived',
+      isActive: p.status === 'active',
+      formattedDate: p.createdAt
+        ? new Date(p.createdAt).toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
             year: 'numeric',
@@ -256,7 +325,7 @@ export class DashboardService {
       userTypesCount: userTypes.length,
       totalProducts,
       docStats,
-      complaintStats: complaintQueue.stats,
+      complaintStats,
       page,
       limit,
       total,
@@ -265,6 +334,15 @@ export class DashboardService {
       currentOrder: sortOrder,
       selectedRole: options?.role || 'all',
       query: options?.search || '',
+      // Catalog Tab Governance Context
+      catalogProducts: formattedProducts,
+      catalogTotal: catalogCounts.total,
+      catalogPage: productSearchResult.page,
+      catalogTotalPages: productSearchResult.totalPages,
+      catalogStatusCounts: catalogCounts,
+      selectedProductStatus: options?.productStatus || 'all',
+      productQuery: options?.productQ || '',
+      currentTab,
     };
   }
 

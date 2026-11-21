@@ -12,6 +12,10 @@ export class SearchFoodProductDto {
 
   @IsOptional()
   @IsString()
+  status?: string; // e.g. 'all', 'active', 'archived', 'banned'
+
+  @IsOptional()
+  @IsString()
   tag?: string; // dietary tag (e.g. vegan, halal, gluten-free)
 
   @IsOptional()
