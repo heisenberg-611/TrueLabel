@@ -1064,3 +1064,26 @@
    - The modal backdrop overlay (`bg-slate-900/60 backdrop-blur-sm`) now flawlessly covers 100% of the viewport from edge to edge (`inset-0`) without top gaps, seamlessly blurring the header, body, and docks.
 4. **Verification**:
    - `npm test`: 26/26 test suites passed (267/267 tests, 0 failed).
+
+---
+
+### Entry 049 | 2026-11-21 23:36:30 +06:00 | Architecture & Data: Modular Curated Database Seeding (45 Authentic Products, 19 Users, Multi-Role Governance)
+
+**What**: Refactored `SeedService` (`src/config/seed.service.ts`) from a 1,023-line monolithic script into a clean, decoupled modular seeding architecture under `src/config/seeds/`. Expanded the catalog from 15 products to 45 realistic items across all 7 food categories and 3 quality score tiers, including statutory quarantined products, diverse consumer profiles, regulatory licences, food safety compliance documents, credibility-weighted reviews, and intentional 3-consumer batch cluster anomaly reports.
+
+**Key Changes**:
+1. **Modular Fixture Architecture (`src/config/seeds/`)**:
+   - `types.ts`: Strict TypeScript interfaces for products, ingredients, nutrition facts, users, preferences, licences, safety documents, reviews, and reports.
+   - `users.seed.ts`: 19 authentic system users across all 4 roles (Consumers with distinct dietary requirements, global and domestic Manufacturers, accredited Food Safety Inspectors, and Admin Compliance Officers).
+   - `preference.seed.ts`: 4 clinical and lifestyle consumer profiles (Vegan with Peanut/Milk allergies, Celiac Gluten/Dairy-Free, Cardiovascular Low-Sodium/Low-Sugar, and Athletic High-Protein).
+   - `products.seed.ts`: 42 comprehensive products covering all 7 categories (Dairy & Plant Milks, Beverages, Bakery & Bread, Snacks & Confectionery, Cereals & Breakfast, Pantry & Condiments, Packaged Meals) across Quality Score Tiers 1, 2, and 3, complete with declared ingredients, hazard classifications (safe, caution, warning), international additive E-numbers, and nutrition facts.
+   - `banned-products.seed.ts`: 3 realistic statutory quarantined/banned products (Curry Powder with ethylene oxide residue, Mini Konjac Jelly Cups with illegal Sudan Red 1 azo dye and choking hazards, ChocoCrisp Wafers with undeclared peanut protein causing anaphylaxis) exercising the Admin Ban and Inspector Recall dockets.
+   - `safety-registry.seed.ts`: 11 authentic licences (BSTI, BFSA, FDA, EFSA, MAFF) and 11 safety compliance documents (including an "expiring soon" sanitation permit expiring in 14 days to trigger inspector dashboard alerts).
+   - `community.seed.ts`: 9 credibility-weighted community reviews with official manufacturer replies and 5 safety complaint reports with an intentional 3-consumer cluster (`BATCH-FRT-2026-09`) to exercise automated cluster detection algorithms.
+   - `index.ts`: Unified barrel exports.
+2. **Decoupled Orchestrator (`src/config/seed.service.ts`)**:
+   - Refactored `SeedService` into a slim, idempotent orchestrator executing parallel lookups, caching user email mappings, and guaranteeing re-run stability without duplicate key constraint violations.
+3. **Verification**:
+   - Full live database synchronization executed via `npm run seed`: All 45 products, 19 users, 4 preference profiles, 11 licences, 11 safety documents, 9 reviews, and 5 complaint reports synchronized with zero errors.
+   - Full test suite passed via `npm test`: 26/26 test suites passed, 267/267 tests passing.
+
