@@ -22,11 +22,20 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans, 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif);
   color: var(--ink);
   background-color: var(--surface-alt);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-display, 'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif);
+  letter-spacing: -0.025em;
+}
+
+code, kbd, samp, pre, .font-mono {
+  font-family: var(--font-mono, 'Geist Mono', 'JetBrains Mono', ui-monospace, monospace);
 }
 
 /* Authentic Food Nutrition Facts Panel (FDA / EU Standard Style) */
@@ -35,13 +44,14 @@ body {
   padding: 1.25rem;
   background-color: var(--surface);
   max-width: 380px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-sans, 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
 }
 
 .nutrition-panel h3 {
-  font-size: 1.75rem;
-  font-weight: 900;
-  letter-spacing: -0.02em;
+  font-family: var(--font-display, 'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif);
+  font-size: 1.85rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
   text-transform: uppercase;
   border-bottom: 8px solid var(--border-dark);
   padding-bottom: 0.25rem;
@@ -654,6 +664,11 @@ html.dark .brand-logo-dark {
    ========================================================================== */
 
 :root {
+  /* High-Authority Professional Typography Tokens (Option 1: A90 & Fontsight Synthesis) */
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-display: 'Bricolage Grotesque', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'Geist Mono', 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
   /* Surface & Ink Foundation (from Fontsight Paper/Ink token system) */
   --paper: #fffdf6;
   --paper-subtle: #f8f7f0;
@@ -750,7 +765,7 @@ html.dark .nutrient-well {
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 12px;
   padding: 12px 16px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+  font-family: var(--font-sans);
   font-size: 12px;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.2);
   pointer-events: auto;
@@ -899,7 +914,7 @@ html.dark .serving-preset-btn.active {
   gap: 6px;
   padding: 4px 8px;
   border-radius: 4px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;

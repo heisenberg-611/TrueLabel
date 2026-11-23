@@ -1262,6 +1262,25 @@
    - `npm test`: All 26 test suites passed cleanly (267/267 tests).
    - `nest build`: Compiled successfully with zero TypeScript errors.
 
+---
+
+### Entry 058 | 2026-11-24 01:26:40 +06:00 | Typography: Implementation of Option 1 (Bricolage Grotesque + Plus Jakarta Sans + Geist Mono)
+
+**What**: Implemented Option 1 typography pairing across the TrueLabel platform, synthesizing the contemporary laboratory aesthetic from `a90.com` and `fontsight.xyz`:
+1. **Font Hierarchy Definition**:
+   - **Display / Headings (`--font-display` / `font-display`)**: **Bricolage Grotesque** (Variable `opsz` 12..96, `wght` 400..800).
+   - **Interface / Body (`--font-sans` / `font-sans`)**: **Plus Jakarta Sans** (`wght` 400..800, italic).
+   - **Technical & Nutrition Metrics (`--font-mono` / `font-mono`)**: **Geist Mono** (`wght` 400..700).
+2. **Layout & View Integrations**:
+   - Updated Google Fonts `<link>` in `src/shared/views/layouts/main.hbs` to load Bricolage Grotesque, Plus Jakarta Sans, and Geist Mono with preconnect optimization.
+   - Extended Tailwind CSS `fontFamily` configuration (`sans`, `display`, `serif`, `mono`).
+   - Integrated CSS variables (`--font-display`, `--font-sans`, `--font-mono`) into `:root` in `public/css/style.css`.
+   - Wired global headings (`h1, h2, h3, h4`), `.nutrition-panel h3`, and `.truelabel-hud-tooltip` to their respective typographic roles.
+   - Updated hero headline and section titles in `src/areas/home/views/index.hbs` with `font-display font-extrabold` and `font-display font-bold`.
+3. **Verification**:
+   - `npm test`: All 26 test suites passed cleanly (267/267 tests).
+   - `nest build`: Compiled with zero TypeScript errors.
+
 
 
 
