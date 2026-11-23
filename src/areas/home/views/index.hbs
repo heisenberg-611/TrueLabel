@@ -172,7 +172,7 @@
   {{/if}}
 
   <!-- SECTION 1: ASYMMETRIC EDITORIAL HERO -->
-  <section class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center pt-2 sm:pt-4 lg:pt-6">
+  <section data-regulatory-zone="hero" data-bg="#fbfbfb" data-fg="#0f172a" data-acc="#059669" class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center pt-2 sm:pt-4 lg:pt-6">
     <!-- Left Column (7 cols): Editorial Mission & Omnibar -->
     <div class="lg:col-span-7 space-y-6">
       
@@ -355,7 +355,7 @@
   </section>
 
   <!-- SECTION 2: HOW THE TRUELABEL SCORE IS CALCULATED (MATHEMATICAL ARCHITECTURE) -->
-  <section class="bg-white border border-slate-200 rounded-2xl p-8 sm:p-10 shadow-sm space-y-8">
+  <section data-regulatory-zone="formula" data-bg="#f8faf9" data-fg="#0b0b0c" data-acc="#047857" class="bg-white dark:bg-[#141413] border border-slate-200 dark:border-white/10 rounded-2xl p-8 sm:p-10 shadow-sm space-y-8">
     <div class="max-w-3xl">
       <span class="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200">
         Scientific Methodology
@@ -472,22 +472,22 @@
   </section>
 
   <!-- SECTION 4: FOOD CATALOG SPOTLIGHT (REAL DATABASE RECORDS) -->
-  <section class="space-y-6">
-    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-200 pb-4">
+  <section data-regulatory-zone="catalog" data-bg="#fdfcf7" data-fg="#0b0b0c" data-acc="#059669" class="space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-200 dark:border-white/10 pb-4">
       <div>
-        <span class="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+        <span class="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
           Live Repository
         </span>
-        <h2 class="font-serif font-normal text-3xl text-slate-950 tracking-tight mt-1">
+        <h2 class="font-serif font-normal text-3xl text-slate-950 dark:text-slate-100 tracking-tight mt-1">
           Featured Food Products Audited
         </h2>
-        <p class="text-sm text-slate-600 mt-1">
-          Real packaged foods with live Quality Scores, full nutrition declarations, and personalized allergen compatibility.
+        <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">
+          Real packaged foods with live Quality Scores, forensic ingredient inspectors, and personalized allergen compatibility.
         </p>
       </div>
-      <a href="/catalog" class="text-xs font-bold text-slate-900 hover:text-emerald-700 flex items-center gap-1 self-start sm:self-auto font-sans">
+      <a href="/catalog" class="text-xs font-bold text-slate-900 dark:text-slate-100 hover:text-emerald-700 dark:hover:text-emerald-400 flex items-center gap-1 self-start sm:self-auto font-sans">
         <span>View Full Catalog ({{stats.products}} items)</span>
-        <span>&rarr;</span>
+        <span class="link-diagonal-arrow font-mono" aria-hidden="true">↗</span>
       </a>
     </div>
 
@@ -499,7 +499,7 @@
   </section>
 
   <!-- SECTION 5: INTERACTIVE GOVERNMENT LICENCE VERIFIER (BSTI, BFSA, FDA) -->
-  <section class="bg-white rounded-2xl p-8 sm:p-12 border-2 border-slate-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-6">
+  <section data-regulatory-zone="standards" data-bg="#f8fafc" data-fg="#0f172a" data-acc="#1d4ed8" class="bg-white dark:bg-[#141413] rounded-2xl p-8 sm:p-12 border-2 border-slate-900 dark:border-white/20 shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-6">
     <div class="max-w-3xl mx-auto text-center space-y-3">
       <span class="inline-flex items-center px-3 py-1 rounded text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
         National Food Standards Registry
