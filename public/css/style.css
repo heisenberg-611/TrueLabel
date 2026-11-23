@@ -22,11 +22,20 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans, 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif);
   color: var(--ink);
   background-color: var(--surface-alt);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-display, 'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif);
+  letter-spacing: -0.025em;
+}
+
+code, kbd, samp, pre, .font-mono {
+  font-family: var(--font-mono, 'Geist Mono', 'JetBrains Mono', ui-monospace, monospace);
 }
 
 /* Authentic Food Nutrition Facts Panel (FDA / EU Standard Style) */
@@ -35,13 +44,14 @@ body {
   padding: 1.25rem;
   background-color: var(--surface);
   max-width: 380px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-sans, 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
 }
 
 .nutrition-panel h3 {
-  font-size: 1.75rem;
-  font-weight: 900;
-  letter-spacing: -0.02em;
+  font-family: var(--font-display, 'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif);
+  font-size: 1.85rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
   text-transform: uppercase;
   border-bottom: 8px solid var(--border-dark);
   padding-bottom: 0.25rem;
@@ -482,6 +492,8 @@ html.dark .additive-pill {
 }
 
 html.dark .bg-emerald-50,
+html.dark .bg-emerald-50\/50,
+html.dark .bg-emerald-50\/60,
 html.dark .bg-emerald-50\/70,
 html.dark .bg-emerald-50\/80,
 html.dark .bg-emerald-50\/90 {
@@ -498,15 +510,20 @@ html.dark .text-emerald-900 {
   color: #34d399 !important;
 }
 
+html.dark .border-emerald-100,
 html.dark .border-emerald-200,
 html.dark .border-emerald-300,
 html.dark .border-emerald-200\/90 {
-  border-color: rgba(5, 150, 105, 0.35) !important;
+  border-color: rgba(5, 150, 105, 0.4) !important;
 }
 
 html.dark .bg-amber-50,
-html.dark .bg-amber-50\/80 {
-  background-color: rgba(120, 53, 15, 0.3) !important;
+html.dark .bg-amber-50\/50,
+html.dark .bg-amber-50\/60,
+html.dark .bg-amber-50\/70,
+html.dark .bg-amber-50\/80,
+html.dark .bg-amber-50\/90 {
+  background-color: rgba(120, 53, 15, 0.35) !important;
 }
 
 html.dark .bg-amber-100 {
@@ -520,13 +537,19 @@ html.dark .text-amber-950 {
   color: #fcd34d !important;
 }
 
+html.dark .border-amber-100,
 html.dark .border-amber-200,
 html.dark .border-amber-300 {
-  border-color: rgba(217, 119, 6, 0.35) !important;
+  border-color: rgba(217, 119, 6, 0.4) !important;
 }
 
-html.dark .bg-rose-50 {
-  background-color: rgba(136, 19, 55, 0.3) !important;
+html.dark .bg-rose-50,
+html.dark .bg-rose-50\/50,
+html.dark .bg-rose-50\/60,
+html.dark .bg-rose-50\/70,
+html.dark .bg-rose-50\/80,
+html.dark .bg-rose-50\/90 {
+  background-color: rgba(136, 19, 55, 0.35) !important;
 }
 
 html.dark .bg-rose-100 {
@@ -539,23 +562,42 @@ html.dark .text-rose-900 {
   color: #fda4af !important;
 }
 
+html.dark .border-rose-100,
 html.dark .border-rose-200,
 html.dark .border-rose-300 {
-  border-color: rgba(225, 29, 72, 0.35) !important;
+  border-color: rgba(225, 29, 72, 0.4) !important;
+}
+
+html.dark .bg-blue-50,
+html.dark .bg-blue-50\/50,
+html.dark .bg-blue-50\/60,
+html.dark .bg-blue-50\/70,
+html.dark .bg-blue-50\/80,
+html.dark .bg-blue-50\/90 {
+  background-color: rgba(30, 58, 138, 0.35) !important;
 }
 
 html.dark .bg-blue-100 {
   background-color: rgba(30, 58, 138, 0.45) !important;
 }
 
+html.dark .text-blue-700,
 html.dark .text-blue-800,
 html.dark .text-blue-900 {
   color: #93c5fd !important;
 }
 
+html.dark .border-blue-100,
 html.dark .border-blue-200,
 html.dark .border-blue-300 {
-  border-color: rgba(59, 130, 246, 0.35) !important;
+  border-color: rgba(59, 130, 246, 0.4) !important;
+}
+
+html.dark .bg-slate-50\/50,
+html.dark .bg-slate-50\/60,
+html.dark .bg-slate-50\/70,
+html.dark .bg-slate-50\/80 {
+  background-color: rgba(15, 23, 42, 0.6) !important;
 }
 
 /* Card Lift & Scrollbars */
@@ -616,4 +658,312 @@ html.dark .brand-logo-dark {
 #viva-dock .text-slate-950 {
   color: #0f172a !important;
 }
+
+/* ==========================================================================
+   A90 & FONTSIGHT SYNTHESIS: TRUE LABEL CLINICAL DESIGN & ANIMATION SYSTEM
+   ========================================================================== */
+
+:root {
+  /* High-Authority Professional Typography Tokens (Option 1: A90 & Fontsight Synthesis) */
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-display: 'Bricolage Grotesque', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'Geist Mono', 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Surface & Ink Foundation (from Fontsight Paper/Ink token system) */
+  --paper: #fffdf6;
+  --paper-subtle: #f8f7f0;
+  --ink: #0b0b0c;
+  --ink-muted: #57564f;
+  --ink-quiet: #8c8b82;
+
+  /* Inset Wells & Structural Surfaces */
+  --card-well: #f1f0e9;
+  --card-well-dark: #1b1b1a;
+  --border-line: rgba(11, 11, 12, 0.12);
+  --border-line-dark: rgba(255, 255, 255, 0.12);
+
+  /* Regulatory & Scientific Signal Tokens */
+  --signal-emerald: #047857;
+  --signal-emerald-bg: #ecfdf5;
+  --signal-amber: #b45309;
+  --signal-amber-bg: #fffbeb;
+  --signal-crimson: #be123c;
+  --signal-crimson-bg: #fff1f2;
+  --signal-yellow: #ffd84a;
+  --signal-blue: #1d4ed8;
+
+  /* Atmospheric Theming Variables (from A90 scroll-theme color-mix) */
+  --zone-page: #fbfbfb;
+  --zone-text: #0f172a;
+  --zone-acc: #059669;
+  --zone-line: color-mix(in srgb, var(--zone-text) 12%, var(--zone-page));
+  --zone-mute: color-mix(in srgb, var(--zone-text) 55%, var(--zone-page));
+}
+
+html.dark {
+  --zone-page: #090d16;
+  --zone-text: #f8fafc;
+  --zone-acc: #10b981;
+  --zone-line: color-mix(in srgb, var(--zone-text) 15%, var(--zone-page));
+  --zone-mute: color-mix(in srgb, var(--zone-text) 55%, var(--zone-page));
+  --card-well: #161e2e;
+}
+
+/* Atmospheric Scroll-Driven Transition Container */
+[data-regulatory-zone] {
+  transition: background-color 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+              color 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Tactile Clinical Dossier Card (A90 & Fontsight Spring Physics) */
+.clinical-card {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.2s ease,
+              box-shadow 0.2s ease;
+}
+
+.clinical-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px -4px rgba(15, 23, 42, 0.08), 0 4px 8px -2px rgba(15, 23, 42, 0.04);
+}
+
+html.dark .clinical-card:hover {
+  box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.4), 0 4px 10px -2px rgba(0, 0, 0, 0.3);
+}
+
+/* Diagonal Link Indicator Spring (from A90) */
+.link-diagonal-arrow {
+  display: inline-block;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.group:hover .link-diagonal-arrow,
+a:hover .link-diagonal-arrow {
+  transform: translate(2px, -2px);
+}
+
+/* Inset Nutrient Well (from Fontsight Card Wells) */
+.nutrient-well {
+  background-color: var(--card-well);
+  border: 1px solid var(--border-line);
+  border-radius: 8px;
+}
+
+html.dark .nutrient-well {
+  background-color: var(--card-well-dark);
+  border-color: var(--border-line-dark);
+}
+
+/* Floating Forensic Ingredient & Additive HUD Inspector (from Fontsight Hover Inspector) */
+.truelabel-hud-tooltip {
+  position: fixed;
+  display: none;
+  z-index: 99999;
+  background: #141413;
+  color: #f8fafc;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.2);
+  pointer-events: auto;
+  max-width: 340px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: opacity 0.15s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.truelabel-hud-tooltip.pinned {
+  border-color: var(--signal-yellow);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.65), 0 0 0 1px var(--signal-yellow);
+}
+
+/* Dynamic Nutrition Facts Waterfall & Portion Scaler (from Fontsight Waterfall Tester) */
+.nutrition-waterfall-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: rgba(11, 11, 12, 0.08);
+  overflow: hidden;
+  position: relative;
+}
+
+html.dark .nutrition-waterfall-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.nutrition-waterfall-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 0.35s ease;
+}
+
+/* Interactive Modern Serving Range Slider */
+.serving-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 9999px;
+  background: #e2e8f0;
+  outline: none;
+  cursor: var(--a90-cursor-scale, pointer);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+  transition: background 0.15s ease;
+}
+
+html.dark .serving-slider {
+  background: #27272a;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* WebKit Thumb */
+.serving-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3.5px solid #059669;
+  cursor: var(--a90-cursor-scale, grab);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18), 0 0 0 2px rgba(16, 185, 129, 0.15);
+  transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.12s ease,
+              border-color 0.12s ease;
+}
+
+.serving-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.18);
+  border-color: #047857;
+  cursor: var(--a90-cursor-scale, grab);
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.35), 0 0 0 4px rgba(16, 185, 129, 0.25);
+}
+
+.serving-slider:active::-webkit-slider-thumb,
+.serving-slider::-webkit-slider-thumb:active {
+  transform: scale(1.25);
+  border-color: #047857;
+  cursor: var(--a90-cursor-scale, grabbing);
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.5), 0 0 0 6px rgba(16, 185, 129, 0.3);
+}
+
+/* Firefox Thumb */
+.serving-slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3.5px solid #059669;
+  cursor: var(--a90-cursor-scale, grab);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18), 0 0 0 2px rgba(16, 185, 129, 0.15);
+  transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.12s ease,
+              border-color 0.12s ease;
+}
+
+.serving-slider::-moz-range-thumb:hover {
+  transform: scale(1.18);
+  border-color: #047857;
+  cursor: var(--a90-cursor-scale, grab);
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.35), 0 0 0 4px rgba(16, 185, 129, 0.25);
+}
+
+.serving-slider:active::-moz-range-thumb {
+  transform: scale(1.25);
+  cursor: var(--a90-cursor-scale, grabbing);
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.5), 0 0 0 6px rgba(16, 185, 129, 0.3);
+}
+
+html.dark .serving-slider::-webkit-slider-thumb {
+  background: #18181b;
+  border-color: #10b981;
+}
+
+html.dark .serving-slider::-moz-range-thumb {
+  background: #18181b;
+  border-color: #10b981;
+}
+
+/* Preset buttons */
+.serving-preset-btn {
+  cursor: var(--a90-cursor-scale, pointer);
+  user-select: none;
+}
+
+.serving-preset-btn.active {
+  background-color: #059669 !important;
+  color: #ffffff !important;
+  border-color: #047857 !important;
+  box-shadow: 0 1px 3px rgba(5, 150, 105, 0.3) !important;
+}
+
+html.dark .serving-preset-btn.active {
+  background-color: #10b981 !important;
+  color: #090d16 !important;
+  border-color: #059669 !important;
+}
+
+/* Verified Certification Micro-Seals (A90 88x31-inspired pixel stamps) */
+.cert-seal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.15s ease;
+  user-select: none;
+}
+
+.cert-seal-badge:hover {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+html.dark .cert-seal-badge {
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Cryptographic Batch Visual Imprint (A90 144px Imprint Canvas) */
+.batch-imprint-canvas {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  border: 1px solid rgba(11, 11, 12, 0.2);
+  border-radius: 6px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+html.dark .batch-imprint-canvas {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Accessibility: Respect Reduced Motion Preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .clinical-card:hover,
+  .cert-seal-badge:hover,
+  .link-diagonal-arrow {
+    transform: none !important;
+  }
+}
+
 

@@ -1087,3 +1087,202 @@
    - Full live database synchronization executed via `npm run seed`: All 45 products, 19 users, 4 preference profiles, 11 licences, 11 safety documents, 9 reviews, and 5 complaint reports synchronized with zero errors.
    - Full test suite passed via `npm test`: 26/26 test suites passed, 267/267 tests passing.
 
+---
+
+### Entry 050 | 2026-11-24 00:20:00 +06:00 | Architecture & Design: Integration Plan for A90 & Fontsight Animation and Style Systems
+
+**What**: Performed a thorough architectural, interaction, and typographic analysis of the two scraped web repositories (`a90.com` and `fontsight.xyz`) and formulated an exhaustive integration blueprint for TrueLabel. The plan adheres strictly to TrueLabel's strict MVC boundaries, Area structure, and the non-negotiable `frontend-design` engineering protocol.
+
+**Key Findings & Domain Mapping**:
+1. **Source Archetype Breakdown**:
+   - `a90.com` (Cody Collier Studio): High-contrast minimalist studio aesthetic, scroll-driven dynamic theming via `color-mix()` and `IntersectionObserver`, running timezone clock (`live-clock.js`), negative letter-spacing typography, 88x31 retro pixel badges, and a 144-pixel interactive imprint canvas.
+   - `fontsight.xyz` (Typographic Intelligence Platform): Neo-Grotesque display typography, tactile high-contrast color tokens (`--paper: #fffdf6`, `--ink: #0b0b0c`, `--yellow: #ffd84a`), floating DOM hover font inspector HUD with 1-click clipboard copy, differential canvas font detection, interactive font rail swapper, and searchable twin matching tables.
+2. **Translation into TrueLabel Clinical Food Safety Domain**:
+   - **Atmospheric Regulatory Tier Transitions** (from `a90.com` scroll-theme): Smooth scroll-based transitions across Food Safety Zones (Safe Green `#047857`, Forensic Slate `#111827`, Accreditation Blue `#1d4ed8`).
+   - **Regulatory Docket & Audit Clock** (from `a90.com` live-clock): Live UTC/BST docket synchronization pill with active heartbeat pulse in navigation and inspector terminals.
+   - **Forensic Ingredient & E-Number HUD Inspector** (from `fontsight.xyz` hover-inspector): Floating clinical tooltip inspecting chemical additives, E-numbers, and allergens on food cards with toxicology risk tiers and copyable monographs.
+   - **Clean-Label Twin Matcher** (from `fontsight.xyz` font-alternatives-table): Searchable twin comparison engine pairing ultra-processed foods with clean-label whole-food alternatives with % match and nutrient deltas.
+   - **Interactive Nutrition Facts Serving Scaler** (from `fontsight.xyz` waterfall & rail): Real-time portion slider dynamically recalculating % DV, calories, and macro waterfall splits without page reload.
+   - **Accredited Verification Seals & Batch Imprint** (from `a90.com` 88x31 badges and imprint): Micro-seals (`ISO 22000`, `NON-GMO`, `ORGANIC`) and deterministic 12x12 tamper-evident visual hash verification for food batch inspection.
+3. **Artifact Created**:
+   - `TRUELABEL_STYLE_ANIMATION_INTEGRATION_PLAN.md` authored to the artifact directory with architecture diagrams, token schemas, component blueprints, and phased execution roadmap.
+
+---
+
+### Entry 051 | 2026-11-24 00:28:30 +06:00 | Feature Execution: A90 & Fontsight Animation, Styling, and Interaction Integration
+
+**What**: Fully integrated the clinical aesthetic, dynamic animations, and forensic typographic inspection tools into TrueLabel as outlined in `TRUELABEL_STYLE_ANIMATION_INTEGRATION_PLAN.md`. Delivered five progressive enhancement JavaScript modules, comprehensive design tokens in CSS, and updated server-rendered Handlebars views.
+
+**Key Changes Delivered**:
+1. **Design Tokens & Stylesheet Foundation (`public/css/style.css`)**:
+   - Integrated Fontsight-inspired Paper & Ink tokens (`--paper: #fffdf6`, `--ink: #0b0b0c`, `--card-well: #f1f0e9`).
+   - Integrated A90-inspired dynamic atmospheric scroll tokens (`--zone-page`, `--zone-text`, `--zone-acc`, `--zone-line`, `--zone-mute`) utilizing modern CSS `color-mix(in srgb, ...)`.
+   - Engineered tactile clinical dossier card physics (`.clinical-card`: spring hover transform `translateY(-2px)`, cubic-bezier easing `cubic-bezier(0.16, 1, 0.3, 1)`), diagonal link action arrows (`.link-diagonal-arrow`), inset nutrient wells (`.nutrient-well`), and verified accreditation micro-seals (`.cert-seal-badge`).
+   - Built styled components for the forensic HUD tooltip (`.truelabel-hud-tooltip`) and dynamic nutrition waterfall bars (`.nutrition-waterfall-track`, `.nutrition-waterfall-fill`).
+   - Guaranteed full accessibility compliance including `@media (prefers-reduced-motion: reduce)` resets.
+2. **Progressive Enhancement Client JS Modules (`public/js/`)**:
+   - `truelabel-theme-scroll.js`: Atmospheric section scrolling with 21 threshold steps using `IntersectionObserver`.
+   - `truelabel-audit-clock.js`: Real-time UTC inspection docket synchronization with pulsing heartbeat indicator.
+   - `truelabel-ingredient-inspector.js`: Floating clinical HUD tooltip displaying FDA/EU status, toxicology tiers, and 1-click clipboard monograph citations.
+   - `truelabel-serving-scaler.js`: Real-time interactive portion size slider recalculating calorie counts, nutrient amounts, and % Daily Value waterfall bars.
+   - `truelabel-batch-imprint.js`: Deterministic 12x12 cryptographic visual hash matrix generator for batch tamper-evidence.
+3. **Handlebars Views & Partials Refactored**:
+   - `src/shared/views/layouts/main.hbs`: Loaded the 5 progressive enhancement scripts.
+   - `src/shared/views/partials/navbar.hbs`: Added the live Regulatory Docket & Inspection Audit Clock pill.
+   - `src/shared/views/partials/_food_card.hbs`: Refactored to `.clinical-card` with dot category indicators, inspectable ingredient attributes, and diagonal link arrows.
+   - `src/areas/food-catalog/views/detail.hbs`: Upgraded the FDA Nutrition Facts panel with dynamic serving scaler and waterfall bars; added forensic ingredient inspector hooks; embedded verified accreditation seals and cryptographic batch visual imprint canvas.
+   - `src/areas/home/views/index.hbs`: Tagged sections with `data-regulatory-zone` attributes; added Section 4.5 **Clean-Label Twin Matcher** showcase pairing ultra-processed items with clean whole-food alternatives.
+4. **Verification & Testing**:
+   - `npm test`: 26/26 test suites passed cleanly (267/267 tests, 0 failed).
+   - `npm run build`: NestJS compiled successfully with zero TypeScript errors.
+
+---
+
+### Entry 052 | 2026-11-24 00:35:30 +06:00 | UI Refinement: Removal of Clean-Label Twin Matcher Section & Audit Clock
+
+**What**: Cleaned up the landing page and navigation bar per user directives:
+1. **Removed Clean-Label Twin Matcher Section**:
+   - Removed Section 4.5 ("Ultra-Processed Groceries • Meet Their Clean-Label Twins") from `src/areas/home/views/index.hbs`.
+   - Removed unused `.twin-matcher-card` styles from `public/css/style.css`.
+2. **Removed Regulatory Docket Audit Clock**:
+   - Removed the clock pill from `src/shared/views/partials/navbar.hbs`.
+   - Removed `<script src="/js/truelabel-audit-clock.js"></script>` from `src/shared/views/layouts/main.hbs`.
+   - Deleted `public/js/truelabel-audit-clock.js`.
+   - Removed `.truelabel-audit-clock` styles from `public/css/style.css`.
+3. **Verification**:
+   - `npm test`: All 26 test suites passing (267/267 tests).
+   - `npm run build`: NestJS builds cleanly with zero errors.
+
+---
+
+### Entry 053 | 2026-11-24 00:45:00 +06:00 | UX Refinement: Synchronized Nutrition Facts Serving Size & Modern Tactile Slider
+
+**What**: Addressed user feedback on the product detail view (`src/areas/food-catalog/views/detail.hbs`):
+1. **Synchronized Nutrition Facts Serving Size**:
+   - Updated `public/js/truelabel-serving-scaler.js` from `container.querySelector('[data-serving-display]')` to `container.querySelectorAll('[data-serving-display]')`.
+   - Now, dragging the portion slider dynamically updates both the top portion scaler readout AND the official Nutrition Facts panel serving size (`Serving size: Xg` and `Amounts scaled dynamically for Xg portion`), plus the per-portion Energy subtitle simultaneously.
+2. **Modernized Slider UI & Mouse Pointer Ergonomics**:
+   - Upgraded the portion slider container in `detail.hbs` with an atmospheric gradient, subtle border depth, and modern layout.
+   - Refactored `public/css/style.css` to add `cursor: pointer !important;` on the track and `cursor: grab !important;` / `cursor: grabbing !important;` on the thumb.
+   - Upgraded the thumb into a 22px floating disc with a 3.5px emerald ring, subtle elevation shadow, and hover/active spring transforms (`scale(1.18)` and `scale(1.25)`).
+   - Styled cross-browser support for both WebKit and Firefox (`::-webkit-slider-thumb` and `::-moz-range-thumb`).
+   - Implemented dynamic track progress fill via `linear-gradient` that tracks the thumb position in real-time.
+   - Added clickable quick preset chips (`25g`, `50g`, `100g Std`, `150g`, `250g`) with pointing hand cursor (`cursor: pointer`), smooth hover feedback, and active state highlights.
+3. **Verification**:
+   - `npm test`: All 26 test suites passed cleanly (267/267 tests).
+   - `nest build`: Compiled with zero TypeScript errors.
+
+---
+
+### Entry 054 | 2026-11-24 00:52:30 +06:00 | Bug Fix: Dark Mode Accreditation Stat Cards Contrast & Global Opacity Overrides
+
+**What**: Fixed the dark mode display defect on the Manufacturer Dashboard (`src/areas/identity/views/dashboard/manufacturer.hbs`) and across the platform where "Pending" (`bg-amber-50/70`) and "Rejected" (`bg-rose-50/70`) accreditation stat cards rendered as washed-out, milky pastel blocks in dark mode.
+
+**Root Cause & Remediation**:
+1. **Missing CSS Dark Mode Overrides for Opacity Variants (`public/css/style.css`)**:
+   - `style.css` previously only had `.bg-emerald-50\/70` defined in its dark mode overrides, but omitted `.bg-amber-50\/70` and `.bg-rose-50\/70`, causing Tailwind's light mode pale pastel backgrounds to bleed through in dark mode.
+   - Borders `.border-amber-100`, `.border-rose-100`, `.border-emerald-100`, and `.border-blue-100` also lacked dark mode rules, rendering as harsh white-pastel outlines.
+   - *Fix*: Added comprehensive dark mode overrides for all `/50`, `/60`, `/70`, `/80`, `/90` opacity variants and `border-*-100` classes across emerald, amber, rose, and blue in `style.css`.
+2. **Template Hardening (`manufacturer.hbs`)**:
+   - Added explicit dark mode classes (`dark:bg-*-950/40`, `dark:border-*-800/60`, `dark:text-*-400`) to the Approved, Pending, and Rejected cards in `manufacturer.hbs`.
+3. **Verification**:
+   - `npm test`: All 26 test suites passed cleanly (267/267 tests).
+   - `nest build`: Compiled with zero errors.
+
+---
+
+### Entry 055 | 2026-11-24 01:03:00 +06:00 | Feature & Synthesis: Integration of A90.com Mouse Pointer & Animated Reticle Systems
+
+**What**: Synthesized and integrated the iconic custom mouse pointer and interactive inspection reticle architecture from `a90.com` (Cody Collier) into TrueLabel:
+1. **A90 Pixel-Matrix Cursor Engine (`public/js/truelabel-cursor.js`)**:
+   - Implemented the 24x24 logical grid compositor (`fe`), rendering the signature 11x11 pixel-art pointer arrow (`ce`) alongside contextual 9x9 pixel badges placed at `(13, 13)`:
+     - `inspect`: Fontsight-inspired magnifying inspection lens for declared ingredients (`[data-inspectable-ingredient]`, `.cursor-help`).
+     - `scale`: Dynamic portion scaler dial for the serving size slider (`.serving-slider`, `.serving-preset-btn`).
+     - `shield`: Ward-inspired food safety seal for accreditation status and audit documents (`[data-audit-status]`, `[data-a90-cursor="shield"]`).
+     - `arrow`: Crisp diagonal action arrow for external links and detail navigation (`.link-diagonal-arrow`, `a[target="_blank"]`).
+     - `default`: Standalone crisp pixel arrow for clinical cards and interactive buttons.
+   - Automatically computes a 1px anti-aliased dual-contrast outline border (`.`) around all opaque pixels for razor-sharp legibility on both dark and light surfaces.
+   - Computes sRGB relative luminance (`pe`) to guarantee WCAG-compliant contrast between badges and page themes.
+2. **Dynamic Real-Time Dark/Light Mode Theme Synchronization**:
+   - Utilizes `MutationObserver` on `document.documentElement` (`class="dark"`) to dynamically recalculate and inject crisp SVG data URIs into CSS custom properties (`--a90-cursor-default`, `--a90-cursor-inspect`, `--a90-cursor-scale`, `--a90-cursor-shield`, `--a90-cursor-arrow`) with 0ms latency upon theme toggle.
+3. **Animated Blooming Pixel Reticle Follower (`ye` Engine)**:
+   - Extracted the 6-frame blooming pixel spark/reticle animation (`_e`, sequence `[0, 1, 2, 3, 4, 5, 4, 3, 2, 1]` at 110ms) from `a90.com`.
+   - Wired to cryptographic batch imprint canvases (`.batch-imprint-canvas`, `[data-batch-imprint]`, `[data-a90-reticle]`) on product detail views.
+   - Smoothly tracks pointer coordinates with `image-rendering: pixelated; pointer-events: none;`, hides native cursor on hover, and gracefully cleans up on pointerleave.
+   - Respects `(prefers-reduced-motion: reduce)` by locking to a static crisp reticle frame.
+4. **Layout & View Integrations**:
+   - Registered `<script src="/js/truelabel-cursor.js"></script>` in `src/shared/views/layouts/main.hbs`.
+   - Refactored `public/css/style.css` `.serving-slider` rules to use `cursor: var(--a90-cursor-scale, ...)` without conflicting `!important` declarations.
+   - Tagged accreditation cards in `src/areas/identity/views/dashboard/manufacturer.hbs` with `data-a90-cursor="shield"`.
+   - Tagged portion slider and batch imprint in `src/areas/food-catalog/views/detail.hbs` with `data-a90-cursor="scale"` and `data-a90-reticle`.
+5. **Verification**:
+   - `npm test`: All 26 test suites passed cleanly (267/267 tests).
+   - `nest build`: Compiled successfully with zero TypeScript or asset compilation errors.
+
+---
+
+### Entry 056 | 2026-11-24 01:16:00 +06:00 | Bug Fix: Resolve Custom Mouse Pointer Display Failure (CSS Syntax & Dual Fallback)
+
+**What**: Identified and resolved the root cause of the custom mouse pointer not displaying in the browser:
+
+**Root Cause Diagnosis**:
+1. **Invalid CSS Cursor Declaration (Double Fallback Keyword)**:
+   - In `public/js/truelabel-cursor.js`, `buildCursorUrl()` previously appended `, pointer` directly to the URL string (`url(...) 2 2, pointer`), and the injected CSS rules then added another keyword fallback (e.g., `cursor: var(--a90-cursor-default), pointer;` or `cursor: var(--a90-cursor-inspect), crosshair;`).
+   - This evaluated in the browser CSS parser as `cursor: url(...) 2 2, pointer, pointer;` or `cursor: url(...) 2 2, pointer, crosshair;`. The CSS specification strictly forbids multiple keyword identifiers at the end of a cursor declaration. Browser engines (Chrome, Safari, Firefox) discarded all the rules as `Invalid property value`.
+2. **Missing Document & Body Selectors**:
+   - The stylesheet rules previously only targeted interactive elements (`a`, `button`, etc.), omitting `html` and `body`. Thus, moving the mouse over the page canvas displayed standard OS system cursors.
+3. **SVG Cursor Rasterization Quirks**:
+   - SVG data URIs for cursors can occasionally be rejected by Chromium on macOS depending on dimensions and shape-rendering flags.
+
+**Fix & Enhancements**:
+1. **Sanitized URL & CSS Declarations**:
+   - Extracted clean URL tokens (`url(...) 2 2`) without trailing keywords.
+   - Output valid CSS with exactly one keyword fallback: `cursor: <url> 2 2, <keyword> !important;`.
+2. **Global Canvas Coverage**:
+   - Added `html, body { cursor: ... auto !important; }` so the crisp A90 pointer arrow is active globally across the entire site.
+3. **Dual SVG + Canvas PNG Fallback Chain**:
+   - Implemented `toPngDataUrl()` using an offscreen HTML5 `<canvas>` rendering 48x48 integer pixels (`fillRect(c*2, r*2, 2, 2)`).
+   - Constructed a dual-source fallback chain: `cursor: url(svg) 2 2, url(png) 2 2, <keyword> !important;` for 100% cross-browser reliability.
+4. **Verification**:
+   - `npm test`: 26/26 test suites passed (267/267 tests).
+   - `nest build`: Compiled cleanly with zero errors.
+
+---
+
+### Entry 057 | 2026-11-24 01:18:30 +06:00 | UX Refinement: Compact Mouse Pointer & Scaled Reticle Sizing
+
+**What**: Rescaled and refined the custom A90 pixel-art mouse pointer and inspection reticle to a compact, sleek desktop size:
+1. **Compact 24x24 Cursor Dimensions**:
+   - Downscaled SVG dimensions from `width="48" height="48"` to `width="24" height="24"` with integer 1:1 pixel rendering on `viewBox="0 0 24 24"`.
+   - Downscaled canvas rasterizer from 48x48 to 24x24 (`fillRect(c, r, 1, 1)`), cutting the cursor footprint by 50% in width/height (75% in surface area) to match standard native operating system pointer proportions.
+   - Shifted coordinate hotspot from `2 2` to `1 1` for exact alignment with the tip of the pixel arrow.
+2. **Compact Reticle Follower**:
+   - Scaled the animated blooming reticle follower from 32px to 24px (`translate(posX - 12, posY - 12)`).
+3. **Verification**:
+   - `npm test`: All 26 test suites passed cleanly (267/267 tests).
+   - `nest build`: Compiled successfully with zero TypeScript errors.
+
+---
+
+### Entry 058 | 2026-11-24 01:26:40 +06:00 | Typography: Implementation of Option 1 (Bricolage Grotesque + Plus Jakarta Sans + Geist Mono)
+
+**What**: Implemented Option 1 typography pairing across the TrueLabel platform, synthesizing the contemporary laboratory aesthetic from `a90.com` and `fontsight.xyz`:
+1. **Font Hierarchy Definition**:
+   - **Display / Headings (`--font-display` / `font-display`)**: **Bricolage Grotesque** (Variable `opsz` 12..96, `wght` 400..800).
+   - **Interface / Body (`--font-sans` / `font-sans`)**: **Plus Jakarta Sans** (`wght` 400..800, italic).
+   - **Technical & Nutrition Metrics (`--font-mono` / `font-mono`)**: **Geist Mono** (`wght` 400..700).
+2. **Layout & View Integrations**:
+   - Updated Google Fonts `<link>` in `src/shared/views/layouts/main.hbs` to load Bricolage Grotesque, Plus Jakarta Sans, and Geist Mono with preconnect optimization.
+   - Extended Tailwind CSS `fontFamily` configuration (`sans`, `display`, `serif`, `mono`).
+   - Integrated CSS variables (`--font-display`, `--font-sans`, `--font-mono`) into `:root` in `public/css/style.css`.
+   - Wired global headings (`h1, h2, h3, h4`), `.nutrition-panel h3`, and `.truelabel-hud-tooltip` to their respective typographic roles.
+   - Updated hero headline and section titles in `src/areas/home/views/index.hbs` with `font-display font-extrabold` and `font-display font-bold`.
+3. **Verification**:
+   - `npm test`: All 26 test suites passed cleanly (267/267 tests).
+   - `nest build`: Compiled with zero TypeScript errors.
+
+
+
+
+
+
