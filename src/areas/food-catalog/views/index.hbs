@@ -54,7 +54,7 @@
   </div>
 
   <!-- Results Count & Active Filters Indicator -->
-  <div class="flex items-center justify-between text-xs text-slate-500 px-1">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500 px-1">
     <div>
       Found <strong class="text-slate-900 font-bold">{{total}}</strong> packaged food product(s)
       {{#if query}} matching &ldquo;<span class="text-slate-800 font-semibold">{{query}}</span>&rdquo;{{/if}}
@@ -62,7 +62,7 @@
       {{#if selectedTag}} with tag <span class="font-semibold text-slate-800">{{selectedTag}}</span>{{/if}}
     </div>
     {{#if (or (eq user.role "manufacturer") (eq user.role "admin"))}}
-      <a href="/catalog/manage/create" class="font-bold text-emerald-700 hover:underline inline-flex items-center gap-1">
+      <a href="/catalog/manage/create" class="font-bold text-emerald-700 hover:underline inline-flex items-center gap-1 self-start sm:self-auto min-h-[36px]">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
         <span>Register New Food Product</span>
       </a>
@@ -71,7 +71,7 @@
 
   <!-- Food Products Grid -->
   {{#if products.length}}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
       {{#each products}}
         {{> _food_card this}}
       {{/each}}

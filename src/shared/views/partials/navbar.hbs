@@ -1,5 +1,5 @@
-<header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-[0_1px_3px_rgba(15,23,42,0.03)]">
-  <div class="container mx-auto px-4 max-w-7xl h-16 flex items-center justify-between gap-4">
+<header class="bg-white border-b border-slate-200 sticky top-0 z-[60] shadow-[0_1px_3px_rgba(15,23,42,0.03)]">
+  <div class="container mx-auto px-3 sm:px-4 max-w-7xl h-16 flex items-center justify-between gap-2 sm:gap-4">
     
     <!-- Left: Brand Logo & Primary Navigation -->
     <div class="flex items-center gap-7">
@@ -258,12 +258,12 @@
     </div>
 
     <!-- Mobile Hamburger Toggle & Quick Theme Toggle -->
-    <div class="flex items-center gap-2 lg:hidden">
+    <div class="flex items-center gap-1.5 lg:hidden">
       <!-- Quick Theme Toggle for Mobile Header -->
       <button
         id="theme-toggle-mobile-header"
         type="button"
-        class="p-2 rounded-lg text-slate-700 hover:text-slate-950 hover:bg-slate-100 border border-slate-200 transition-colors"
+        class="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-lg text-slate-700 hover:text-slate-950 hover:bg-slate-100 border border-slate-200 transition-colors"
         title="Toggle color theme"
         aria-label="Toggle color theme"
       >
@@ -279,7 +279,9 @@
         id="mobile-nav-toggle"
         type="button"
         aria-label="Toggle navigation menu"
-        class="p-2 rounded-lg text-slate-700 hover:text-slate-950 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-colors"
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+        class="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-lg text-slate-700 hover:text-slate-950 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-colors"
       >
         <svg id="hamburger-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
@@ -292,8 +294,15 @@
 
   </div>
 
+  <!-- Mobile Backdrop Overlay (dismiss on outside tap) -->
+  <div
+    id="mobile-menu-backdrop"
+    class="hidden lg:hidden fixed inset-x-0 top-16 bottom-0 bg-slate-900/50 backdrop-blur-xs z-40 transition-opacity duration-200"
+    aria-hidden="true"
+  ></div>
+
   <!-- Mobile Drawer / Dropdown Panel -->
-  <div id="mobile-menu" class="hidden lg:hidden border-t border-slate-200 bg-white px-4 py-4 space-y-4 shadow-xl animate-fadeIn">
+  <div id="mobile-menu" class="hidden lg:hidden absolute top-full left-0 right-0 z-50 border-b border-slate-200 bg-white px-4 pt-4 pb-6 space-y-4 shadow-2xl max-h-[calc(100vh-4.5rem)] overflow-y-auto transform transition-all duration-200 origin-top animate-fadeIn">
     
     <!-- User Info if Authenticated -->
     {{#if user}}
@@ -316,128 +325,128 @@
       </div>
     {{/if}}
 
-    <!-- Mobile Navigation Links — Role-tailored -->
-    <div class="flex flex-col space-y-1 text-sm font-bold text-slate-700">
-      <a href="/" class="px-3 py-2 rounded-md hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'home')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
+    <!-- Mobile Navigation Links — Role-tailored (44px Accessible Touch Targets) -->
+    <div class="flex flex-col space-y-1.5 text-sm font-bold text-slate-700">
+      <a href="/" class="min-h-[44px] px-3 py-2.5 rounded-lg hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'home')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
         <span>Home</span>
-        <span class="text-xs text-slate-400">&rarr;</span>
+        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
       </a>
-      <a href="/catalog" class="px-3 py-2 rounded-md hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'catalog')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
+      <a href="/catalog" class="min-h-[44px] px-3 py-2.5 rounded-lg hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'catalog')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
         <span>Food Catalog</span>
-        <span class="text-xs text-slate-400">&rarr;</span>
+        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
       </a>
 
       {{#if (eq user.role "consumer")}}
         {{!-- Consumer mobile: Dietary Profile, My Reports, Dashboard --}}
-        <a href="/personal/profile" class="px-3 py-2 rounded-md hover:bg-emerald-100 flex items-center justify-between {{#if (eq activeNav 'profile')}}text-emerald-800 bg-emerald-100 font-extrabold{{else}}bg-emerald-50 text-emerald-800{{/if}}">
+        <a href="/personal/profile" class="min-h-[44px] px-3 py-2.5 rounded-lg hover:bg-emerald-100 flex items-center justify-between {{#if (eq activeNav 'profile')}}text-emerald-800 bg-emerald-100 font-extrabold{{else}}bg-emerald-50 text-emerald-800{{/if}}">
           <span class="flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
             Dietary Profile
           </span>
-          <span class="text-xs text-emerald-600 font-bold">&rarr;</span>
+          <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </a>
-        <a href="/community/reports/mine" class="px-3 py-2 rounded-md hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'reports')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
+        <a href="/community/reports/mine" class="min-h-[44px] px-3 py-2.5 rounded-lg hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'reports')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
           <span class="flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-rose-500"></span>
             My Reports
           </span>
-          <span class="text-xs text-slate-400">&rarr;</span>
+          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </a>
-        <a href="/dashboard" class="px-3 py-2 rounded-md hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'dashboard')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
+        <a href="/dashboard" class="min-h-[44px] px-3 py-2.5 rounded-lg hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'dashboard')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
           <span>Dashboard</span>
-          <span class="text-xs text-slate-400">&rarr;</span>
+          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </a>
 
       {{else if (eq user.role "manufacturer")}}
         {{!-- Manufacturer mobile: Safety Documents, Upload Certificate, Verify Licence, Dashboard --}}
-        <a href="/safety/documents" class="px-3 py-2 rounded-md hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'documents')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
+        <a href="/safety/documents" class="min-h-[44px] px-3 py-2.5 rounded-lg hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'documents')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
           <span>Safety Documents</span>
-          <span class="text-xs text-slate-400">&rarr;</span>
+          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </a>
-        <a href="/safety/documents/upload" class="px-3 py-2 rounded-md hover:bg-emerald-100 flex items-center justify-between {{#if (eq activeNav 'upload')}}text-emerald-800 bg-emerald-100 font-extrabold{{else}}bg-emerald-50 text-emerald-800{{/if}}">
+        <a href="/safety/documents/upload" class="min-h-[44px] px-3 py-2.5 rounded-lg hover:bg-emerald-100 flex items-center justify-between {{#if (eq activeNav 'upload')}}text-emerald-800 bg-emerald-100 font-extrabold{{else}}bg-emerald-50 text-emerald-800{{/if}}">
           <span class="flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
             Upload Certificate
           </span>
-          <span class="text-xs text-emerald-600 font-bold">&rarr;</span>
+          <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </a>
-        <a href="/safety/licence/verify" class="px-3 py-2 rounded-md hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'verify')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
+        <a href="/safety/licence/verify" class="min-h-[44px] px-3 py-2.5 rounded-lg hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'verify')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
           <span>Verify Licence</span>
-          <span class="text-xs text-slate-400">&rarr;</span>
+          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </a>
-        <a href="/dashboard" class="px-3 py-2 rounded-md hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'dashboard')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
+        <a href="/dashboard" class="min-h-[44px] px-3 py-2.5 rounded-lg hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'dashboard')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
           <span>Dashboard</span>
-          <span class="text-xs text-slate-400">&rarr;</span>
+          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </a>
 
       {{else if (eq user.role "inspector")}}
         {{!-- Inspector mobile: Safety Documents, Complaint Queue, Verify Licence, Dashboard --}}
-        <a href="/safety/documents" class="px-3 py-2 rounded-md hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'documents')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
+        <a href="/safety/documents" class="min-h-[44px] px-3 py-2.5 rounded-lg hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'documents')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
           <span>Safety Documents</span>
-          <span class="text-xs text-slate-400">&rarr;</span>
+          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </a>
-        <a href="/community/reports/queue" class="px-3 py-2 rounded-md hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'complaints')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
+        <a href="/community/reports/queue" class="min-h-[44px] px-3 py-2.5 rounded-lg hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'complaints')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
           <span class="flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-rose-500"></span>
             Complaint Queue
           </span>
-          <span class="text-xs text-slate-400">&rarr;</span>
+          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </a>
-        <a href="/safety/licence/verify" class="px-3 py-2 rounded-md hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'verify')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
+        <a href="/safety/licence/verify" class="min-h-[44px] px-3 py-2.5 rounded-lg hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'verify')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
           <span>Verify Licence</span>
-          <span class="text-xs text-slate-400">&rarr;</span>
+          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </a>
-        <a href="/dashboard" class="px-3 py-2 rounded-md hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'dashboard')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
+        <a href="/dashboard" class="min-h-[44px] px-3 py-2.5 rounded-lg hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'dashboard')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
           <span>Dashboard</span>
-          <span class="text-xs text-slate-400">&rarr;</span>
+          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </a>
 
       {{else if (eq user.role "admin")}}
         {{!-- Admin mobile: Safety Documents, Complaint Queue, Verify Licence, Admin Console --}}
-        <a href="/safety/documents" class="px-3 py-2 rounded-md hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'documents')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
+        <a href="/safety/documents" class="min-h-[44px] px-3 py-2.5 rounded-lg hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'documents')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
           <span>Safety Documents</span>
-          <span class="text-xs text-slate-400">&rarr;</span>
+          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </a>
-        <a href="/community/reports/queue" class="px-3 py-2 rounded-md hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'complaints')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
+        <a href="/community/reports/queue" class="min-h-[44px] px-3 py-2.5 rounded-lg hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'complaints')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
           <span class="flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-rose-500"></span>
             Complaint Queue
           </span>
-          <span class="text-xs text-slate-400">&rarr;</span>
+          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </a>
-        <a href="/safety/licence/verify" class="px-3 py-2 rounded-md hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'verify')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
+        <a href="/safety/licence/verify" class="min-h-[44px] px-3 py-2.5 rounded-lg hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'verify')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
           <span>Verify Licence</span>
-          <span class="text-xs text-slate-400">&rarr;</span>
+          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </a>
-        <a href="/dashboard" class="px-3 py-2 rounded-md hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'dashboard')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
+        <a href="/dashboard" class="min-h-[44px] px-3 py-2.5 rounded-lg hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'dashboard')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
           <span>Admin Console</span>
-          <span class="text-xs text-slate-400">&rarr;</span>
+          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </a>
 
       {{else}}
         {{!-- Guest mobile: Safety Documents, Verify Licence, About --}}
-        <a href="/safety/documents" class="px-3 py-2 rounded-md hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'documents')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
+        <a href="/safety/documents" class="min-h-[44px] px-3 py-2.5 rounded-lg hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'documents')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
           <span>Safety Documents</span>
-          <span class="text-xs text-slate-400">&rarr;</span>
+          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </a>
-        <a href="/safety/licence/verify" class="px-3 py-2 rounded-md hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'verify')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
+        <a href="/safety/licence/verify" class="min-h-[44px] px-3 py-2.5 rounded-lg hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'verify')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
           <span>Verify Licence</span>
-          <span class="text-xs text-slate-400">&rarr;</span>
+          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </a>
-        <a href="/about" class="px-3 py-2 rounded-md hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'about')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
+        <a href="/about" class="min-h-[44px] px-3 py-2.5 rounded-lg hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'about')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
           <span>About</span>
-          <span class="text-xs text-slate-400">&rarr;</span>
+          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </a>
       {{/if}}
     </div>
 
     <!-- Mobile Guest Actions -->
     {{#unless user}}
-      <div class="pt-3 border-t border-slate-100 grid grid-cols-2 gap-2">
-        <a href="/auth/login" class="text-center py-2.5 rounded-lg border border-slate-300 text-slate-800 font-bold text-xs">
+      <div class="pt-3 border-t border-slate-100 grid grid-cols-2 gap-2.5">
+        <a href="/auth/login" class="min-h-[44px] flex items-center justify-center text-center px-3 py-2.5 rounded-lg border border-slate-300 text-slate-800 font-bold text-xs hover:bg-slate-50 transition-colors">
           Sign In
         </a>
-        <a href="/auth/register" class="text-center py-2.5 rounded-lg bg-slate-950 text-white font-bold text-xs uppercase tracking-wider">
+        <a href="/auth/register" class="min-h-[44px] flex items-center justify-center text-center px-3 py-2.5 rounded-lg bg-slate-950 text-white font-bold text-xs uppercase tracking-wider hover:bg-slate-800 transition-colors">
           Create Account
         </a>
       </div>
@@ -463,23 +472,69 @@
   <!-- Vanilla JS Dropdown & Mobile Toggle Handlers -->
   <script>
     (function() {
-      // 1. Mobile Menu Toggle
+      // 1. Mobile Menu Overlay & Dropdown Handlers
       const toggleBtn = document.getElementById('mobile-nav-toggle');
       const mobileMenu = document.getElementById('mobile-menu');
+      const mobileBackdrop = document.getElementById('mobile-menu-backdrop');
       const hamburgerIcon = document.getElementById('hamburger-icon');
       const closeIcon = document.getElementById('close-icon');
 
+      function openMobileMenu() {
+        if (!mobileMenu) return;
+        mobileMenu.classList.remove('hidden');
+        if (mobileBackdrop) mobileBackdrop.classList.remove('hidden');
+        if (hamburgerIcon) hamburgerIcon.classList.add('hidden');
+        if (closeIcon) closeIcon.classList.remove('hidden');
+        if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'true');
+        document.body.classList.add('overflow-hidden');
+      }
+
+      function closeMobileMenu() {
+        if (!mobileMenu) return;
+        mobileMenu.classList.add('hidden');
+        if (mobileBackdrop) mobileBackdrop.classList.add('hidden');
+        if (hamburgerIcon) hamburgerIcon.classList.remove('hidden');
+        if (closeIcon) closeIcon.classList.add('hidden');
+        if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'false');
+        document.body.classList.remove('overflow-hidden');
+      }
+
       if (toggleBtn && mobileMenu) {
-        toggleBtn.addEventListener('click', function() {
+        toggleBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
           const isHidden = mobileMenu.classList.contains('hidden');
           if (isHidden) {
-            mobileMenu.classList.remove('hidden');
-            if (hamburgerIcon) hamburgerIcon.classList.add('hidden');
-            if (closeIcon) closeIcon.classList.remove('hidden');
+            openMobileMenu();
           } else {
-            mobileMenu.classList.add('hidden');
-            if (hamburgerIcon) hamburgerIcon.classList.remove('hidden');
-            if (closeIcon) closeIcon.classList.add('hidden');
+            closeMobileMenu();
+          }
+        });
+
+        // Close on backdrop tap (outside dismissal)
+        if (mobileBackdrop) {
+          mobileBackdrop.addEventListener('click', function() {
+            closeMobileMenu();
+          });
+        }
+
+        // Close on Escape key press
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape' && !mobileMenu.classList.contains('hidden')) {
+            closeMobileMenu();
+          }
+        });
+
+        // Close when clicking any navigation link inside mobile menu
+        mobileMenu.querySelectorAll('a').forEach(function(link) {
+          link.addEventListener('click', function() {
+            closeMobileMenu();
+          });
+        });
+
+        // Auto-close if resized to desktop viewport (>= 1024px)
+        window.addEventListener('resize', function() {
+          if (window.innerWidth >= 1024 && !mobileMenu.classList.contains('hidden')) {
+            closeMobileMenu();
           }
         });
       }

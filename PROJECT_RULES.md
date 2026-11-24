@@ -22,6 +22,10 @@ When anyone (developer or AI agent) starts working on this project for the first
 3. **Mandatory Application of `frontend-design` on ALL Frontend Work**:
    - Every frontend view, template, UI component, and redesign **MUST strictly follow the `frontend-design` skill** instructions (`.agents/skills/frontend-design/SKILL.md`).
    - Building or modifying frontend views using generic AI defaults without activating and adhering to the `frontend-design` skill is strictly prohibited.
+4. **Mandatory Mobile-First Optimization for Every Feature**:
+   - Every new feature, UI view, dashboard, card, modal, or layout **MUST be fully responsive and explicitly optimized for mobile viewports** (down to 320px/360px) in accordance with Section 7.
+5. **Mandatory Pagination on All Lists & Collections**:
+   - Every feature presenting any list, table, feed, directory, or collection **MUST be paginated** at both the database level and the view layer in accordance with Section 8. Unbounded table scans and unpaginated DOM rendering are strictly prohibited.
 
 ---
 
@@ -97,10 +101,12 @@ flowchart LR
 * **Responsibilities**:
   1. Render server-side HTML pages and partials.
   2. Format displayed data (e.g., date formatting, score badge colors, allergen tags) using registered Handlebars helpers.
-  3. Follow responsive design with Tailwind CSS.
+  3. Follow responsive design with Tailwind CSS, strictly adhering to Section 7 (Mandatory Mobile Optimization & Responsive Ergonomics Protocol).
+  4. Implement accessible, responsive pagination controls for all collections and lists in accordance with Section 8 (Mandatory Pagination Protocol).
 * **Prohibitions**:
   - **Zero business decisions**: Views must only inspect pre-calculated flags and values provided by the controller ViewModel.
   - **Zero data mutations or API calls to fetch core page data**: Everything required to render the view must be supplied by the controller.
+  - **NO unpaginated list dumping**: Never render unbounded arrays of records directly without pagination controls.
 
 ### 1.4. Mandatory Frontend Design Engineering Protocol (`frontend-design` Skill)
 All frontend development (Handlebars templates, CSS styling, UI components, layout structures, and visual hierarchies) **MUST strictly adhere to the `frontend-design` skill**:
@@ -238,9 +244,10 @@ All database access in the TrueLabel platform must be engineered for high throug
 - **Passing Pre-Computed Counts**: When a parent aggregator resolves status counts for UI badges, pass those counts into child search methods (e.g., `statusCounts: precomputedCounts`) to prevent redundant duplicate queries within the same request lifecycle.
 
 ### 3.4. Database-Level Pagination, Filtering, and Sorting (`LIMIT` & `OFFSET`)
+- **Mandatory Pagination for All Lists**: In accordance with Section 8, every query that retrieves a list, directory, or collection must utilize database-level pagination via `.skip(offset).take(limit)` or `findAndCount({ skip, take, where, order })`.
 - **Prohibition of In-Memory Table Slicing**: Never execute `repo.find()` to load all records into Node.js memory and subsequently run JavaScript `.filter()`, `.sort()`, and `.slice()`.
 - **Push Execution to SQL**:
-  - Always utilize database-level pagination via `.skip(offset).take(limit)` or `findAndCount({ skip, take, where, order })`.
+  - Always utilize database-level pagination.
   - Push text search and filtering to the database via `LIKE` / `ILIKE` or parameterized `where` clauses with indexed columns.
 
 ### 3.5. Single-Pass SQL Grouped Aggregations vs Multi-Query Polling
@@ -334,4 +341,78 @@ In accordance with user directives, development begins with **High Business Valu
    - `personal-food` Area: User allergy & dietary profile setup, persistent profile storage, and active conflict warning flags on food items.
 4. **Accountable Industry Value (Manufacturer & Safety Foundation - F06)**:
    - `food-safety` Area: Manufacturer licence verification, food safety document submission, and verification status state machine.
+
+---
+
+## 7. Mandatory Mobile Optimization & Responsive Ergonomics Protocol
+
+Every feature developed or refactored in the TrueLabel platform **MUST be fully optimized for mobile devices**. TrueLabel is a public health and food transparency platform engineered for consumers scanning foods in grocery aisles on smartphones, as well as food inspectors and brand managers reviewing safety accreditations on mobile devices and tablets.
+
+### 7.1. Responsive Breakpoint & Viewport Rules
+1. **Universal Fluid Responsiveness**:
+   - Every page, dashboard, modal, form, card, and interactive widget must adapt seamlessly across Tailwind CSS breakpoints (`sm: 640px`, `md: 768px`, `lg: 1024px`, `xl: 1280px`) down to narrow mobile viewports (`320px` - `375px`).
+   - Rigid pixel widths (e.g., `width: 900px` without `max-w-full` or responsive width classes) that cause horizontal document viewport blowout are strictly prohibited.
+   - Text, badges, and labels must never clip, overflow containers unreachably, or collide with adjacent controls on mobile screens.
+2. **Multi-Column & Grid Breakpoint Stacking**:
+   - Multi-column card grids (e.g., food catalog items, accreditation stats, workflow cards) must scale responsively: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`.
+   - Never render fixed multi-column grids (such as `grid-cols-3` or `grid-cols-4`) without a single-column or two-column mobile fallback.
+3. **Table & Dense Data Adaptation**:
+   - Dense administrative and audit dockets must either:
+     - Wrap in a dedicated container with smooth horizontal scrolling (`overflow-x-auto` with visible scrollbar/gradient indicator), or
+     - Transform into responsive stacked clinical cards on mobile viewports (`<768px`) displaying key attributes vertically.
+
+### 7.2. Mobile Touch Ergonomics & Interaction Standards
+1. **Accessible Touch Targets**:
+   - All interactive controls (buttons, links, tab buttons, filter chips, dropdown toggles, pagination arrows) must maintain an accessible touch target area of at least **44×44px** (including padding) to prevent accidental mis-taps.
+   - Interactive chips and buttons must maintain minimum `gap-2` or `gap-3` spacing on mobile.
+2. **Touch-Safe Scrubbing & Sliders**:
+   - Range inputs, dynamic portion scalers, and draggable components must use `touch-action: pan-y` or `manipulation` to ensure smooth slider scrubbing without triggering accidental page scrolls.
+3. **Graceful Fine-Pointer Degradation**:
+   - Hardware cursor effects (such as custom pixel pointers or hover-dependent HUD micro-inspectors) must be gated with `@media (pointer: fine)` so touch devices (`pointer: coarse`) maintain standard OS touch behavior and provide tap-to-inspect fallbacks.
+4. **Modal & Floating Element Safety**:
+   - Modals and slide-overs must be scrollable on mobile (`max-h-[90vh] overflow-y-auto`) and must never position confirmation actions off-screen.
+   - Sticky docks (like the Viva dock or mobile navigation) must not obscure form inputs, submit buttons, or conflict with mobile virtual keyboards.
+
+---
+
+## 8. Mandatory Pagination Protocol for Lists, Tables, and Collections
+
+Whenever any feature presents a collection of entities or records—including food products, ingredient lists, reviews, consumer complaints/reports, safety audit documents, manufacturer licences, search results, bookmarked foods, or administrative logs—**it MUST be paginated**. Unbounded database queries and unpaginated DOM rendering are strictly prohibited.
+
+### 8.1. Architectural Requirements Across the MVC Layers
+
+1. **Domain & Model Layer (TypeORM & Services)**:
+   - **Database-Level Slicing (`LIMIT` & `OFFSET`)**: Always execute pagination directly in the database engine using `take` (limit) and `skip` (offset) via `findAndCount()` or `createQueryBuilder()`.
+   - **Strict Prohibition of In-Memory Slicing**: Never retrieve all rows from the database into Node.js memory and subsequently slice them via JavaScript `.slice()`.
+   - **Standardized Pagination Result**: Services returning paginated collections must return a typed structure:
+     ```typescript
+     export interface PaginatedResult<T> {
+       items: T[];
+       total: number;
+       page: number;
+       limit: number;
+       totalPages: number;
+       hasNextPage: boolean;
+       hasPrevPage: boolean;
+     }
+     ```
+   - **Standard Page Size**: Use context-appropriate default limits (e.g., 10 for administrative tables and audit queues, 12 for visual product card grids, 5 for compact review feeds).
+
+2. **Controller Layer (Request Handling & DTO Validation)**:
+   - Accept and sanitize `page` and `limit` query parameters with sensible fallbacks:
+     - `page`: positive integer (default `1`).
+     - `limit`: positive integer with an upper ceiling (e.g., maximum 50 or 100 items per request) to protect the server from Denial-of-Service memory exhaustion.
+   - Pass the full pagination metadata to the view ViewModel.
+
+3. **View Layer (Handlebars Templates & UI Controls)**:
+   - **Visible Pagination Controls**: Render clear pagination navigation controls whenever `totalPages > 1`:
+     - **Previous & Next buttons** (disabled on first/last page respectively).
+     - **Current Page indicator** (e.g., *"Page 2 of 8"* or clickable page number pills).
+     - **Summary Readout**: Display item range (e.g., *"Showing 13–24 of 88 items"*).
+   - **Query Parameter Preservation**: Page navigation links must preserve all active filter, search, category, and sorting parameters:
+     ```html
+     <a href="?q={{query}}&category={{category}}&sort={{sort}}&page={{nextPage}}">Next</a>
+     ```
+   - **Mobile-Responsive Pagination Controls**: On mobile screens (`<640px`), pagination controls must collapse gracefully (e.g., compact Previous/Next buttons with *"2 / 8"* indicator) to prevent multi-line button wrapping.
+   - **Zero-Record & Single-Page Handling**: If a list has 0 items, render a helpful empty state with no broken pagination chrome. If `totalPages === 1`, hide the pagination controls cleanly.
 
