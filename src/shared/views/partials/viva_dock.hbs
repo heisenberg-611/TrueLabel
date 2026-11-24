@@ -1,13 +1,13 @@
 <!-- CSE470 Viva Evaluation Dock (Floating Bottom Bar) -->
-<aside id="viva-dock" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 max-w-full px-3">
+<aside id="viva-dock" class="fixed bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 z-50 w-auto max-w-[calc(100vw-1rem)] px-1 sm:px-3">
   
   <!-- Expanded Pill -->
-  <div id="viva-dock-expanded" class="flex items-center gap-3 bg-slate-950/95 text-white backdrop-blur-md border border-slate-700/80 rounded-full px-4 py-2 shadow-[0_10px_35px_-5px_rgba(0,0,0,0.4)] transition-all">
+  <div id="viva-dock-expanded" class="flex items-center gap-1.5 sm:gap-3 bg-slate-950/95 text-white backdrop-blur-md border border-slate-700/80 rounded-full px-2.5 sm:px-4 py-1.5 sm:py-2 shadow-[0_10px_35px_-5px_rgba(0,0,0,0.4)] transition-all">
     
     <!-- Persona Switcher Badge -->
-    <div class="flex items-center gap-1.5 pr-2 border-r border-slate-800">
+    <div class="hidden xs:flex items-center gap-1.5 pr-2 border-r border-slate-800 shrink-0">
       <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-      <span class="text-[11px] font-mono font-bold tracking-tight text-slate-300 whitespace-nowrap">Persona Switcher</span>
+      <span class="text-[10px] sm:text-[11px] font-mono font-bold tracking-tight text-slate-300 whitespace-nowrap">Persona Switcher</span>
     </div>
 
     <!-- Quick Persona Switcher -->
@@ -18,7 +18,7 @@
       <a
         href="/auth/switch-role/consumer"
         title="Switch to Consumer Persona"
-        class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all {{#if (eq user.role 'consumer')}}bg-white text-slate-950 shadow-sm{{else}}text-slate-300 hover:text-white hover:bg-slate-800{{/if}}"
+        class="min-h-[36px] sm:min-h-[38px] flex items-center justify-center px-2 sm:px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-bold transition-all {{#if (eq user.role 'consumer')}}bg-white text-slate-950 shadow-sm{{else}}text-slate-300 hover:text-white hover:bg-slate-800{{/if}}"
       >
         Consumer
       </a>
@@ -27,7 +27,7 @@
       <a
         href="/auth/switch-role/manufacturer"
         title="Switch to Manufacturer Persona"
-        class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all {{#if (eq user.role 'manufacturer')}}bg-emerald-500 text-slate-950 shadow-sm{{else}}text-slate-300 hover:text-white hover:bg-slate-800{{/if}}"
+        class="min-h-[36px] sm:min-h-[38px] flex items-center justify-center px-2 sm:px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-bold transition-all {{#if (eq user.role 'manufacturer')}}bg-emerald-500 text-slate-950 shadow-sm{{else}}text-slate-300 hover:text-white hover:bg-slate-800{{/if}}"
       >
         Mfg
       </a>
@@ -36,7 +36,7 @@
       <a
         href="/auth/switch-role/inspector"
         title="Switch to Inspector Persona"
-        class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all {{#if (eq user.role 'inspector')}}bg-amber-400 text-slate-950 shadow-sm{{else}}text-slate-300 hover:text-white hover:bg-slate-800{{/if}}"
+        class="min-h-[36px] sm:min-h-[38px] flex items-center justify-center px-2 sm:px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-bold transition-all {{#if (eq user.role 'inspector')}}bg-amber-400 text-slate-950 shadow-sm{{else}}text-slate-300 hover:text-white hover:bg-slate-800{{/if}}"
       >
         Inspector
       </a>
@@ -45,7 +45,7 @@
       <a
         href="/auth/switch-role/admin"
         title="Switch to Administrator Persona"
-        class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all {{#if (eq user.role 'admin')}}bg-indigo-400 text-slate-950 shadow-sm{{else}}text-slate-300 hover:text-white hover:bg-slate-800{{/if}}"
+        class="min-h-[36px] sm:min-h-[38px] flex items-center justify-center px-2 sm:px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-bold transition-all {{#if (eq user.role 'admin')}}bg-indigo-400 text-slate-950 shadow-sm{{else}}text-slate-300 hover:text-white hover:bg-slate-800{{/if}}"
       >
         Admin
       </a>
@@ -56,7 +56,7 @@
       id="viva-dock-minimize-btn"
       type="button"
       title="Minimize Viva Dock"
-      class="text-slate-400 hover:text-white p-1 rounded-full hover:bg-slate-800 transition-colors ml-1"
+      class="text-slate-400 hover:text-white p-1.5 rounded-full hover:bg-slate-800 transition-colors ml-0.5 sm:ml-1 min-w-[32px] min-h-[32px] flex items-center justify-center"
     >
       <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
     </button>

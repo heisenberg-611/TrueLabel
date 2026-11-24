@@ -118,7 +118,7 @@
               </div>
 
               <!-- Four Dimension Scores -->
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 text-xs">
                 <div class="bg-slate-50 rounded px-2.5 py-1.5 border border-slate-100">
                   <span class="text-slate-500 block text-[11px]">Taste & quality</span>
                   <span class="font-mono font-bold text-slate-900">{{this.tasteRating}}/5</span>
@@ -168,7 +168,7 @@
                       </summary>
                       <form method="POST" action="/community/reviews/{{this.id}}/edit" class="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-4">
                         <input type="hidden" name="_csrf" value="{{../csrfToken}}">
-                        <div class="grid grid-cols-2 gap-3 text-xs">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
                           <label class="font-semibold text-slate-700">
                             Taste & quality (1 to 5)
                             <select name="tasteRating" required class="mt-1 block w-full border border-slate-300 rounded-md p-2 bg-white text-sm">
@@ -218,7 +218,7 @@
                           Your experience
                           <textarea name="comment" minlength="10" maxlength="2000" rows="3" required class="mt-1 block w-full border border-slate-300 rounded-md p-2 text-sm bg-white">{{this.comment}}</textarea>
                         </label>
-                        <button type="submit" class="px-4 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-md transition-colors">
+                        <button type="submit" class="w-full sm:w-auto px-4 py-2.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-md transition-colors min-h-[44px] flex items-center justify-center">
                           Save review changes
                         </button>
                       </form>
@@ -354,7 +354,7 @@
             <textarea name="comment" minlength="10" maxlength="2000" rows="4" required class="mt-1 block w-full border border-slate-300 rounded-md p-2.5 text-sm bg-white" placeholder="Describe taste, packaging seal integrity, and whether the printed label matched expectations."></textarea>
           </label>
 
-          <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-lg px-4 py-2.5 text-xs transition-colors">
+          <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-lg px-4 py-2.5 text-xs transition-colors min-h-[44px] flex items-center justify-center">
             Publish review
           </button>
         </form>

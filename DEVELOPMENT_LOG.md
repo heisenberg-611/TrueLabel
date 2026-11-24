@@ -1281,6 +1281,95 @@
    - `npm test`: All 26 test suites passed cleanly (267/267 tests).
    - `nest build`: Compiled with zero TypeScript errors.
 
+---
+
+### Entry 059 | 2026-11-24 12:08:00 +06:00 | Governance & Rules: Codification of Mobile Optimization & Pagination Protocols
+
+**What**: Formally codified non-negotiable engineering mandates for mobile responsiveness and database-level pagination into `PROJECT_RULES.md` per user directives:
+1. **Onboarding Directives (`PROJECT_RULES.md` Section 0)**:
+   - Added Rule 0.4: Mandatory Mobile-First Optimization for every feature and view down to 320px/360px viewports.
+   - Added Rule 0.5: Mandatory Database-Level Pagination for all lists, feeds, tables, and collections.
+2. **View & Architectural Refinements (`PROJECT_RULES.md` Section 1.3 & 3.4)**:
+   - Formally updated View Layer rules to require mobile-first Tailwind design and accessible pagination controls.
+   - Prohibited in-memory collection slicing (`.slice()`) and unbounded array dumping into templates.
+3. **Section 7: Mandatory Mobile Optimization & Responsive Ergonomics Protocol**:
+   - Established fluid responsiveness rules across all Tailwind breakpoints (`sm:`, `md:`, `lg:`, `xl:`) down to 320px without rigid pixel overflow.
+   - Codified multi-column card grid stacking (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`).
+   - Standardized 44×44px minimum accessible touch target sizes, mobile slider scrubbing (`touch-action: pan-y`), and containerized horizontal scrolling for wide audit dockets.
+   - Required `@media (pointer: fine)` guards for desktop-specific cursor effects to ensure clean touch performance.
+4. **Section 8: Mandatory Pagination Protocol for Lists, Tables, and Collections**:
+   - Established end-to-end full-stack pagination protocol across Service (TypeORM `findAndCount` / QueryBuilder `.skip().take()`), Controller (DTO validation & query sanitization), and Handlebars View layers.
+   - Required standard `PaginatedResult<T>` structure, preservation of URL query parameters across page transitions (`?q=...&page=...`), and responsive pagination controls on mobile.
+5. **Verification**:
+   - `npm test`: All 26 test suites passed cleanly (267/267 tests).
+   - `nest build`: Compiled successfully with zero TypeScript errors.
+
+---
+
+### Entry 060 | 2026-11-24 12:30:00 +06:00 | Comprehensive Mobile Optimization & Responsive Ergonomics Implementation Across All Viewlayers
+
+**What**: Executed a comprehensive mobile optimization and responsive ergonomics overhaul across the entire TrueLabel viewlayer to satisfy `PROJECT_RULES.md` Section 7 ("Mandatory Mobile Optimization & Responsive Ergonomics Protocol") and Section 1.4 ("Frontend Design Protocol"):
+1. **Core Shell, Layout & Global Ergonomics**:
+   - `src/shared/views/layouts/main.hbs`: Updated `<main>` container with responsive mobile padding `px-3 sm:px-4 py-6 sm:py-8` and bottom clearing padding `pb-28 sm:pb-12` to prevent occlusion by the sticky Viva dock across small screens.
+   - `src/shared/views/partials/navbar.hbs`: Enhanced mobile drawer navigation links and guest buttons with accessible 44px minimum touch targets (`min-h-[44px]`), clean SVG indicators, and touch-friendly hit areas.
+   - `src/shared/views/partials/viva_dock.hbs`: Positioned dock safely on mobile with `bottom-3 sm:bottom-4`, `max-w-[calc(100vw-1rem)]`, and optimized role pill touch targets.
+   - `public/css/style.css`: Enforced fluid container constraints (`max-width: 380px` for `.nutrition-panel`, `calc(100vw - 24px)` for HUD tooltip), `touch-action: pan-y;` on `.serving-slider` for mobile scrubbing without page scroll conflicts, and touch-friendly scrollbars.
+   - `public/js/truelabel-ingredient-inspector.js`: Added tap-to-inspect and tap-to-dismiss behavior with an explicit close button for touch devices, safely docking HUD tooltips above the mobile Viva dock on screens <= 640px.
+2. **Shared Partials & Components**:
+   - `src/shared/views/partials/_pagination.hbs`: Responsive full-width centered layout on mobile with `min-h-[44px] min-w-[44px]` accessible touch targets on Previous/Next buttons.
+   - `src/shared/views/partials/_nutrition_facts_form.hbs`: Converted rigid grid to fluid responsive `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`.
+   - `src/shared/views/partials/_food_card.hbs`: Added `min-w-0` and mobile-safe padding to eliminate flex blowout.
+3. **Area View Layer Adaptations**:
+   - **Home Area (`src/areas/home/views/`)**:
+     - `index.hbs`: Responsive telemetry metrics, catalog previews, and ecosystem cards with `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4/3` and `min-h-[44px]` touch targets.
+     - `cache-policy.hbs`: Added `min-w-[540px]` inside `overflow-x-auto` to protect HTTP caching policy table layout.
+   - **Identity Area (`src/areas/identity/views/`)**:
+     - `login.hbs` & `register.hbs`: Optimized container spacing `p-5 sm:p-8 my-6 sm:my-12` with 44px minimum touch height inputs and action buttons.
+     - `consumer.hbs`: Converted metabolic numbers grid from `grid-cols-2` to `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`.
+     - `inspector.hbs`: Responsive telemetry bar `grid-cols-1 sm:grid-cols-2 md:grid-cols-4` and tables with `min-w-[700px]` and `min-w-[640px]`.
+     - `manufacturer.hbs`: Responsive accreditation blocks `grid-cols-1 sm:grid-cols-3` and registered formulations table with `min-w-[640px]`.
+     - `admin.hbs`: Telemetry grid `grid-cols-1 sm:grid-cols-2 md:grid-cols-4`, users and formulations tables with `min-w-[700px]`, and all 4 administrative modals upgraded with `max-h-[90vh] flex flex-col` and scrollable form bodies.
+   - **Food Catalog Area (`src/areas/food-catalog/views/`)**:
+     - `index.hbs`: Responsive filter bar and catalog grid `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`.
+     - `detail.hbs`: Dimension averages grid `grid-cols-1 sm:grid-cols-2`, serving preset touch buttons `min-h-[38px]`, additives/allergens summary grid `grid-cols-1 sm:grid-cols-2`, and ban/delete modals upgraded with `max-h-[90vh] flex flex-col` and scrollable form bodies.
+     - `create.hbs` & `edit.hbs`: Mobile padding `p-4 sm:p-8`, responsive serving grids `grid-cols-1 sm:grid-cols-2 md:grid-cols-3`, and full-width/accessible submit buttons.
+   - **Food Safety Area (`src/areas/food-safety/views/`)**:
+     - `documents.hbs`: Responsive metrics overview cards `grid-cols-1 sm:grid-cols-2 md:grid-cols-4`.
+     - `upload.hbs`: Responsive action buttons `flex-col sm:flex-row` with 44px touch targets.
+   - **Personal Food Area (`src/areas/personal-food/views/`)**:
+     - `profile.hbs`: Responsive dietary lifestyle grid `grid-cols-1 sm:grid-cols-2 md:grid-cols-4`, metabolic inputs `grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5`, BMR/TDEE stats `grid-cols-1 sm:grid-cols-2 md:grid-cols-4`, and accessible submit controls.
+   - **Community Area (`src/areas/community/views/`)**:
+     - `report-queue.hbs`: Responsive 4-metric telemetry bar `grid-cols-1 sm:grid-cols-2 md:grid-cols-4` and regulatory docket table with `min-w-[700px]`.
+     - `reviews.hbs`: Responsive dimension score badges `grid-cols-1 sm:grid-cols-2 md:grid-cols-4`, review editing grid `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`, and 44px min-height buttons.
+     - `report-form.hbs`: Accessible 44px submit button with responsive stacking.
+4. **Verification**:
+   - `npm test`: All 26 test suites passed cleanly (267/267 tests).
+   - `nest build`: Compiled successfully with zero TypeScript compilation or lint errors.
+
+---
+
+### Entry 061 | 2026-11-24 12:41:00 +06:00 | Mobile Menu Dropdown Refactor: Floating Overlay, Backdrop Dimming & Interaction Ergonomics
+
+**What**: Addressed user feedback regarding mobile menu dropdown behavior in `src/shared/views/partials/navbar.hbs`:
+1. **Elimination of Page Layout Shift & Push-Down**:
+   - Refactored `#mobile-menu` from an in-flow static block to an elevated absolute overlay (`absolute top-full left-0 right-0 z-50`). Opening the menu no longer reflows or pushes page content downward.
+   - Raised `<header>` to `z-[60]` so the sticky header and its overlay safely float above the bottom Viva dock (`z-50`).
+2. **Backdrop Scrim & Outside Tap Dismissal**:
+   - Added `#mobile-menu-backdrop` (`fixed inset-x-0 top-16 bottom-0 z-40 bg-slate-900/50 backdrop-blur-xs`) that dims the page content below the header.
+   - Added click listener on the backdrop scrim to immediately dismiss the menu on any outside tap.
+3. **Viewport Height Clamping & Internal Scrolling**:
+   - Added `max-h-[calc(100vh-4.5rem)] overflow-y-auto` to `#mobile-menu`, guaranteeing that role menus with extensive navigation links (inspector/manufacturer/admin) scroll cleanly within the menu container without being clipped on compact screens.
+4. **Body Scroll Locking & Keyboard Accessibility**:
+   - Implemented body scroll lock (`document.body.classList.toggle('overflow-hidden')`) while the mobile dropdown is open, eliminating background bouncing or scroll interference.
+   - Added `Escape` key event listener to close the dropdown.
+   - Added click listeners to all navigation links inside the drawer to automatically close the menu upon selection.
+   - Added responsive resize listener to auto-close the mobile menu if the viewport expands to desktop width ($\ge 1024px$).
+   - Managed `aria-expanded` and `aria-controls` attributes on `#mobile-nav-toggle`.
+5. **Verification**:
+   - `npm test`: All 26 test suites passed cleanly (267/267 tests).
+   - `nest build`: Compiled with zero TypeScript errors.
+
+
 
 
 

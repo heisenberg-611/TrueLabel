@@ -1,4 +1,4 @@
-<div class="max-w-md mx-auto my-12 bg-white p-8 border border-slate-200 rounded-lg shadow-sm">
+<div class="max-w-md mx-auto my-6 sm:my-12 bg-white p-5 sm:p-8 border border-slate-200 rounded-xl shadow-sm">
   <div class="mb-6 text-center">
     <a href="/" class="inline-block mb-4" aria-label="TrueLabel Home">
       <img
@@ -21,7 +21,7 @@
   </div>
 
   {{#if unauthorized}}
-    <div class="mb-4 p-3 bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded font-medium">
+    <div class="mb-4 p-3 bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-lg font-medium">
       Please sign in to access this protected resource.
     </div>
   {{/if}}
@@ -37,7 +37,7 @@
         value="{{email}}"
         required
         placeholder="consumer@truelabel.demo"
-        class="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-transparent"
+        class="w-full px-3.5 py-2.5 min-h-[44px] border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-transparent"
       />
     </div>
 
@@ -49,13 +49,13 @@
         name="password"
         required
         placeholder="••••••••"
-        class="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-transparent"
+        class="w-full px-3.5 py-2.5 min-h-[44px] border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-transparent"
       />
     </div>
 
     <button
       type="submit"
-      class="w-full py-2.5 px-4 bg-slate-900 text-white font-bold text-sm rounded hover:bg-slate-800 transition-colors"
+      class="w-full min-h-[44px] py-2.5 px-4 bg-slate-900 text-white font-bold text-sm rounded-lg hover:bg-slate-800 transition-colors flex items-center justify-center shadow-sm"
     >
       Sign In
     </button>

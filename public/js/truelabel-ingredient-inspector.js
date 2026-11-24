@@ -49,7 +49,10 @@ class TrueLabelIngredientInspector {
     this.tooltip.innerHTML = `
       <div class="flex items-center justify-between gap-2 pb-2 mb-2 border-b border-white/10">
         <span class="font-bold text-white text-[13px] tracking-tight">${name}</span>
-        ${hazardBadge}
+        <div class="flex items-center gap-1.5">
+          ${hazardBadge}
+          <button type="button" class="truelabel-hud-close text-slate-300 hover:text-white text-xs px-2 py-1 rounded bg-white/10 cursor-pointer" aria-label="Close HUD" title="Close">✕</button>
+        </div>
       </div>
       <div class="space-y-1 text-[11px] text-slate-300">
         <div class="flex items-center justify-between text-[10px] font-mono text-slate-400">
@@ -65,25 +68,52 @@ class TrueLabelIngredientInspector {
       </div>
     `;
 
+    const closeBtn = this.tooltip.querySelector('.truelabel-hud-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        this.pinned = false;
+        this.tooltip.classList.remove('pinned');
+        this.tooltip.style.display = 'none';
+      });
+    }
+
     this.tooltip.style.display = 'block';
     this.positionTooltip(e);
   }
 
   positionTooltip(e) {
+    if (window.innerWidth <= 640) {
+      // Mobile screen: safely dock at bottom above viva dock
+      this.tooltip.style.left = '12px';
+      this.tooltip.style.right = '12px';
+      this.tooltip.style.width = 'auto';
+      this.tooltip.style.maxWidth = `${window.innerWidth - 24}px`;
+      this.tooltip.style.bottom = '76px';
+      this.tooltip.style.top = 'auto';
+      return;
+    }
+
     const tooltipWidth = 320;
     const tooltipHeight = 160;
     const padding = 16;
+    const clientX = e && typeof e.clientX === 'number' ? e.clientX : window.innerWidth / 2;
+    const clientY = e && typeof e.clientY === 'number' ? e.clientY : window.innerHeight / 2;
 
-    let left = e.clientX + padding;
-    let top = e.clientY + padding;
+    let left = clientX + padding;
+    let top = clientY + padding;
 
     if (left + tooltipWidth > window.innerWidth) {
-      left = e.clientX - tooltipWidth - padding;
+      left = clientX - tooltipWidth - padding;
     }
     if (top + tooltipHeight > window.innerHeight) {
-      top = e.clientY - tooltipHeight - padding;
+      top = clientY - tooltipHeight - padding;
     }
 
+    this.tooltip.style.bottom = 'auto';
+    this.tooltip.style.right = 'auto';
+    this.tooltip.style.width = '';
+    this.tooltip.style.maxWidth = '340px';
     this.tooltip.style.left = `${Math.max(10, left)}px`;
     this.tooltip.style.top = `${Math.max(10, top)}px`;
   }
@@ -109,11 +139,26 @@ class TrueLabelIngredientInspector {
     });
 
     document.addEventListener('click', (e) => {
+      if (e.target.closest('.truelabel-hud-close')) {
+        return;
+      }
       const el = e.target.closest(this.targetSelector);
       if (el) {
-        this.pinned = !this.pinned;
-        if (this.pinned) {
+        if (this.tooltip.style.display !== 'block' || this.activeEl !== el) {
+          this.inspect(el, e);
+          this.pinned = true;
           this.tooltip.classList.add('pinned');
+        } else {
+          this.pinned = !this.pinned;
+          if (this.pinned) {
+            this.tooltip.classList.add('pinned');
+          } else {
+            this.tooltip.classList.remove('pinned');
+            this.tooltip.style.display = 'none';
+          }
+        }
+
+        if (this.pinned) {
           const name = el.getAttribute('data-ingredient-name') || el.textContent.trim();
           const citation = el.getAttribute('data-citation') || `TrueLabel Forensic Registry Monograph: ${name}`;
           navigator.clipboard.writeText(citation).catch(() => {});
@@ -122,8 +167,6 @@ class TrueLabelIngredientInspector {
           if (footerNotice) {
             footerNotice.textContent = '✓ Citation Copied to Clipboard!';
           }
-        } else {
-          this.tooltip.classList.remove('pinned');
         }
       } else if (!e.target.closest('.truelabel-hud-tooltip')) {
         this.pinned = false;

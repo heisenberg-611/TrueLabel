@@ -340,7 +340,7 @@
             <span class="text-3xl font-black font-mono text-slate-950">{{reviewSummary.averageRating}}</span>
             <span class="text-xs font-mono text-slate-500">/ 5.0 weighted average ({{reviewSummary.reviewCount}} {{#if (eq reviewSummary.reviewCount 1)}}review{{else}}reviews{{/if}})</span>
           </div>
-          <div class="grid grid-cols-2 gap-2.5 text-xs">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
             {{#each reviewSummary.dimensionAverages}}
               <div class="bg-slate-50 border border-slate-100 rounded-md px-3 py-2">
                 <span class="text-slate-500 block text-[11px]">{{this.label}}</span>
@@ -408,21 +408,21 @@
           />
         </div>
 
-        <!-- Modern Clickable Preset Chips with Pointer Cursor -->
+        <!-- Modern Clickable Preset Chips with Pointer Cursor (Touch-Friendly) -->
         <div class="flex flex-wrap items-center justify-between gap-1.5 pt-0.5">
-          <button type="button" data-preset-val="25" class="serving-preset-btn px-2.5 py-1 rounded-md text-[10px] font-mono font-bold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:border-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 cursor-pointer transition-all">
+          <button type="button" data-preset-val="25" class="serving-preset-btn min-h-[38px] px-3 py-1.5 rounded-md text-[10px] font-mono font-bold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:border-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 cursor-pointer transition-all flex items-center justify-center">
             25g
           </button>
-          <button type="button" data-preset-val="50" class="serving-preset-btn px-2.5 py-1 rounded-md text-[10px] font-mono font-bold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:border-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 cursor-pointer transition-all">
+          <button type="button" data-preset-val="50" class="serving-preset-btn min-h-[38px] px-3 py-1.5 rounded-md text-[10px] font-mono font-bold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:border-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 cursor-pointer transition-all flex items-center justify-center">
             50g
           </button>
-          <button type="button" data-preset-val="100" class="serving-preset-btn px-2.5 py-1 rounded-md text-[10px] font-mono font-bold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:border-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 cursor-pointer transition-all">
+          <button type="button" data-preset-val="100" class="serving-preset-btn min-h-[38px] px-3 py-1.5 rounded-md text-[10px] font-mono font-bold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:border-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 cursor-pointer transition-all flex items-center justify-center">
             100g (Std)
           </button>
-          <button type="button" data-preset-val="150" class="serving-preset-btn px-2.5 py-1 rounded-md text-[10px] font-mono font-bold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:border-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 cursor-pointer transition-all">
+          <button type="button" data-preset-val="150" class="serving-preset-btn min-h-[38px] px-3 py-1.5 rounded-md text-[10px] font-mono font-bold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:border-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 cursor-pointer transition-all flex items-center justify-center">
             150g
           </button>
-          <button type="button" data-preset-val="250" class="serving-preset-btn px-2.5 py-1 rounded-md text-[10px] font-mono font-bold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:border-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 cursor-pointer transition-all">
+          <button type="button" data-preset-val="250" class="serving-preset-btn min-h-[38px] px-3 py-1.5 rounded-md text-[10px] font-mono font-bold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:border-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 cursor-pointer transition-all flex items-center justify-center">
             250g
           </button>
         </div>
@@ -542,7 +542,7 @@
       <!-- Additives & Safety Info -->
       <div class="bg-white dark:bg-[#141413] border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-sm">
         <h4 class="text-sm font-black text-slate-900 dark:text-slate-100 tracking-tight">Food Safety & Compliance Summary</h4>
-        <div class="grid grid-cols-2 gap-4 mt-3 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-3 text-xs">
           <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
             <div class="text-slate-400 dark:text-slate-500 font-bold uppercase text-[10px]">Additives Count</div>
             <div class="text-lg font-black text-slate-800 dark:text-slate-200 mt-0.5">{{additives.length}} identified</div>
@@ -605,8 +605,8 @@
     class="!m-0 fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden"
     onclick="if (event.target === this) closeBanProductModal()"
   >
-    <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden transform transition-all">
-      <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-rose-50/50">
+    <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col border border-slate-200 overflow-hidden transform transition-all">
+      <div class="p-4 sm:p-6 border-b border-slate-100 flex items-center justify-between bg-rose-50/50">
         <div class="flex items-center gap-2.5">
           <span class="w-7 h-7 rounded-lg bg-rose-700 text-white flex items-center justify-center text-xs font-bold">!</span>
           <div>
@@ -617,13 +617,13 @@
         <button
           type="button"
           onclick="closeBanProductModal()"
-          class="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+          class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg min-h-[36px] min-w-[36px] flex items-center justify-center"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
 
-      <form method="POST" action="/catalog/manage/{{product.id}}/ban" class="p-6 space-y-4">
+      <form method="POST" action="/catalog/manage/{{product.id}}/ban" class="p-4 sm:p-6 space-y-4 overflow-y-auto flex-grow">
         <input type="hidden" name="_csrf" value="{{csrfToken}}">
 
         <div>
@@ -644,13 +644,13 @@
           <button
             type="button"
             onclick="closeBanProductModal()"
-            class="px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg text-xs font-semibold transition-colors"
+            class="min-h-[44px] px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg text-xs font-semibold transition-colors"
           >
             Cancel
           </button>
           <button
             type="submit"
-            class="px-4 py-2 bg-rose-700 hover:bg-rose-800 text-white rounded-lg text-xs font-semibold transition-colors shadow-sm"
+            class="min-h-[44px] px-4 py-2 bg-rose-700 hover:bg-rose-800 text-white rounded-lg text-xs font-semibold transition-colors shadow-sm"
           >
             Confirm regulatory ban
           </button>
@@ -665,8 +665,8 @@
     class="!m-0 fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden"
     onclick="if (event.target === this) closeDeleteProductModal()"
   >
-    <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden transform transition-all">
-      <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-rose-50/50">
+    <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col border border-slate-200 overflow-hidden transform transition-all">
+      <div class="p-4 sm:p-6 border-b border-slate-100 flex items-center justify-between bg-rose-50/50">
         <div class="flex items-center gap-2.5">
           <span class="w-7 h-7 rounded-lg bg-rose-700 text-white flex items-center justify-center text-xs font-bold">&times;</span>
           <div>
@@ -677,13 +677,13 @@
         <button
           type="button"
           onclick="closeDeleteProductModal()"
-          class="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+          class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg min-h-[36px] min-w-[36px] flex items-center justify-center"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
 
-      <form method="POST" action="/catalog/manage/{{product.id}}/delete" class="p-6 space-y-4">
+      <form method="POST" action="/catalog/manage/{{product.id}}/delete" class="p-4 sm:p-6 space-y-4 overflow-y-auto flex-grow">
         <input type="hidden" name="_csrf" value="{{csrfToken}}">
 
         <p class="text-xs text-slate-600 leading-relaxed">
@@ -699,7 +699,7 @@
             id="confirmDeleteBarcode"
             oninput="document.getElementById('confirmDeleteBtn').disabled = (this.value.trim() !== '{{product.barcode}}')"
             placeholder="Enter barcode exactly"
-            class="w-full text-xs rounded-lg border border-slate-300 px-3 py-2 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-700 font-mono"
+            class="w-full text-xs rounded-lg border border-slate-300 px-3 py-2 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-700 font-mono min-h-[44px]"
           />
         </div>
 
@@ -707,7 +707,7 @@
           <button
             type="button"
             onclick="closeDeleteProductModal()"
-            class="px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg text-xs font-semibold transition-colors"
+            class="min-h-[44px] px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg text-xs font-semibold transition-colors"
           >
             Cancel
           </button>
@@ -715,7 +715,7 @@
             type="submit"
             id="confirmDeleteBtn"
             disabled
-            class="px-4 py-2 bg-rose-700 hover:bg-rose-800 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-xs font-semibold transition-colors shadow-sm"
+            class="min-h-[44px] px-4 py-2 bg-rose-700 hover:bg-rose-800 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-xs font-semibold transition-colors shadow-sm"
           >
             Delete product permanently
           </button>

@@ -45,7 +45,7 @@
   </div>
 
   <!-- Connected Metric Strip -->
-  <div class="grid grid-cols-2 md:grid-cols-4 bg-white border border-slate-200 rounded-xl divide-y md:divide-y-0 md:divide-x divide-slate-100 overflow-hidden shadow-sm">
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 bg-white border border-slate-200 rounded-xl divide-y sm:divide-y-0 sm:divide-x divide-slate-100 overflow-hidden shadow-sm">
     <div class="p-5">
       <span class="text-xs font-medium text-slate-500 block">Total registered accounts</span>
       <div class="text-2xl sm:text-3xl font-black text-slate-900 font-mono mt-1">{{totalUsers}}</div>
@@ -232,7 +232,7 @@
 
     <!-- Table of Users -->
     <div class="overflow-x-auto">
-      <table class="w-full text-left text-xs">
+      <table class="w-full min-w-[700px] text-left text-xs">
         <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold text-[11px]">
           <tr>
             <th class="px-6 py-3.5">User ID</th>
@@ -423,7 +423,7 @@
 
     <!-- Table of Catalog Formulations -->
     <div class="overflow-x-auto">
-      <table class="w-full text-left text-xs">
+      <table class="w-full min-w-[700px] text-left text-xs">
         <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold text-[11px]">
           <tr>
             <th class="px-6 py-3.5">Barcode</th>
@@ -563,25 +563,25 @@
 <!-- Modal: Add New User Account -->
 <div
   id="addUserModal"
-  class="!m-0 fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden"
+  class="!m-0 fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden"
   onclick="if (event.target === this) closeAddUserModal()"
 >
-  <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden transform transition-all">
-    <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+  <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col border border-slate-200 overflow-hidden transform transition-all">
+    <div class="p-5 sm:p-6 border-b border-slate-100 flex items-center justify-between shrink-0">
       <div>
-        <h3 class="text-lg font-bold text-slate-900">Create new user account</h3>
+        <h3 class="text-base sm:text-lg font-bold text-slate-900">Create new user account</h3>
         <p class="text-xs text-slate-500 mt-0.5">Provision a new identity with assigned system role</p>
       </div>
       <button
         type="button"
         onclick="closeAddUserModal()"
-        class="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+        class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg min-w-[36px] min-h-[36px] flex items-center justify-center"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
     </div>
 
-    <form method="POST" action="/dashboard/admin/users/create" class="p-6 space-y-4">
+    <form method="POST" action="/dashboard/admin/users/create" class="p-5 sm:p-6 space-y-4 overflow-y-auto flex-grow">
       <input type="hidden" name="_csrf" value="{{csrfToken}}">
 
       <div>
@@ -670,25 +670,25 @@
 <!-- Modal: Edit Existing User Account -->
 <div
   id="editUserModal"
-  class="!m-0 fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden"
+  class="!m-0 fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden"
   onclick="if (event.target === this) closeEditUserModal()"
 >
-  <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden transform transition-all">
-    <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+  <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col border border-slate-200 overflow-hidden transform transition-all">
+    <div class="p-5 sm:p-6 border-b border-slate-100 flex items-center justify-between shrink-0">
       <div>
-        <h3 class="text-lg font-bold text-slate-900">Modify user account <span id="editUserIdDisplay" class="font-mono text-slate-500"></span></h3>
+        <h3 class="text-base sm:text-lg font-bold text-slate-900">Modify user account <span id="editUserIdDisplay" class="font-mono text-slate-500"></span></h3>
         <p class="text-xs text-slate-500 mt-0.5">Update credentials, role assignments, or active verification status</p>
       </div>
       <button
         type="button"
         onclick="closeEditUserModal()"
-        class="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+        class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg min-w-[36px] min-h-[36px] flex items-center justify-center"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
     </div>
 
-    <form id="editUserForm" method="POST" action="/dashboard/admin/users/0/update" class="p-6 space-y-4">
+    <form id="editUserForm" method="POST" action="/dashboard/admin/users/0/update" class="p-5 sm:p-6 space-y-4 overflow-y-auto flex-grow">
       <input type="hidden" name="_csrf" value="{{csrfToken}}">
       <input type="hidden" name="_hasVerifiedField" value="true">
 
@@ -776,11 +776,11 @@
 <!-- Modal: Admin Ban Food Product -->
 <div
   id="adminBanProductModal"
-  class="!m-0 fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden"
+  class="!m-0 fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden"
   onclick="if (event.target === this) closeAdminBanModal()"
 >
-  <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden transform transition-all">
-    <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-rose-50/50">
+  <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col border border-slate-200 overflow-hidden transform transition-all">
+    <div class="p-5 sm:p-6 border-b border-slate-100 flex items-center justify-between bg-rose-50/50 shrink-0">
       <div class="flex items-center gap-2.5">
         <span class="w-7 h-7 rounded-lg bg-rose-700 text-white flex items-center justify-center text-xs font-bold">!</span>
         <div>
@@ -791,13 +791,13 @@
       <button
         type="button"
         onclick="closeAdminBanModal()"
-        class="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+        class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg min-w-[36px] min-h-[36px] flex items-center justify-center"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
     </div>
 
-    <form id="adminBanProductForm" method="POST" action="" class="p-6 space-y-4">
+    <form id="adminBanProductForm" method="POST" action="" class="p-5 sm:p-6 space-y-4 overflow-y-auto flex-grow">
       <input type="hidden" name="_csrf" value="{{csrfToken}}">
 
       <p class="text-xs text-slate-600">
@@ -840,11 +840,11 @@
 <!-- Modal: Admin Permanent Product Deletion -->
 <div
   id="adminDeleteProductModal"
-  class="!m-0 fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden"
+  class="!m-0 fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden"
   onclick="if (event.target === this) closeAdminDeleteModal()"
 >
-  <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden transform transition-all">
-    <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-rose-50/50">
+  <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col border border-slate-200 overflow-hidden transform transition-all">
+    <div class="p-5 sm:p-6 border-b border-slate-100 flex items-center justify-between bg-rose-50/50 shrink-0">
       <div class="flex items-center gap-2.5">
         <span class="w-7 h-7 rounded-lg bg-rose-700 text-white flex items-center justify-center text-xs font-bold">&times;</span>
         <div>
@@ -855,13 +855,13 @@
       <button
         type="button"
         onclick="closeAdminDeleteModal()"
-        class="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+        class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg min-w-[36px] min-h-[36px] flex items-center justify-center"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
     </div>
 
-    <form id="adminDeleteProductForm" method="POST" action="" class="p-6 space-y-4">
+    <form id="adminDeleteProductForm" method="POST" action="" class="p-5 sm:p-6 space-y-4 overflow-y-auto flex-grow">
       <input type="hidden" name="_csrf" value="{{csrfToken}}">
 
       <p class="text-xs text-slate-600 leading-relaxed">
