@@ -32,7 +32,7 @@
             name="name"
             value="{{product.name}}"
             required
-            class="w-full min-h-[44px] px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+            class="w-full min-h-[44px] px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-emerald-500"
           />
         </div>
         <div>
@@ -42,7 +42,7 @@
             name="brand"
             value="{{product.brand}}"
             required
-            class="w-full min-h-[44px] px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+            class="w-full min-h-[44px] px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-emerald-500"
           />
         </div>
         <div>
@@ -50,7 +50,7 @@
           <select
             name="category"
             required
-            class="w-full min-h-[44px] px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+            class="w-full min-h-[44px] px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-emerald-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
           >
             {{#each categories}}
               <option value="{{this}}" {{#if (eq ../product.category this)}}selected{{/if}}>{{this}}</option>
@@ -64,19 +64,61 @@
             name="barcode"
             value="{{product.barcode}}"
             required
-            class="w-full min-h-[44px] px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-slate-900"
+            class="w-full min-h-[44px] px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-emerald-500"
           />
         </div>
       </div>
     </div>
 
-    <div>
-      <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Product description</label>
-      <textarea
-        name="description"
-        rows="3"
-        class="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
-      >{{product.description}}</textarea>
+    <!-- Section 2: Serving Details & Description -->
+    <div class="pt-5 border-t border-slate-200 dark:border-slate-800 space-y-4">
+      <div>
+        <h2 class="text-sm font-bold text-slate-900 dark:text-slate-100">Serving size and description</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Standard serving parameters and dietary tags</p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Serving size</label>
+          <input
+            type="number"
+            name="servingSize"
+            value="{{#if product.servingSize}}{{product.servingSize}}{{else}}100{{/if}}"
+            step="0.1"
+            min="1"
+            class="w-full min-h-[44px] px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-emerald-500"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Serving unit</label>
+          <select
+            name="servingUnit"
+            class="w-full min-h-[44px] px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-emerald-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+          >
+            <option value="g" {{#if (eq product.servingUnit 'g')}}selected{{/if}}>Grams (g)</option>
+            <option value="ml" {{#if (eq product.servingUnit 'ml')}}selected{{/if}}>Milliliters (ml)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Dietary tags</label>
+          <input
+            type="text"
+            name="dietaryTags"
+            placeholder="Vegan, Gluten-Free, Halal"
+            value="{{#if dietaryTagsRaw}}{{dietaryTagsRaw}}{{else}}{{#each product.dietaryTags}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}{{/if}}"
+            class="w-full min-h-[44px] px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-emerald-500"
+          />
+          <span class="text-[11px] text-slate-400 block mt-0.5">Comma-separated</span>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Product description</label>
+        <textarea
+          name="description"
+          rows="3"
+          class="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-emerald-500"
+        >{{product.description}}</textarea>
+      </div>
     </div>
 
     <!-- Section 3: Statutory Nutrition Facts Panel (per 100g / 100ml) -->
@@ -92,7 +134,7 @@
         name="rawIngredients"
         rows="3"
         placeholder="e.g. Whole Cow Milk, Vitamin D3, Salt"
-        class="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 font-sans"
+        class="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-emerald-500 font-sans"
       >{{rawIngredients}}</textarea>
       <p class="text-xs text-slate-500 dark:text-slate-400">
         Allergens, additive E-numbers/INS/CI codes, and category restrictions are automatically re-evaluated against the active food rule base upon update. Unclassified ingredients are separated and never assumed safe.

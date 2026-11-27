@@ -78,19 +78,34 @@
     {{/if}}
   </div>
 
-  <!-- Card Action with A90-style Diagonal Arrow -->
-  <div class="mt-4 pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
+  <!-- Card Action & Compare Toggle -->
+  <div class="mt-4 pt-3 border-t border-slate-100 dark:border-white/5 flex flex-wrap items-center justify-between gap-2">
     <a
       href="/catalog/product/{{this.id}}"
-      class="text-xs font-bold text-slate-900 dark:text-slate-100 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1 group-hover:underline"
+      class="min-h-[44px] text-xs font-bold text-slate-900 dark:text-slate-100 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1 group-hover:underline"
     >
       <span>Inspect food details</span>
       <span class="link-diagonal-arrow font-mono" aria-hidden="true">↗</span>
     </a>
-    {{#if this.nutritionFacts.length}}
-      <span class="nutrient-well px-2 py-0.5 text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400">
-        {{this.nutritionFacts.length}} facts
-      </span>
-    {{/if}}
+    <div class="flex items-center gap-2">
+      {{#if this.nutritionFacts.length}}
+        <span class="nutrient-well px-2 py-0.5 text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 hidden sm:inline-block">
+          {{this.nutritionFacts.length}} facts
+        </span>
+      {{/if}}
+      <button
+        type="button"
+        data-compare-toggle
+        data-product-id="{{this.id}}"
+        data-product-name="{{this.name}}"
+        data-product-brand="{{this.brand}}"
+        data-product-category="{{this.category}}"
+        data-product-score="{{this.qualityScore}}"
+        aria-pressed="false"
+        class="min-h-[44px] sm:min-h-[34px] px-2.5 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:border-emerald-600 transition-colors"
+      >
+        <span data-compare-label>+ Compare</span>
+      </button>
+    </div>
   </div>
 </div>

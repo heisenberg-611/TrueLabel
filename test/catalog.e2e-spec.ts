@@ -4,7 +4,7 @@ import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { configureE2eApp } from './e2e-helper';
 
-describe('Food Catalog & Ingredient Analysis (E2E Integration Test)', () => {
+describe('Food Catalog, Ingredient Analysis & Food Comparison (E2E Integration Test)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
@@ -22,6 +22,18 @@ describe('Food Catalog & Ingredient Analysis (E2E Integration Test)', () => {
       await app.close();
     }
   });
+
+  async function resolveProductIdByBarcode(barcode: string): Promise<string> {
+    const res = await request(app.getHttpServer())
+      .get(`/catalog/barcode/${barcode}`)
+      .expect(302);
+    const loc = res.header.location as string;
+    const match = /\/catalog\/product\/(\d+)/.exec(loc);
+    if (!match) {
+      throw new Error(`Expected product redirect for ${barcode}, got ${loc}`);
+    }
+    return match[1];
+  }
 
   it('GET / should return 200 OK and render the authoritative Home Page', async () => {
     const response = await request(app.getHttpServer())
@@ -42,6 +54,21 @@ describe('Food Catalog & Ingredient Analysis (E2E Integration Test)', () => {
     expect(response.text).toContain('Food Catalog & Transparency Discovery');
     expect(response.text).toContain('Oatly');
     expect(response.text).toContain('Barista Edition Oat Drink');
+  });
+
+  it('GET /catalog?minScore=80 and empty query params (?q=&minScore=) should apply numeric coercion and return 200 OK', async () => {
+    const filtered = await request(app.getHttpServer())
+      .get('/catalog?minScore=80')
+      .expect(200);
+
+    expect(filtered.text).toContain('option value="80" selected');
+    expect(filtered.text).toContain('80/100');
+
+    const emptyParams = await request(app.getHttpServer())
+      .get('/catalog?q=&category=&tag=&minScore=')
+      .expect(200);
+
+    expect(emptyParams.text).toContain('Food Catalog & Transparency Discovery');
   });
 
   it('GET /catalog/barcode/7394376311482 should redirect to product detail page', async () => {
@@ -88,7 +115,7 @@ describe('Food Catalog & Ingredient Analysis (E2E Integration Test)', () => {
       .expect(401);
   });
 
-  it('GET /catalog/product/:id should render product details with F03 rule-based ingredient analysis, nutrition & F04 score breakdown', async () => {
+  it('GET /catalog/product/:id should render product details with F03 rule-based ingredient analysis, nutrition, F04 score breakdown & Compare actions', async () => {
     const barcodeRes = await request(app.getHttpServer())
       .get('/catalog/barcode/7394376311482')
       .expect(302);
@@ -110,5 +137,51 @@ describe('Food Catalog & Ingredient Analysis (E2E Integration Test)', () => {
     expect(response.text).toContain('Recall &amp; safety incidents');
     expect(response.text).toContain('Community feedback');
     expect(response.text).toContain('Score history &amp; audit trail');
+    expect(response.text).toContain('data-compare-toggle');
+    expect(response.text).toContain('Compare in Dairy &amp; Plant Milks');
+  });
+
+  it('GET /catalog/compare should render F05 empty comparison picker with categories', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/catalog/compare')
+      .expect(200);
+
+    expect(response.text).toContain('Food Comparison Engine');
+    expect(response.text).toContain('Select packaged foods to compare');
+    expect(response.text).toContain('Dairy &amp; Plant Milks');
+  });
+
+  it('GET /catalog/compare?ids=<oatly>,<chobani> should render F05 side-by-side matrix with standardized bases and Not declared handling', async () => {
+    const oatlyId = await resolveProductIdByBarcode('7394376311482');
+    const chobaniId = await resolveProductIdByBarcode('089470001382');
+
+    const response = await request(app.getHttpServer())
+      .get(`/catalog/compare?ids=${oatlyId},${chobaniId}`)
+      .expect(200);
+
+    expect(response.text).toContain('Quality score &amp; five-pillar breakdown');
+    expect(response.text).toContain('Standardized nutrition facts');
+    expect(response.text).toContain('Ingredients, additives &amp; formulation differences');
+    expect(response.text).toContain('Allergen comparison &amp; dietary safety');
+    expect(response.text).toContain('Certifications &amp; regulatory verification');
+    expect(response.text).toContain('Barista Edition Oat Drink');
+    expect(response.text).toContain('Non-Fat Plain Greek Yogurt');
+    expect(response.text).toContain('per 100 ml');
+    expect(response.text).toContain('per 100 g');
+    expect(response.text).toContain('Not declared');
+  });
+
+  it('GET /catalog/compare?ids=<oatly>,<cola> should block cross-category comparisons cleanly', async () => {
+    const oatlyId = await resolveProductIdByBarcode('7394376311482');
+    const colaId = await resolveProductIdByBarcode('5449000000996');
+
+    const response = await request(app.getHttpServer())
+      .get(`/catalog/compare?ids=${oatlyId},${colaId}`)
+      .expect(200);
+
+    expect(response.text).toContain('Cross-category comparison is blocked');
+    expect(response.text).toContain('Dairy &amp; Plant Milks vs. Beverages');
+    expect(response.text).toContain('Keep Dairy &amp; Plant Milks');
+    expect(response.text).not.toContain('Standardized nutrition facts');
   });
 });

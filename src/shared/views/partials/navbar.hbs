@@ -50,6 +50,9 @@
         <a href="/catalog" class="px-3 py-2 rounded-md hover:text-slate-950 hover:bg-slate-100 transition-colors {{#if (eq activeNav 'catalog')}}text-emerald-700 bg-emerald-50/70 font-extrabold{{/if}}">
           Food Catalog
         </a>
+        <a href="/catalog/compare" class="px-3 py-2 rounded-md hover:text-slate-950 hover:bg-slate-100 transition-colors {{#if (eq activeNav 'compare')}}text-emerald-700 bg-emerald-50/70 font-extrabold{{/if}}">
+          Compare
+        </a>
 
         {{#if (eq user.role "consumer")}}
           {{!-- Consumer: Dietary Profile, My Reports, Dashboard --}}
@@ -348,6 +351,10 @@
       </a>
       <a href="/catalog" class="min-h-[44px] px-3 py-2.5 rounded-lg hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'catalog')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
         <span>Food Catalog</span>
+        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+      </a>
+      <a href="/catalog/compare" class="min-h-[44px] px-3 py-2.5 rounded-lg hover:bg-slate-100 hover:text-slate-950 flex items-center justify-between {{#if (eq activeNav 'compare')}}text-emerald-700 bg-emerald-50/80 font-extrabold{{/if}}">
+        <span>Compare Foods</span>
         <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
       </a>
 

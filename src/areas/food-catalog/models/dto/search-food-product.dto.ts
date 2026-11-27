@@ -1,5 +1,13 @@
 import { IsOptional, IsString, IsNumber } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
+
+function toOptionalNumber(value: unknown): number | undefined {
+  if (value === undefined || value === null || String(value).trim() === '') {
+    return undefined;
+  }
+  const num = Number(value);
+  return Number.isFinite(num) ? num : undefined;
+}
 
 export class SearchFoodProductDto {
   @IsOptional()
@@ -19,18 +27,17 @@ export class SearchFoodProductDto {
   tag?: string; // dietary tag (e.g. vegan, halal, gluten-free)
 
   @IsOptional()
-  @Type(() => Number)
+  @Transform(({ value }) => toOptionalNumber(value))
   @IsNumber()
   minScore?: number;
 
   @IsOptional()
-  @Type(() => Number)
+  @Transform(({ value }) => toOptionalNumber(value))
   @IsNumber()
   page?: number = 1;
 
   @IsOptional()
-  @Type(() => Number)
+  @Transform(({ value }) => toOptionalNumber(value))
   @IsNumber()
   limit?: number = 12;
 }
-

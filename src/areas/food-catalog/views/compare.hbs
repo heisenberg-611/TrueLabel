@@ -1,0 +1,702 @@
+<div class="space-y-6">
+
+  <!-- Top Editorial Specification Header & Slot Strip -->
+  <section class="bg-white dark:bg-[#141413] border border-slate-200 dark:border-white/10 rounded-xl p-5 sm:p-7 shadow-sm space-y-5">
+    <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+      <div class="space-y-1.5 max-w-2xl">
+        <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+          <a href="/catalog" class="inline-flex items-center min-h-[44px] font-semibold hover:text-slate-900 dark:hover:text-white transition-colors">
+            &larr; Back to food catalog
+          </a>
+          {{#if comparison.activeCategory}}
+            <span class="text-slate-300 dark:text-slate-700">/</span>
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 font-semibold">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400"></span>
+              Category scope: {{comparison.activeCategory}}
+            </span>
+          {{/if}}
+        </div>
+
+        <h1 class="font-display text-2xl sm:text-3xl font-extrabold text-slate-950 dark:text-white tracking-tight">
+          Food Comparison Engine
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          Side-by-side regulatory, nutritional, and ingredient inspection for 2 to 3 packaged foods in the same statutory category.
+        </p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+        {{#if (gt comparison.selectedCount 0)}}
+          <a
+            href="{{comparison.clearUrl}}"
+            data-compare-clear
+            class="min-h-[44px] inline-flex items-center justify-center px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+          >
+            Clear selection
+          </a>
+        {{/if}}
+        <a
+          href="#comparison-picker"
+          class="min-h-[44px] inline-flex items-center justify-center px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white text-xs font-semibold transition-colors shadow-sm"
+        >
+          {{#if comparison.canCompare}}Swap or add food{{else}}Choose foods to compare{{/if}}
+        </a>
+      </div>
+    </div>
+
+    <!-- Active Comparison Slots Strip (Slots 1-3) -->
+    {{#if comparison.slots.length}}
+      <div class="pt-4 border-t border-slate-100 dark:border-white/10" data-compare-active-slots>
+        <div class="flex items-center justify-between gap-2 mb-2.5">
+          <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">
+            Selected items ({{comparison.selectedCount}} / 3 max)
+          </span>
+          {{#if comparison.activeCategory}}
+            <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+              Locked to {{comparison.activeCategory}}
+            </span>
+          {{/if}}
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+          {{#each comparison.slots}}
+            <div
+              class="flex items-center justify-between gap-2.5 p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/70"
+              data-compare-slot
+              data-product-id="{{this.id}}"
+              data-product-name="{{this.name}}"
+              data-product-brand="{{this.brand}}"
+              data-product-category="{{this.category}}"
+              data-product-score="{{this.qualityScore}}"
+            >
+              <div class="min-w-0">
+                <div class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 truncate">{{this.brand}} &bull; {{this.category}}</div>
+                <a href="{{this.detailUrl}}" class="text-xs font-bold text-slate-900 dark:text-slate-100 hover:text-emerald-700 dark:hover:text-emerald-400 truncate block">
+                  {{this.name}}
+                </a>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 tabular-nums">
+                  {{this.qualityScore}}
+                </span>
+                <a
+                  href="{{this.removeUrl}}"
+                  aria-label="Remove {{this.name}} from comparison"
+                  class="min-h-[44px] min-w-[36px] px-2.5 inline-flex items-center justify-center rounded-md border border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-700 dark:hover:text-rose-300 hover:border-rose-300 transition-colors"
+                >
+                  Remove
+                </a>
+              </div>
+            </div>
+          {{/each}}
+        </div>
+      </div>
+    {{/if}}
+  </section>
+
+  <!-- Validation / Cross-Category Block / Guidance Banner -->
+  {{#if comparison.isCrossCategoryBlocked}}
+    <section class="bg-rose-50 dark:bg-rose-950/40 border-2 border-rose-500 dark:border-rose-700 rounded-xl p-5 sm:p-6 space-y-4">
+      <div class="flex items-start gap-3">
+        <span class="w-7 h-7 rounded-lg bg-rose-700 text-white font-bold text-sm flex items-center justify-center shrink-0 mt-0.5">!</span>
+        <div class="space-y-1.5">
+          <h2 class="text-base font-extrabold text-rose-950 dark:text-rose-100 tracking-tight">
+            Cross-category comparison is blocked
+          </h2>
+          <p class="text-xs sm:text-sm text-rose-900 dark:text-rose-200 leading-relaxed max-w-3xl">
+            {{comparison.validationError}}
+          </p>
+        </div>
+      </div>
+
+      {{#if comparison.categoryQuickFixes.length}}
+        <div class="pt-3 border-t border-rose-200 dark:border-rose-800/80 flex flex-wrap items-center gap-2.5">
+          <span class="text-xs font-semibold text-rose-900 dark:text-rose-200">Resolve by keeping one category:</span>
+          {{#each comparison.categoryQuickFixes}}
+            <a
+              href="{{this.url}}"
+              class="min-h-[44px] inline-flex items-center px-3.5 py-2 rounded-lg bg-white dark:bg-slate-900 border border-rose-300 dark:border-rose-700 text-xs font-semibold text-rose-900 dark:text-rose-200 hover:bg-rose-100 dark:hover:bg-rose-900/60 transition-colors"
+            >
+              Keep {{this.category}} ({{this.count}})
+            </a>
+          {{/each}}
+          <a
+            href="/catalog/compare"
+            data-compare-clear
+            class="min-h-[44px] inline-flex items-center px-3.5 py-2 rounded-lg text-xs font-semibold text-rose-800 dark:text-rose-300 hover:underline"
+          >
+            Reset all slots
+          </a>
+        </div>
+      {{/if}}
+    </section>
+  {{else if comparison.validationError}}
+    <section class="p-4 sm:p-5 rounded-xl bg-amber-50 dark:bg-amber-950/35 border border-amber-300 dark:border-amber-800 text-xs sm:text-sm text-amber-950 dark:text-amber-200 flex items-start gap-3">
+      <span class="w-6 h-6 rounded-full bg-amber-600 text-white font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">i</span>
+      <p class="leading-relaxed">{{comparison.validationError}}</p>
+    </section>
+  {{/if}}
+
+  <!-- READY COMPARISON MATRIX (2 or 3 same-category foods) -->
+  {{#if (eq comparison.mode 'ready')}}
+
+    <!-- Quick Highlights Strip -->
+    {{#if comparison.nutritionMatrix}}
+      <div class="grid grid-cols-1 sm:grid-cols-3 bg-white dark:bg-[#141413] border border-slate-200 dark:border-white/10 rounded-xl divide-y sm:divide-y-0 sm:divide-x divide-slate-200 dark:divide-white/10 overflow-hidden shadow-sm">
+        <div class="p-4 sm:p-5">
+          <div class="text-xs font-medium text-slate-500 dark:text-slate-400">Standardization basis</div>
+          <div class="text-sm font-bold font-mono text-slate-900 dark:text-white mt-1">{{comparison.nutritionMatrix.servingBaseSummary}}</div>
+        </div>
+        <div class="p-4 sm:p-5">
+          <div class="text-xs font-medium text-slate-500 dark:text-slate-400">Lowest declared sugar</div>
+          <div class="text-sm font-bold text-emerald-700 dark:text-emerald-400 mt-1">
+            {{#if comparison.nutritionMatrix.lowestSugarProduct}}{{comparison.nutritionMatrix.lowestSugarProduct}}{{else}}No clear distinction / not declared{{/if}}
+          </div>
+        </div>
+        <div class="p-4 sm:p-5">
+          <div class="text-xs font-medium text-slate-500 dark:text-slate-400">Highest declared protein</div>
+          <div class="text-sm font-bold text-slate-900 dark:text-white mt-1">
+            {{#if comparison.nutritionMatrix.highestProteinProduct}}{{comparison.nutritionMatrix.highestProteinProduct}}{{else}}No clear distinction / not declared{{/if}}
+          </div>
+        </div>
+      </div>
+    {{/if}}
+
+    <!-- SECTION 1: Product Identity & Quality Score Header Bench -->
+    <section class="bg-white dark:bg-[#141413] border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden shadow-sm">
+      <div class="px-5 py-4 border-b border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-slate-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div>
+          <h2 class="text-base font-extrabold text-slate-950 dark:text-white tracking-tight">Quality score &amp; five-pillar breakdown</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Live 0–100 regulatory score computed using active formula weights.</p>
+        </div>
+        <span class="text-xs font-mono text-slate-500 dark:text-slate-400">{{comparison.selectedCount}} items in {{comparison.activeCategory}}</span>
+      </div>
+
+      <!-- Product Summary Column Headers -->
+      <div class="grid grid-cols-1 {{#if (eq comparison.selectedCount 2)}}md:grid-cols-2{{else}}md:grid-cols-3{{/if}} divide-y md:divide-y-0 md:divide-x divide-slate-200 dark:divide-white/10 border-b border-slate-200 dark:border-white/10">
+        {{#each comparison.products}}
+          <div class="p-5 space-y-3 {{#if this.isHighestScore}}bg-emerald-50/35 dark:bg-emerald-950/15{{/if}}">
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0">
+                <div class="text-xs font-semibold text-slate-500 dark:text-slate-400">{{this.brand}}</div>
+                <h3 class="font-display text-lg font-extrabold text-slate-950 dark:text-white leading-snug mt-0.5">
+                  <a href="{{this.detailUrl}}" class="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">{{this.name}}</a>
+                </h3>
+              </div>
+              {{#if this.isHighestScore}}
+                <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 shrink-0">
+                  Highest score
+                </span>
+              {{else if this.isTiedTopScore}}
+                <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 shrink-0">
+                  Tied top
+                </span>
+              {{/if}}
+            </div>
+
+            {{#if this.isBanned}}
+              <div class="px-2.5 py-1.5 rounded-md bg-rose-600 text-white text-xs font-bold">
+                Statutory ban active (Score capped at 35)
+              </div>
+            {{/if}}
+
+            <div class="flex items-baseline justify-between gap-2 pt-1">
+              <div class="text-3xl font-black font-mono tabular-nums {{#if (gte this.qualityScore 80)}}text-emerald-700 dark:text-emerald-400{{else}}{{#if (gte this.qualityScore 60)}}text-amber-700 dark:text-amber-400{{else}}text-rose-700 dark:text-rose-400{{/if}}{{/if}}">
+                {{this.qualityScore}}<span class="text-sm font-normal text-slate-400">/100</span>
+              </div>
+              <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">{{this.tierLabel}}</span>
+            </div>
+
+            <div class="text-[11px] font-mono text-slate-500 dark:text-slate-400 space-y-0.5">
+              <div>Barcode: {{this.barcode}}</div>
+              <div>{{this.servingLabel}}</div>
+            </div>
+
+            {{#if this.dietaryTags.length}}
+              <div class="flex flex-wrap gap-1.5 pt-1">
+                {{#each this.dietaryTags}}
+                  <span class="text-[11px] font-medium px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                    {{this}}
+                  </span>
+                {{/each}}
+              </div>
+            {{/if}}
+          </div>
+        {{/each}}
+      </div>
+
+      <!-- 5-Pillar Score Matrix Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-slate-50 dark:bg-slate-900/80 border-b border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300">
+              <th scope="col" class="py-3 px-4 font-bold sticky left-0 bg-slate-50 dark:bg-slate-900 z-10 min-w-[180px] border-r border-slate-200 dark:border-white/10">
+                Score component
+              </th>
+              <th scope="col" class="py-3 px-3 font-mono font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap">Weight</th>
+              {{#each comparison.products}}
+                <th scope="col" class="py-3 px-4 font-bold text-slate-900 dark:text-slate-100 min-w-[160px]">
+                  {{this.name}}
+                </th>
+              {{/each}}
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-white/5">
+            {{#each comparison.scoreMatrix}}
+              <tr class="{{#if this.isTotalRow}}bg-slate-50/80 dark:bg-slate-900/50 font-bold{{else}}hover:bg-slate-50/50 dark:hover:bg-slate-900/30{{/if}}">
+                <th scope="row" class="py-3 px-4 sticky left-0 {{#if this.isTotalRow}}bg-slate-50 dark:bg-slate-900{{else}}bg-white dark:bg-[#141413]{{/if}} z-10 border-r border-slate-200 dark:border-white/10 font-semibold text-slate-800 dark:text-slate-200">
+                  {{this.label}}
+                </th>
+                <td class="py-3 px-3 font-mono tabular-nums text-slate-500 dark:text-slate-400">{{this.weightLabel}}</td>
+                {{#each this.cells}}
+                  <td class="py-3 px-4">
+                    <div class="flex items-center gap-2">
+                      <span class="font-mono tabular-nums text-sm font-extrabold {{this.toneClass}}">{{this.score}}</span>
+                      {{#if this.isLeader}}
+                        <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                          Highest
+                        </span>
+                      {{else if this.isTiedTop}}
+                        <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                          Tied
+                        </span>
+                      {{/if}}
+                    </div>
+                    <div class="w-full max-w-[140px] h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden mt-1.5">
+                      <div class="h-full bg-emerald-600 dark:bg-emerald-500" style="width: {{this.score}}%;"></div>
+                    </div>
+                    <div class="text-[11px] font-mono text-slate-500 dark:text-slate-400 mt-1">
+                      {{#unless ../isTotalRow}}+{{this.weightedContributionFormatted}} pts{{/unless}}{{#if this.provisional}}{{#unless ../isTotalRow}} &bull; {{/unless}}Provisional{{/if}}
+                    </div>
+                  </td>
+                {{/each}}
+              </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 2: Standardized Nutrition Facts Matrix (per 100g / 100ml) -->
+    {{#if comparison.nutritionMatrix}}
+      <section class="bg-white dark:bg-[#141413] border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden shadow-sm">
+        <div class="px-5 py-4 border-b border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-slate-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h2 class="text-base font-extrabold text-slate-950 dark:text-white tracking-tight">Standardized nutrition facts</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Values normalized per 100 g or 100 ml. Missing nutrients are explicitly marked Not declared and never treated as zero.
+            </p>
+          </div>
+          <span class="text-xs font-mono font-semibold text-slate-600 dark:text-slate-300">
+            {{comparison.nutritionMatrix.servingBaseSummary}}
+          </span>
+        </div>
+
+        {{#if comparison.nutritionMatrix.hasMixedUnits}}
+          <div class="px-5 py-2.5 bg-amber-50/70 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-800/60 text-xs text-amber-900 dark:text-amber-200">
+            Note: Compared products in {{comparison.activeCategory}} declare different measurement bases (grams vs. milliliters). Each column specifies its exact per-100 basis.
+          </div>
+        {{/if}}
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-50 dark:bg-slate-900/80 border-b border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300">
+                <th scope="col" class="py-3 px-4 font-bold sticky left-0 bg-slate-50 dark:bg-slate-900 z-10 min-w-[175px] border-r border-slate-200 dark:border-white/10">
+                  Nutrient
+                </th>
+                {{#each comparison.products}}
+                  <th scope="col" class="py-3 px-4 min-w-[165px]">
+                    <div class="font-bold text-slate-900 dark:text-slate-100">{{this.name}}</div>
+                    <div class="text-[11px] font-mono font-normal text-slate-500 dark:text-slate-400">{{this.per100BaseLabel}} (serving {{this.servingSize}}{{this.servingUnit}})</div>
+                  </th>
+                {{/each}}
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-white/5">
+              {{#each comparison.nutritionMatrix.rows}}
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/30">
+                  <th scope="row" class="py-3 px-4 sticky left-0 bg-white dark:bg-[#141413] z-10 border-r border-slate-200 dark:border-white/10 font-semibold text-slate-800 dark:text-slate-200">
+                    {{this.label}}
+                  </th>
+                  {{#each this.cells}}
+                    <td class="py-3 px-4 {{#if this.isLeader}}bg-emerald-50/40 dark:bg-emerald-950/20{{/if}}">
+                      {{#if this.declared}}
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <span class="font-mono tabular-nums text-sm font-bold text-slate-900 dark:text-slate-100">
+                            {{this.displayValue}}
+                          </span>
+                          {{#if this.leaderLabel}}
+                            <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded {{#if this.isLeader}}bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800{{else}}bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300{{/if}}">
+                              {{this.leaderLabel}}
+                            </span>
+                          {{/if}}
+                        </div>
+                        <div class="text-[10px] font-mono text-slate-400 dark:text-slate-500 mt-0.5">{{this.perBaseLabel}}</div>
+                      {{else}}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                          Not declared
+                        </span>
+                      {{/if}}
+                    </td>
+                  {{/each}}
+                </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    {{/if}}
+
+    <!-- SECTION 3: Ingredients, Additives & Formulation Differences (F03) -->
+    {{#if comparison.ingredientMatrix}}
+      <section class="bg-white dark:bg-[#141413] border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden shadow-sm">
+        <div class="px-5 py-4 border-b border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-slate-900/50 space-y-1">
+          <h2 class="text-base font-extrabold text-slate-950 dark:text-white tracking-tight">Ingredients, additives &amp; formulation differences</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Compares rule-base coverage, unique vs. shared ingredients, and detected E-number / INS / CI additives. Unclassified items are separated and never treated as safe.
+          </p>
+        </div>
+
+        <div class="p-5 space-y-5">
+          <!-- Shared Ingredients Banner -->
+          <div class="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/60">
+            <div class="text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
+              Shared ingredients across all {{comparison.selectedCount}} items ({{comparison.ingredientMatrix.sharedIngredients.length}})
+            </div>
+            {{#if comparison.ingredientMatrix.sharedIngredients.length}}
+              <div class="flex flex-wrap gap-1.5">
+                {{#each comparison.ingredientMatrix.sharedIngredients}}
+                  <span class="text-xs px-2.5 py-0.5 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-medium">
+                    {{this}}
+                  </span>
+                {{/each}}
+              </div>
+            {{else}}
+              <p class="text-xs text-slate-500 dark:text-slate-400">No identical base ingredient appears across all compared products.</p>
+            {{/if}}
+          </div>
+
+          <!-- Per-Product Ingredient Breakdown & Unique Ingredients -->
+          <div class="grid grid-cols-1 {{#if (eq comparison.selectedCount 2)}}md:grid-cols-2{{else}}md:grid-cols-3{{/if}} gap-4">
+            {{#each comparison.ingredientMatrix.perProduct}}
+              <div class="border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-3 bg-slate-50/30 dark:bg-slate-900/40">
+                <div>
+                  <h3 class="text-sm font-extrabold text-slate-900 dark:text-slate-100">{{this.productName}}</h3>
+                  <div class="flex flex-wrap gap-2 mt-1.5 text-[11px] font-mono">
+                    <span class="px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                      {{this.coveragePercent}}% rule verified
+                    </span>
+                    <span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                      {{this.additiveCount}} additive(s)
+                    </span>
+                    {{#if (gt this.unknownCount 0)}}
+                      <span class="px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                        {{this.unknownCount}} unknown
+                      </span>
+                    {{/if}}
+                  </div>
+                </div>
+
+                <div class="space-y-1.5">
+                  <div class="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Declared list ({{this.totalCount}})
+                  </div>
+                  {{#if this.allIngredients.length}}
+                    <ul class="space-y-1.5">
+                      {{#each this.allIngredients}}
+                        <li class="text-xs p-2 rounded-md border {{#if this.isUnknown}}border-dashed border-slate-400 dark:border-indigo-700 bg-slate-100/70 dark:bg-slate-900{{else}}{{#if (eq this.hazardLevel 'warning')}}border-rose-300 dark:border-rose-800 bg-rose-50/70 dark:bg-rose-950/30{{else}}{{#if (eq this.hazardLevel 'caution')}}border-amber-300 dark:border-amber-800 bg-amber-50/70 dark:bg-amber-950/30{{else}}border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/50{{/if}}{{/if}}{{/if}} flex flex-wrap items-center justify-between gap-1.5">
+                          <span class="font-medium text-slate-800 dark:text-slate-200">{{this.name}}</span>
+                          <span class="flex flex-wrap items-center gap-1">
+                            {{#if this.additiveCode}}
+                              <span class="additive-pill">{{this.additiveCode}}</span>
+                            {{/if}}
+                            {{#if this.isUnknown}}
+                              <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-indigo-300">Unknown</span>
+                            {{/if}}
+                            {{#if this.isUnique}}
+                              <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">Unique</span>
+                            {{/if}}
+                          </span>
+                        </li>
+                      {{/each}}
+                    </ul>
+                  {{else}}
+                    <p class="text-xs text-slate-500 dark:text-slate-400 italic">No ingredients declared.</p>
+                  {{/if}}
+                </div>
+              </div>
+            {{/each}}
+          </div>
+
+          <!-- Additive Comparison Table (if any additives detected) -->
+          {{#if comparison.ingredientMatrix.additiveRows.length}}
+            <div class="overflow-x-auto border border-slate-200 dark:border-white/10 rounded-lg">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="bg-slate-50 dark:bg-slate-900/80 border-b border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300">
+                    <th scope="col" class="py-2.5 px-4 font-bold sticky left-0 bg-slate-50 dark:bg-slate-900 z-10 border-r border-slate-200 dark:border-white/10">
+                      Detected additive / E-code
+                    </th>
+                    {{#each comparison.products}}
+                      <th scope="col" class="py-2.5 px-4 font-bold text-slate-900 dark:text-slate-100">{{this.name}}</th>
+                    {{/each}}
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-white/5">
+                  {{#each comparison.ingredientMatrix.additiveRows}}
+                    <tr>
+                      <th scope="row" class="py-2.5 px-4 sticky left-0 bg-white dark:bg-[#141413] z-10 border-r border-slate-200 dark:border-white/10 font-mono font-semibold text-slate-800 dark:text-slate-200">
+                        {{this.codeOrName}}
+                      </th>
+                      {{#each this.cells}}
+                        <td class="py-2.5 px-4">
+                          {{#if this.present}}
+                            <span class="inline-flex px-2 py-0.5 rounded text-[11px] font-semibold {{#if (eq this.hazardLevel 'warning')}}bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300{{else}}{{#if (eq this.hazardLevel 'caution')}}bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300{{else}}bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300{{/if}}{{/if}}">
+                              {{this.label}}
+                            </span>
+                          {{else}}
+                            <span class="text-slate-400 dark:text-slate-500">Not present</span>
+                          {{/if}}
+                        </td>
+                      {{/each}}
+                    </tr>
+                  {{/each}}
+                </tbody>
+              </table>
+            </div>
+          {{/if}}
+        </div>
+      </section>
+    {{/if}}
+
+    <!-- SECTION 4: Allergen Matrix & Consumer Profile Conflict Check -->
+    {{#if comparison.allergenMatrix}}
+      <section class="bg-white dark:bg-[#141413] border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden shadow-sm">
+        <div class="px-5 py-4 border-b border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-slate-900/50 space-y-1">
+          <h2 class="text-base font-extrabold text-slate-950 dark:text-white tracking-tight">Allergen comparison &amp; dietary safety</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Declared allergen flags across compared products{{#if comparison.allergenMatrix.consumerSafetyActive}}, annotated with your saved consumer dietary profile{{/if}}.
+          </p>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-50 dark:bg-slate-900/80 border-b border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300">
+                <th scope="col" class="py-3 px-4 font-bold sticky left-0 bg-slate-50 dark:bg-slate-900 z-10 min-w-[175px] border-r border-slate-200 dark:border-white/10">
+                  Allergen / profile check
+                </th>
+                {{#each comparison.products}}
+                  <th scope="col" class="py-3 px-4 font-bold text-slate-900 dark:text-slate-100 min-w-[165px]">{{this.name}}</th>
+                {{/each}}
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-white/5">
+              {{#if comparison.allergenMatrix.consumerSafetyActive}}
+                <tr class="bg-slate-50/50 dark:bg-slate-900/40">
+                  <th scope="row" class="py-3 px-4 sticky left-0 bg-slate-50 dark:bg-slate-900 z-10 border-r border-slate-200 dark:border-white/10 font-bold text-slate-900 dark:text-white">
+                    Your personal profile (F16)
+                  </th>
+                  {{#each comparison.allergenMatrix.consumerCells}}
+                    <td class="py-3 px-4">
+                      <span class="inline-flex px-2.5 py-1 rounded text-[11px] font-bold {{#if (eq this.tone 'danger')}}bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-800{{else}}{{#if (eq this.tone 'caution')}}bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800{{else}}{{#if (eq this.tone 'safe')}}bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800{{else}}bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300{{/if}}{{/if}}{{/if}}">
+                        {{this.summaryLabel}}
+                      </span>
+                    </td>
+                  {{/each}}
+                </tr>
+              {{/if}}
+
+              {{#if comparison.allergenMatrix.hasAnyAllergens}}
+                {{#each comparison.allergenMatrix.rows}}
+                  <tr>
+                    <th scope="row" class="py-3 px-4 sticky left-0 bg-white dark:bg-[#141413] z-10 border-r border-slate-200 dark:border-white/10 font-semibold text-slate-800 dark:text-slate-200">
+                      {{this.allergenLabel}}
+                    </th>
+                    {{#each this.cells}}
+                      <td class="py-3 px-4">
+                        {{#if this.declared}}
+                          <span class="allergen-pill">Declared{{#if this.personalMatch}} (Matches profile){{/if}}</span>
+                        {{else}}
+                          <span class="text-xs font-semibold text-emerald-700 dark:text-emerald-400">Not declared</span>
+                        {{/if}}
+                      </td>
+                    {{/each}}
+                  </tr>
+                {{/each}}
+              {{else}}
+                <tr>
+                  <td colspan="4" class="py-4 px-4 text-xs text-emerald-700 dark:text-emerald-400 font-semibold">
+                    None of the compared products contain declared allergens in the ingredient list.
+                  </td>
+                </tr>
+              {{/if}}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    {{/if}}
+
+    <!-- SECTION 5: Food Safety Certifications & Licences (F06) -->
+    {{#if comparison.certificationMatrix.length}}
+      <section class="bg-white dark:bg-[#141413] border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden shadow-sm">
+        <div class="px-5 py-4 border-b border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-slate-900/50 space-y-1">
+          <h2 class="text-base font-extrabold text-slate-950 dark:text-white tracking-tight">Certifications &amp; regulatory verification</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Approved safety certificates and active manufacturer licence records linked to each brand.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 {{#if (eq comparison.selectedCount 2)}}md:grid-cols-2{{else}}md:grid-cols-3{{/if}} divide-y md:divide-y-0 md:divide-x divide-slate-200 dark:divide-white/10">
+          {{#each comparison.certificationMatrix}}
+            <div class="p-5 space-y-3">
+              <div class="flex items-start justify-between gap-2">
+                <h3 class="text-sm font-extrabold text-slate-900 dark:text-slate-100">{{this.productName}}</h3>
+                <span class="text-xs font-mono font-bold text-blue-700 dark:text-blue-400 shrink-0">{{this.verificationScore}}/100</span>
+              </div>
+
+              <div class="text-xs text-slate-600 dark:text-slate-300 font-medium">
+                {{this.verificationStanding}}
+              </div>
+
+              <div class="space-y-1.5 text-xs">
+                <div class="font-semibold text-slate-700 dark:text-slate-300">Approved certificates ({{this.approvedCount}})</div>
+                {{#if this.docLabels.length}}
+                  <div class="flex flex-wrap gap-1.5">
+                    {{#each this.docLabels}}
+                      <span class="cert-seal-badge bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700">
+                        {{this}}
+                      </span>
+                    {{/each}}
+                  </div>
+                {{else}}
+                  <span class="text-xs text-slate-500 dark:text-slate-400">No active approved safety certificates matched yet.</span>
+                {{/if}}
+              </div>
+
+              <div class="pt-2 border-t border-slate-100 dark:border-white/5 text-[11px] font-mono">
+                <span class="text-slate-500 dark:text-slate-400 block">Manufacturer licence:</span>
+                <span class="{{#if this.licenceValid}}text-emerald-700 dark:text-emerald-400 font-bold{{else}}text-slate-600 dark:text-slate-300{{/if}}">
+                  {{this.licenceLabel}}
+                </span>
+              </div>
+            </div>
+          {{/each}}
+        </div>
+      </section>
+    {{/if}}
+
+  {{/if}}
+
+  <!-- Interactive Same-Category Product Picker -->
+  <section id="comparison-picker" class="bg-white dark:bg-[#141413] border border-slate-200 dark:border-white/10 rounded-xl p-5 sm:p-6 space-y-5 shadow-sm">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-white/10 pb-4">
+      <div>
+        <h2 class="text-base font-extrabold text-slate-950 dark:text-white tracking-tight">
+          Select packaged foods to compare
+        </h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          Pick 2 or 3 foods from any single category below. Selecting a different category is blocked to keep baselines valid.
+        </p>
+      </div>
+
+      {{#if categories.length}}
+        <form action="/catalog/compare" method="GET" class="flex flex-wrap items-center gap-2">
+          {{#if requestedIdsRaw}}
+            <input type="hidden" name="ids" value="{{requestedIdsRaw}}">
+          {{/if}}
+          <select
+            name="category"
+            aria-label="Filter picker by category"
+            onchange="this.form.submit()"
+            class="min-h-[44px] px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200"
+          >
+            <option value="">All categories</option>
+            {{#each categories}}
+              <option value="{{this}}" {{#if (eq ../selectedCategoryFilter this)}}selected{{/if}}>{{this}}</option>
+            {{/each}}
+          </select>
+        </form>
+      {{/if}}
+    </div>
+
+    {{#if pickerGroups.length}}
+      <div class="space-y-6">
+        {{#each pickerGroups}}
+          <div class="space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">{{this.category}}</h3>
+                <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400">({{this.count}} items)</span>
+              </div>
+              {{#if this.quickCompareUrl}}
+                <a
+                  href="{{this.quickCompareUrl}}"
+                  class="min-h-[44px] inline-flex items-center px-3 py-1 rounded-md bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-colors"
+                >
+                  Quick compare top items in {{this.category}}
+                </a>
+              {{/if}}
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {{#each this.products}}
+                <div class="p-3.5 rounded-lg border {{#if this.isSelected}}border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/25{{else}}border-slate-200 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-900/50{{/if}} flex flex-col justify-between gap-3">
+                  <div class="flex items-start justify-between gap-2">
+                    <div class="min-w-0">
+                      <div class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 truncate">{{this.brand}}</div>
+                      <div class="text-xs font-bold text-slate-900 dark:text-slate-100 leading-snug">{{this.name}}</div>
+                      <div class="text-[11px] font-mono text-slate-400 dark:text-slate-500 mt-0.5">{{this.servingSize}}{{this.servingUnit}} &bull; {{this.barcode}}</div>
+                    </div>
+                    <span class="score-badge px-2 py-0.5 text-[11px] font-bold font-mono shrink-0 {{#if (gte this.qualityScore 80)}}score-badge-high{{else}}{{#if (gte this.qualityScore 60)}}score-badge-mid{{else}}score-badge-low{{/if}}{{/if}}">
+                      {{this.qualityScore}}
+                    </span>
+                  </div>
+
+                  <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-200/70 dark:border-white/5">
+                    <a href="/catalog/product/{{this.id}}" class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                      Inspect details
+                    </a>
+                    {{#if this.isSelected}}
+                      <a
+                        href="{{this.toggleUrl}}"
+                        class="min-h-[44px] inline-flex items-center px-3 py-1.5 rounded-md bg-slate-900 dark:bg-emerald-700 text-white text-xs font-semibold hover:bg-rose-700 dark:hover:bg-rose-700 transition-colors"
+                      >
+                        Selected &times;
+                      </a>
+                    {{else if this.isDifferentCategory}}
+                      <span class="min-h-[44px] inline-flex items-center px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 text-[11px] font-medium cursor-not-allowed" title="Blocked: different category from current selection">
+                        Different category
+                      </span>
+                    {{else if (gte ../../comparison.selectedCount 3)}}
+                      <span class="min-h-[44px] inline-flex items-center px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 text-[11px] font-medium">
+                        Max 3 reached
+                      </span>
+                    {{else}}
+                      <a
+                        href="{{this.toggleUrl}}"
+                        class="min-h-[44px] inline-flex items-center px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold hover:border-emerald-600 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
+                      >
+                        Add to compare
+                      </a>
+                    {{/if}}
+                  </div>
+                </div>
+              {{/each}}
+            </div>
+          </div>
+        {{/each}}
+      </div>
+    {{else}}
+      <div class="p-6 text-center text-xs text-slate-500 dark:text-slate-400">
+        No active packaged foods available for comparison yet.
+      </div>
+    {{/if}}
+
+    <!-- Mandatory Informational & Medical Safety Notice (PROJECT_RULES §5.3) -->
+    <p class="pt-4 border-t border-slate-100 dark:border-white/10 text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+      Informational notice: Side-by-side nutrition comparisons, ingredient classifications, and quality scores are provided for consumer transparency only. Always inspect physical product packaging before consumption, especially for severe allergies or medical conditions.
+    </p>
+  </section>
+
+</div>

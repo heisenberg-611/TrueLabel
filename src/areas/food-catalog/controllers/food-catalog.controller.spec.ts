@@ -21,8 +21,15 @@ describe('FoodCatalogController (Unit Tests)', () => {
     status: 'active' as const,
     qualityScore: 88,
     manufacturerId: 10,
-    ingredients: [],
-    nutritionFacts: [],
+    servingSize: 200,
+    servingUnit: 'ml',
+    ingredients: [
+      { name: 'Oat Base (Water, Oats 10%)', isAllergen: true, allergenType: 'Gluten', hazardLevel: 'safe' },
+    ],
+    nutritionFacts: [
+      { nutrient: 'Energy', amountPer100g: 59, amountPerServing: 118, unit: 'kcal' },
+      { nutrient: 'Saturated Fat', amountPer100g: 0.3, amountPerServing: 0.6, unit: 'g' },
+    ],
   };
 
   beforeEach(async () => {
@@ -100,6 +107,22 @@ describe('FoodCatalogController (Unit Tests)', () => {
       expect(result.title).toContain('Food Catalog');
       expect(result.userProfile).toBeNull();
       expect(result.products[0].userConflict).toBeNull();
+      expect(result.minScore).toBe('');
+    });
+
+    it('should normalize string minScore query input into numeric ViewModel value for strict eq helper', async () => {
+      (catalogService.searchAndFilter as jest.Mock).mockResolvedValue({
+        items: [mockProduct],
+        total: 1,
+        page: 1,
+        totalPages: 1,
+      });
+
+      const mockReq = { session: { user: null } } as any;
+      const result = await controller.getCatalog({ minScore: '80' as any }, mockReq);
+
+      expect(result.minScore).toBe(80);
+      expect(typeof result.minScore).toBe('number');
     });
 
     it('should not evaluate dietary profile for manufacturers in catalog discovery', async () => {
@@ -265,13 +288,15 @@ describe('FoodCatalogController (Unit Tests)', () => {
     });
   });
 
-  describe('getEditForm (BOLA / Ownership Authorization)', () => {
+  describe('getEditForm & handleEdit (BOLA / Form Preservation)', () => {
     it('should allow the product owner to access the edit form', async () => {
       (catalogService.findById as jest.Mock).mockResolvedValue(mockProduct as any);
       const mockReq = { session: { user: { id: 10, role: 'manufacturer' } } } as any;
 
       const result = await controller.getEditForm(1, mockReq);
       expect(result.product.id).toBe(1);
+      expect(result.nutritionMap.Energy).toBe(59);
+      expect(result.rawIngredients).toContain('Oat Base');
     });
 
     it('should throw ForbiddenException if another manufacturer attempts to access edit form', async () => {
@@ -287,6 +312,38 @@ describe('FoodCatalogController (Unit Tests)', () => {
 
       const result = await controller.getEditForm(1, mockReq);
       expect(result.product.id).toBe(1);
+    });
+
+    it('handleEdit error path should return HTTP 400 and preserve activeNav, nutritionMap, and rawIngredients', async () => {
+      (catalogService.update as jest.Mock).mockRejectedValue(
+        new Error('Barcode "999" is already assigned to another food'),
+      );
+      (catalogService.findById as jest.Mock).mockResolvedValue(mockProduct as any);
+
+      const mockReq = {
+        session: { user: { id: 10, role: 'manufacturer' } },
+        body: {
+          name: 'Updated Oat Milk',
+          barcode: '999',
+          nutrition_energy: '75',
+          rawIngredients: 'Water, Whole Oats, Sea Salt',
+        },
+      } as any;
+      const mockRes = { redirect: jest.fn(), render: jest.fn(), status: jest.fn().mockReturnThis() } as any;
+
+      await controller.handleEdit(1, { name: 'Updated Oat Milk', barcode: '999' }, mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.render).toHaveBeenCalledWith(
+        'areas/food-catalog/views/edit',
+        expect.objectContaining({
+          activeNav: 'catalog',
+          error: expect.stringContaining('already assigned'),
+          rawIngredients: 'Water, Whole Oats, Sea Salt',
+          nutritionMap: expect.objectContaining({ Energy: '75' }),
+          product: expect.objectContaining({ id: 1, name: 'Updated Oat Milk', barcode: '999' }),
+        }),
+      );
     });
   });
 
@@ -411,15 +468,12 @@ describe('FoodCatalogController (Unit Tests)', () => {
 
   describe('Administrative Food Governance Actions (Feature F01)', () => {
     it('handleBan should call catalogService.ban and redirect to product detail with success message', async () => {
-      // Arrange
       (catalogService.ban as jest.Mock).mockResolvedValue({ id: 1, name: 'Pure Oat Milk' } as any);
       const mockReq = { session: { user: { id: 99, role: 'admin' } } } as any;
       const mockRes = { redirect: jest.fn() } as any;
 
-      // Act
       await controller.handleBan(1, { reason: 'Undeclared peanut traces' }, mockReq, mockRes);
 
-      // Assert
       expect(catalogService.ban).toHaveBeenCalledWith(1, 'Undeclared peanut traces', mockReq.session.user);
       expect(mockRes.redirect).toHaveBeenCalledWith(
         expect.stringContaining('/catalog/product/1?success='),
@@ -427,15 +481,12 @@ describe('FoodCatalogController (Unit Tests)', () => {
     });
 
     it('handleUnban should call catalogService.unban and redirect with success message', async () => {
-      // Arrange
       (catalogService.unban as jest.Mock).mockResolvedValue({ id: 1, name: 'Pure Oat Milk' } as any);
       const mockReq = { session: { user: { id: 99, role: 'admin' } } } as any;
       const mockRes = { redirect: jest.fn() } as any;
 
-      // Act
       await controller.handleUnban(1, mockReq, mockRes);
 
-      // Assert
       expect(catalogService.unban).toHaveBeenCalledWith(1, mockReq.session.user);
       expect(mockRes.redirect).toHaveBeenCalledWith(
         expect.stringContaining('/catalog/product/1?success='),
@@ -443,15 +494,12 @@ describe('FoodCatalogController (Unit Tests)', () => {
     });
 
     it('handleDelete should call catalogService.delete and redirect to admin catalog dashboard', async () => {
-      // Arrange
       (catalogService.delete as jest.Mock).mockResolvedValue(undefined);
       const mockReq = { session: { user: { id: 99, role: 'admin' } } } as any;
       const mockRes = { redirect: jest.fn() } as any;
 
-      // Act
       await controller.handleDelete(1, mockReq, mockRes);
 
-      // Assert
       expect(catalogService.delete).toHaveBeenCalledWith(1, mockReq.session.user);
       expect(mockRes.redirect).toHaveBeenCalledWith(
         expect.stringContaining('/dashboard/admin?tab=catalog&success='),

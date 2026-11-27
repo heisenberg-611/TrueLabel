@@ -52,9 +52,45 @@ export class FoodCatalogController {
   }
 
   /**
+   * Build nutrient lookup map for `_nutrition_facts_form` partial, optionally
+   * overlaying submitted POST form values so validation failures retain user input.
+   */
+  private buildNutritionMap(
+    nutritionFacts: Array<{ nutrient: string; amountPer100g: number }> = [],
+    submittedBody?: Record<string, any>,
+  ): Record<string, number | string> {
+    const map: Record<string, number | string> = {};
+    (nutritionFacts || []).forEach((n) => {
+      map[n.nutrient] = n.amountPer100g;
+      if (n.nutrient === 'Saturated Fat') map.SaturatedFat = n.amountPer100g;
+    });
+
+    if (submittedBody) {
+      const formFieldPairs: Array<[string, string]> = [
+        ['nutrition_energy', 'Energy'],
+        ['nutrition_fat', 'Fat'],
+        ['nutrition_saturatedFat', 'SaturatedFat'],
+        ['nutrition_carbohydrates', 'Carbohydrates'],
+        ['nutrition_sugars', 'Sugars'],
+        ['nutrition_fiber', 'Fiber'],
+        ['nutrition_protein', 'Protein'],
+        ['nutrition_salt', 'Salt'],
+      ];
+      for (const [field, key] of formFieldPairs) {
+        if (submittedBody[field] !== undefined && submittedBody[field] !== '') {
+          map[key] = submittedBody[field];
+        }
+      }
+    }
+
+    return map;
+  }
+
+  /**
    * Catalog Discovery: Search, filter by category/tag, score breakdown
    */
   @Get()
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   @Render('areas/food-catalog/views/index')
   async getCatalog(@Query() searchDto: SearchFoodProductDto, @Req() req: Request) {
     const { items, total, page, totalPages } =
@@ -76,6 +112,15 @@ export class FoodCatalogController {
       };
     });
 
+    const normalizedMinScore =
+      searchDto.minScore !== undefined &&
+      searchDto.minScore !== null &&
+      String(searchDto.minScore).trim() !== '' &&
+      Number.isFinite(Number(searchDto.minScore)) &&
+      Number(searchDto.minScore) > 0
+        ? Number(searchDto.minScore)
+        : '';
+
     return {
       title: 'Food Catalog & Transparency Score — TrueLabel',
       activeNav: 'catalog',
@@ -86,7 +131,7 @@ export class FoodCatalogController {
       query: searchDto.q || '',
       selectedCategory: searchDto.category || '',
       selectedTag: searchDto.tag || '',
-      minScore: searchDto.minScore || '',
+      minScore: normalizedMinScore,
       categories: filterOptions.categories,
       dietaryTags: filterOptions.dietaryTags,
       user: req.session?.user || null,
@@ -371,12 +416,7 @@ export class FoodCatalogController {
     }
 
     const filterOptions = await this.catalogService.getFilterOptions();
-
-    const nutritionMap: Record<string, number> = {};
-    (product.nutritionFacts || []).forEach((n) => {
-      nutritionMap[n.nutrient] = n.amountPer100g;
-      if (n.nutrient === 'Saturated Fat') nutritionMap.SaturatedFat = n.amountPer100g;
-    });
+    const nutritionMap = this.buildNutritionMap(product.nutritionFacts || []);
     const rawIngredients = (product.ingredients || []).map((i) => i.name).join(', ');
 
     return {
@@ -405,6 +445,18 @@ export class FoodCatalogController {
   ) {
     try {
       const body = req.body || {};
+      if (body.servingSize !== undefined && String(body.servingSize).trim() !== '') {
+        const parsedServing = Number(body.servingSize);
+        if (Number.isFinite(parsedServing) && parsedServing > 0) {
+          dto.servingSize = parsedServing;
+        }
+      }
+      if (typeof body.dietaryTags === 'string') {
+        dto.dietaryTags = body.dietaryTags
+          .split(',')
+          .map((tag: string) => tag.trim())
+          .filter(Boolean);
+      }
       if (body.nutrition_energy !== undefined) {
         dto.nutritionFacts = this.analyzer.buildNutritionFactsFromForm(body);
       }
@@ -426,10 +478,33 @@ export class FoodCatalogController {
     } catch (err) {
       const product = await this.catalogService.findById(id);
       const filterOptions = await this.catalogService.getFilterOptions();
-      return res.render('areas/food-catalog/views/edit', {
+      const body = req.body || {};
+      const nutritionMap = this.buildNutritionMap(product.nutritionFacts || [], body);
+      const rawIngredients =
+        body.rawIngredients !== undefined
+          ? body.rawIngredients
+          : (product.ingredients || []).map((i) => i.name).join(', ');
+      const statusCode = err instanceof ForbiddenException ? 403 : 400;
+
+      const preservedProduct = {
+        ...product,
+        name: body.name ?? product.name,
+        brand: body.brand ?? product.brand,
+        category: body.category ?? product.category,
+        barcode: body.barcode ?? product.barcode,
+        description: body.description !== undefined ? body.description : product.description,
+        servingSize: body.servingSize || product.servingSize,
+        servingUnit: body.servingUnit || product.servingUnit,
+      };
+
+      return res.status(statusCode).render('areas/food-catalog/views/edit', {
         title: `Edit ${product.name} — TrueLabel`,
+        activeNav: 'catalog',
         error: err.message || 'Failed to update product',
-        product,
+        product: preservedProduct,
+        nutritionMap,
+        rawIngredients,
+        dietaryTagsRaw: typeof body.dietaryTags === 'string' ? body.dietaryTags : undefined,
         categories: filterOptions.categories,
         dietaryTags: filterOptions.dietaryTags,
         user: req.session?.user,

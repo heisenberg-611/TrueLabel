@@ -1436,3 +1436,29 @@
    - `npm test`: 31/31 suites passed (315/315 unit tests).
    - `npm run test:e2e`: 2/2 suites passed (13/13 E2E integration tests).
    - `npm run build`: Clean build with zero TypeScript compiler diagnostics.
+---
+
+### Entry 065 | 2026-11-27 21:23:16 +06:00 | Sprint 1 & 2 Fixes + Feature F05: Side-by-Side Same-Category Food Comparison Engine
+
+**What**: Resolved all remaining Sprint 1 & 2 audit findings across the `food-catalog` area and delivered **Feature F05 (Food Comparison Engine)** end-to-end—spanning a pure zero-DB comparison domain engine, lightweight orchestrator service, thin MVC controller, theme-compatible side-by-side comparison workbench, floating comparison queue tray, and full unit & E2E verification.
+
+**Key Deliverables**:
+1. **Sprint 1 & 2 Quality & Bug Fixes (`food-catalog` & `shared/views`)**:
+   - `src/areas/food-catalog/models/dto/search-food-product.dto.ts`: Replaced bare `@Type(() => Number)` with `toOptionalNumber` `@Transform` on `minScore`, `page`, and `limit` so empty HTML query inputs (`?q=&minScore=`) coerce cleanly to `undefined` without triggering false 400 validation errors.
+   - `src/areas/food-catalog/controllers/food-catalog.controller.ts`: Enabled `ValidationPipe({ transform: true, whitelist: true })` and `normalizedMinScore` coercion on `getCatalog`; extracted `buildNutritionMap()` helper; expanded `handleEdit` to accept `servingSize` and comma-separated `dietaryTags`; fixed `handleEdit` error handling to emit proper `403`/`400` HTTP status codes while preserving `activeNav`, `nutritionMap`, `rawIngredients`, `dietaryTagsRaw`, and submitted form values.
+   - `src/areas/food-catalog/views/edit.hbs` & `src/shared/views/partials/_nutrition_facts_form.hbs`: Added `servingSize`, `servingUnit`, and `dietaryTags` inputs to the edit form; upgraded all nutrition input fields for `html.dark` theme parity and `min-h-[44px]` mobile touch targets.
+2. **Feature F05 Backend Architecture (Strict SRP + Zero-DB Engine)**:
+   - `src/areas/food-catalog/models/dto/compare-foods.dto.ts`: Added `CompareFoodsDto` and `parseCompareProductIds()` supporting comma-separated (`?ids=1,2,3`) and repeated (`?ids=1&ids=2`) query params with deduplication and positive-integer filtering.
+   - `src/areas/food-catalog/services/food-comparison.engine.ts`: Pure Zero-DB `FoodComparisonEngine` handling state modes (`empty`, `insufficient`, `too_many`, `cross_category_blocked`, `ready`), mandatory same-category blocking with 1-click `categoryQuickFixes`, tie-aware 5-pillar `scoreMatrix`, standardized per-100g/100ml `nutritionMatrix` distinguishing declared `0` from `Not declared` (never treated as zero), sodium-to-salt conversion (`sodium * 2.5`), mixed `g`/`ml` warnings, `ingredientMatrix` (shared vs. unique formulation breakdown & additive matrix), `allergenMatrix` with F16 consumer profile conflict checks, and `certificationMatrix` (F06 certificates & licences).
+   - `src/areas/food-catalog/services/food-comparison.service.ts`: Orchestrator fetching bounded lightweight picker candidates via `createQueryBuilder().select([...]).take(100)` (no eager joins per `PROJECT_RULES.md` §3) and concurrently evaluating selected items across F03, F04, F06, F11, and F13 signals.
+   - `src/areas/food-catalog/controllers/food-comparison.controller.ts` & `src/areas/food-catalog/food-catalog.module.ts`: Registered `FoodComparisonController` (`GET /catalog/compare`) ahead of `FoodCatalogController` and exported `FoodComparisonEngine` and `FoodComparisonService`.
+3. **Frontend Workbench, Compare Tray & Navigation (`frontend-design` Skill)**:
+   - `src/areas/food-catalog/views/compare.hbs`: Built side-by-side comparison workbench with light/dark theme parity, active 3-slot strip, prominent cross-category block alert with 1-click resolution links, sticky-column responsive comparison tables (`tabular-nums`, explicit serving bases), same-category interactive food picker, `min-h-[44px]` controls, and mandatory informational disclaimer.
+   - `public/js/truelabel-compare-tray.js` & `src/shared/views/layouts/main.hbs`: Built floating top-right Comparison Tray (`localStorage` persistence, max 3 items, instant cross-category guard alert, clear of bottom `#viva-dock`).
+   - `src/shared/views/partials/navbar.hbs`, `_food_card.hbs`, `index.hbs`, `detail.hbs`: Added `Compare` links in desktop/mobile nav, `Compare foods` button on catalog discovery, and `+ Compare` toggle / category quick-compare buttons on food cards and product dossier pages.
+4. **Testing & Verification**:
+   - Added unit specs: `food-comparison.engine.spec.ts`, `food-comparison.service.spec.ts`, `food-comparison.controller.spec.ts`, plus filter/error tests in `food-catalog.controller.spec.ts`.
+   - Expanded `test/catalog.e2e-spec.ts` with `GET /catalog?minScore=80`, empty filter queries, `GET /catalog/compare`, same-category matrix (`Oatly` vs `Chobani`), and cross-category blocking (`Oatly` vs `Coca-Cola`).
+   - `npx tsc --noEmit` & `npm run build`: Exited `0`.
+   - `npm test`: **34/34 test suites passed, 329/329 unit tests passed (0 failed)**.
+   - `npm run test:e2e`: **2/2 E2E suites passed, 17/17 E2E integration tests passed**.

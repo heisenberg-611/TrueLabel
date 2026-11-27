@@ -13,6 +13,9 @@ import { FoodReport } from '../community/models/food-report.entity';
 import { CatalogService } from './services/catalog.service';
 import { IngredientAnalyzerService } from './services/ingredient-analyzer.service';
 import { FoodScoreService } from './services/food-score.service';
+import { FoodComparisonEngine } from './services/food-comparison.engine';
+import { FoodComparisonService } from './services/food-comparison.service';
+import { FoodComparisonController } from './controllers/food-comparison.controller';
 import { FoodCatalogController } from './controllers/food-catalog.controller';
 import { PersonalFoodModule } from '../personal-food/personal-food.module';
 import { FoodSafetyModule } from '../food-safety/food-safety.module';
@@ -36,8 +39,20 @@ import { CommunityModule } from '../community/community.module';
     FoodSafetyModule,
     CommunityModule,
   ],
-  controllers: [FoodCatalogController],
-  providers: [CatalogService, IngredientAnalyzerService, FoodScoreService],
-  exports: [CatalogService, IngredientAnalyzerService, FoodScoreService],
+  controllers: [FoodComparisonController, FoodCatalogController],
+  providers: [
+    CatalogService,
+    IngredientAnalyzerService,
+    FoodScoreService,
+    FoodComparisonEngine,
+    FoodComparisonService,
+  ],
+  exports: [
+    CatalogService,
+    IngredientAnalyzerService,
+    FoodScoreService,
+    FoodComparisonEngine,
+    FoodComparisonService,
+  ],
 })
 export class FoodCatalogModule {}
