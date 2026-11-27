@@ -1,6 +1,7 @@
-import { Controller, Get, Req, Render } from '@nestjs/common';
+import { Controller, Get, Optional, Req, Render } from '@nestjs/common';
 import { Request } from 'express';
 import { CatalogService } from '../../food-catalog/services/catalog.service';
+import { FoodScoreService } from '../../food-catalog/services/food-score.service';
 import { DocumentService } from '../../food-safety/services/document.service';
 import { PreferenceService } from '../../personal-food/services/preference.service';
 
@@ -10,6 +11,7 @@ export class HomeController {
     private readonly catalogService: CatalogService,
     private readonly documentService: DocumentService,
     private readonly preferenceService: PreferenceService,
+    @Optional() private readonly foodScoreService?: FoodScoreService,
   ) { }
 
   /**
@@ -23,10 +25,13 @@ export class HomeController {
     const { items: featuredProducts, total: totalProducts } =
       await this.catalogService.searchAndFilter({ limit: 4 });
 
-    // 2. Fetch safety documents & compliance statistics
-    const docStats = await this.documentService.getStatistics();
-    const sampleLicences = await this.documentService.getSampleLicences(6);
-    const filterOptions = await this.catalogService.getFilterOptions();
+    // 2. Fetch safety documents, scoring weights & compliance statistics
+    const [docStats, sampleLicences, filterOptions, scoringConfig] = await Promise.all([
+      this.documentService.getStatistics(),
+      this.documentService.getSampleLicences(6),
+      this.catalogService.getFilterOptions(),
+      this.foodScoreService ? this.foodScoreService.getActiveConfig() : Promise.resolve(null),
+    ]);
 
     // 3. User session & personalized health profile evaluation
     const user = req.session?.user || null;
@@ -77,6 +82,7 @@ export class HomeController {
       dossierProduct,
       dossierSpecimen,
       sampleLicences,
+      scoringConfig,
       quickCategories: filterOptions.categories.slice(0, 3),
       quickTags: filterOptions.dietaryTags.slice(0, 3),
       stats: {

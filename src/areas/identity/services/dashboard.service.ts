@@ -11,6 +11,7 @@ import * as bcrypt from 'bcryptjs';
 import { User, UserRole } from '../models/user.entity';
 import { FoodProduct } from '../../food-catalog/models/food-product.entity';
 import { CatalogService } from '../../food-catalog/services/catalog.service';
+import { FoodScoreService } from '../../food-catalog/services/food-score.service';
 import { DocumentService } from '../../food-safety/services/document.service';
 import { PreferenceService } from '../../personal-food/services/preference.service';
 import { ReviewService } from '../../community/services/review.service';
@@ -41,6 +42,7 @@ export class DashboardService {
     @Optional() private readonly reviewService?: ReviewService,
     @Optional() private readonly reportService?: ReportService,
     @Optional() private readonly ruleManagementService?: RuleManagementService,
+    @Optional() private readonly foodScoreService?: FoodScoreService,
   ) {}
 
   /**
@@ -145,15 +147,23 @@ export class DashboardService {
   }
 
   /**
-   * Aggregate Admin Command Center Data (Platform Users, Catalog, Accreditation, F03 Food Rules & F13 Complaints)
+   * Aggregate Admin Command Center Data (Platform Users, Catalog, Accreditation, F03 Food Rules, F04 Scoring & F13 Complaints)
    * Highly optimized: executes global vitals in parallel via Promise.all, avoids unindexed eager joins,
    * and implements tab-aware lazy loading so catalog formulations are only queried when on the catalog tab.
    */
   async getAdminDashboardData(options?: AdminDashboardQueryOptions) {
     const currentTab = options?.tab === 'catalog' ? 'catalog' : 'users';
 
-    // 1. Concurrent telemetry: resolve users, document stats, complaint stats, rule stats, and catalog counts in parallel
-    const [allUsers, docStats, complaintStats, rawCatalogCounts, ruleStats] = await Promise.all([
+    // 1. Concurrent telemetry: resolve users, document stats, complaint stats, rule stats, scoring stats, and catalog counts in parallel
+    const [
+      allUsers,
+      docStats,
+      complaintStats,
+      rawCatalogCounts,
+      ruleStats,
+      scoringConfig,
+      scoreTierStats,
+    ] = await Promise.all([
       this.userRepo.find({
         order: { createdAt: 'DESC' },
         select: ['id', 'name', 'email', 'role', 'isVerified', 'createdAt'],
@@ -170,6 +180,12 @@ export class DashboardService {
       this.ruleManagementService
         ? this.ruleManagementService.getQuickStats()
         : Promise.resolve({ total: 0, active: 0, inactive: 0, safe: 0, caution: 0, warning: 0, allergens: 0 }),
+      this.foodScoreService
+        ? this.foodScoreService.getActiveConfig()
+        : Promise.resolve(null),
+      this.foodScoreService
+        ? this.foodScoreService.getCatalogTierStats()
+        : Promise.resolve(null),
     ]);
 
     let catalogCounts = rawCatalogCounts;
@@ -332,6 +348,8 @@ export class DashboardService {
       docStats,
       complaintStats,
       ruleStats,
+      scoringConfig,
+      scoreTierStats,
       page,
       limit,
       total,

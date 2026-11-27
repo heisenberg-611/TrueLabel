@@ -82,7 +82,13 @@ describe('Food Catalog & Ingredient Analysis (E2E Integration Test)', () => {
       .expect(401);
   });
 
-  it('GET /catalog/product/:id should render product details with F03 rule-based ingredient analysis & nutrition', async () => {
+  it('GET /admin/scoring without authentication should require login (401)', async () => {
+    await request(app.getHttpServer())
+      .get('/admin/scoring')
+      .expect(401);
+  });
+
+  it('GET /catalog/product/:id should render product details with F03 rule-based ingredient analysis, nutrition & F04 score breakdown', async () => {
     const barcodeRes = await request(app.getHttpServer())
       .get('/catalog/barcode/7394376311482')
       .expect(302);
@@ -97,5 +103,12 @@ describe('Food Catalog & Ingredient Analysis (E2E Integration Test)', () => {
     expect(response.text).toContain('Ingredient, additive &amp; allergen analysis');
     expect(response.text).toContain('Rule base coverage:');
     expect(response.text).toContain('Rule-verified ingredients &amp; additives');
+    expect(response.text).toContain('Explainable Food Quality Score Breakdown');
+    expect(response.text).toContain('Ingredient &amp; allergen transparency');
+    expect(response.text).toContain('Nutrition profile');
+    expect(response.text).toContain('Verification &amp; certification');
+    expect(response.text).toContain('Recall &amp; safety incidents');
+    expect(response.text).toContain('Community feedback');
+    expect(response.text).toContain('Score history &amp; audit trail');
   });
 });

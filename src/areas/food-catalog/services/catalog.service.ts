@@ -11,6 +11,7 @@ import { Repository } from 'typeorm';
 import { FoodProduct } from '../models/food-product.entity';
 import { Ingredient } from '../models/ingredient.entity';
 import { NutritionFact } from '../models/nutrition-fact.entity';
+import { FoodScoreSnapshot } from '../models/food-score-snapshot.entity';
 import { CreateFoodProductDto } from '../models/dto/create-food-product.dto';
 import { SearchFoodProductDto } from '../models/dto/search-food-product.dto';
 import { FoodRule } from '../../admin/models/food-rule.entity';
@@ -19,6 +20,7 @@ import {
   IngredientAnalysisReport,
   IngredientAnalyzerService,
 } from './ingredient-analyzer.service';
+import { FoodScoreService } from './food-score.service';
 
 export interface RuleRecalculationSummary {
   productsEvaluated: number;
@@ -27,6 +29,8 @@ export interface RuleRecalculationSummary {
   ingredientsUpdated: number;
   matchedCount: number;
   unknownCount: number;
+  scoresUpdated?: number;
+  snapshotsRecorded?: number;
 }
 
 @Injectable()
@@ -45,6 +49,11 @@ export class CatalogService {
     private readonly foodRuleRepo?: Repository<FoodRule>,
     @Optional()
     private readonly ingredientAnalyzer?: IngredientAnalyzerService,
+    @Optional()
+    private readonly foodScoreService?: FoodScoreService,
+    @Optional()
+    @InjectRepository(FoodScoreSnapshot)
+    private readonly snapshotRepo?: Repository<FoodScoreSnapshot>,
   ) {}
 
   private get analyzer(): IngredientAnalyzerService {
@@ -172,7 +181,7 @@ export class CatalogService {
   }
 
   /**
-   * Create a new food product (Feature F01 + Feature F03 rule analysis)
+   * Create a new food product (Feature F01 + F03 rule analysis + F04 score snapshot)
    * Enforces barcode uniqueness across the catalog and evaluates ingredients against FoodRule base.
    */
   async create(
@@ -200,7 +209,7 @@ export class CatalogService {
           )
         : [];
 
-    // Provisional baseline score incorporating F03 rule classifications and unknown penalty (refined in F04)
+    // Baseline score before F04 full 5-component evaluation runs (or fallback for isolated unit mocks)
     const baselineScore = this.computeProvisionalScoreFromAnalysis(
       analyzedIngredients,
       activeRules.length > 0,
@@ -241,6 +250,8 @@ export class CatalogService {
         }),
       );
       savedProduct.ingredients = await this.ingredientRepo.save(ingredients);
+    } else {
+      savedProduct.ingredients = savedProduct.ingredients || [];
     }
 
     if (dto.nutritionFacts && dto.nutritionFacts.length > 0) {
@@ -251,13 +262,23 @@ export class CatalogService {
         }),
       );
       savedProduct.nutritionFacts = await this.nutritionRepo.save(facts);
+    } else {
+      savedProduct.nutritionFacts = savedProduct.nutritionFacts || [];
+    }
+
+    if (this.foodScoreService) {
+      await this.foodScoreService.evaluateAndSyncProduct(savedProduct, {
+        trigger: 'product_create',
+        forceSnapshot: true,
+        suppliedRules: activeRules,
+      });
     }
 
     return savedProduct;
   }
 
   /**
-   * Update food product (Feature F01 + Feature F03 rule re-evaluation)
+   * Update food product (Feature F01 + F03 rule re-evaluation + F04 score snapshot)
    * Manufacturers can edit ONLY their own products. Admins can edit any.
    */
   async update(
@@ -328,7 +349,7 @@ export class CatalogService {
       );
       saved.ingredients = await this.ingredientRepo.save(entities);
 
-      if (saved.status !== 'banned' && analyzedIngredients.length > 0) {
+      if (!this.foodScoreService && saved.status !== 'banned' && analyzedIngredients.length > 0) {
         saved.qualityScore = this.computeProvisionalScoreFromAnalysis(
           analyzedIngredients,
           activeRules.length > 0,
@@ -361,12 +382,25 @@ export class CatalogService {
       saved.nutritionFacts = await this.nutritionRepo.save(entities);
     }
 
+    if (!saved.ingredients && product.ingredients) {
+      saved.ingredients = product.ingredients;
+    }
+    if (!saved.nutritionFacts && product.nutritionFacts) {
+      saved.nutritionFacts = product.nutritionFacts;
+    }
+
+    if (this.foodScoreService) {
+      await this.foodScoreService.evaluateAndSyncProduct(saved, {
+        trigger: 'product_edit',
+      });
+    }
+
     return saved;
   }
 
   /**
-   * Feature F03: Trigger rule-base recalculation across all catalog products & ingredients
-   * whenever an administrator creates, modifies, toggles, or deletes a FoodRule.
+   * Feature F03 & F04: Trigger rule-base recalculation across all catalog products & ingredients
+   * whenever an administrator creates, modifies, toggles, or deletes a FoodRule, and sync F04 scores.
    */
   async recalculateAllWithRules(
     suppliedRules?: FoodRule[],
@@ -406,6 +440,18 @@ export class CatalogService {
       }
     }
 
+    let scoreRecalcStats: { scoresUpdated?: number; snapshotsRecorded?: number } = {};
+    if (this.foodScoreService) {
+      const scoreSummary = await this.foodScoreService.recalculateAllScores(
+        'rule_update',
+        activeRules,
+      );
+      scoreRecalcStats = {
+        scoresUpdated: scoreSummary.productsUpdated,
+        snapshotsRecorded: scoreSummary.snapshotsRecorded,
+      };
+    }
+
     return {
       productsEvaluated: products.length,
       productsUpdated,
@@ -413,6 +459,7 @@ export class CatalogService {
       ingredientsUpdated,
       matchedCount,
       unknownCount,
+      ...scoreRecalcStats,
     };
   }
 
@@ -513,7 +560,7 @@ export class CatalogService {
   }
 
   /**
-   * Ban food product (Feature F01: Administrative Regulatory Governance)
+   * Ban food product (Feature F01: Administrative Regulatory Governance + F04 score quarantine cap)
    * Enforces mandatory regulatory justification; sets status to 'banned' and records audit fields.
    */
   async ban(
@@ -539,11 +586,18 @@ export class CatalogService {
     product.bannedAt = new Date().toISOString();
     product.bannedBy = user.id;
 
-    return this.productRepo.save(product);
+    const saved = await this.productRepo.save(product);
+    if (this.foodScoreService) {
+      await this.foodScoreService.evaluateAndSyncProduct(saved, {
+        trigger: 'product_ban',
+        forceSnapshot: true,
+      });
+    }
+    return saved;
   }
 
   /**
-   * Reinstate / Unban food product (Feature F01: Administrative Regulatory Governance)
+   * Reinstate / Unban food product (Feature F01: Administrative Regulatory Governance + F04 recalculation)
    * Restores status to 'active' and clears ban metadata.
    */
   async unban(
@@ -562,7 +616,14 @@ export class CatalogService {
     product.bannedAt = null;
     product.bannedBy = null;
 
-    return this.productRepo.save(product);
+    const saved = await this.productRepo.save(product);
+    if (this.foodScoreService) {
+      await this.foodScoreService.evaluateAndSyncProduct(saved, {
+        trigger: 'product_unban',
+        forceSnapshot: true,
+      });
+    }
+    return saved;
   }
 
   /**
@@ -581,9 +642,12 @@ export class CatalogService {
 
     const product = await this.findById(id);
 
-    // Clean up dependent ingredients and nutrition facts
+    // Clean up dependent ingredients, nutrition facts, and score history snapshots
     await this.ingredientRepo.delete({ product: { id: product.id } });
     await this.nutritionRepo.delete({ product: { id: product.id } });
+    if (this.snapshotRepo) {
+      await this.snapshotRepo.delete({ productId: product.id });
+    }
 
     await this.productRepo.delete(id);
   }

@@ -19,6 +19,7 @@ import {
 import { Request, Response } from 'express';
 import { CatalogService } from '../services/catalog.service';
 import { IngredientAnalyzerService } from '../services/ingredient-analyzer.service';
+import { FoodScoreBreakdown, FoodScoreService, ScoreHistoryViewItem } from '../services/food-score.service';
 import { PreferenceService } from '../../personal-food/services/preference.service';
 import { DocumentService } from '../../food-safety/services/document.service';
 import { ReviewService } from '../../community/services/review.service';
@@ -39,6 +40,7 @@ export class FoodCatalogController {
     private readonly documentService: DocumentService,
     @Optional() private readonly reviewService?: ReviewService,
     @Optional() private readonly ingredientAnalyzer?: IngredientAnalyzerService,
+    @Optional() private readonly foodScoreService?: FoodScoreService,
   ) {}
 
   private get analyzer(): IngredientAnalyzerService {
@@ -270,7 +272,7 @@ export class FoodCatalogController {
   }
 
   /**
-   * Product Details: Ingredients, Rule-Based Analysis (F03), Nutrition Facts, Transparency breakdown
+   * Product Details: Ingredients, Rule-Based Analysis (F03), Explainable Score (F04), Nutrition Facts
    */
   @Get('product/:id')
   @Render('areas/food-catalog/views/detail')
@@ -295,6 +297,19 @@ export class FoodCatalogController {
     const allergens = ingredientAnalysis.allergens;
     const additives = ingredientAnalysis.additives;
 
+    // Feature F04: Live 5-component Food Quality Score computation & snapshot sync
+    let scoreBreakdown: FoodScoreBreakdown | null = null;
+    let scoreHistory: ScoreHistoryViewItem[] = [];
+    let scoringConfig: any = null;
+    if (this.foodScoreService) {
+      const scoreSync = await this.foodScoreService.evaluateAndSyncProduct(product, {
+        trigger: 'signal_sync',
+      });
+      scoreBreakdown = scoreSync.breakdown;
+      scoreHistory = scoreSync.history;
+      scoringConfig = scoreSync.config;
+    }
+
     // Personal Allergen & Dietary Conflict Evaluation (Feature F16 - Consumer only)
     let conflictEvaluation = null;
     let userProfile = null;
@@ -316,6 +331,9 @@ export class FoodCatalogController {
       activeNav: 'catalog',
       product,
       ingredientAnalysis,
+      scoreBreakdown,
+      scoreHistory,
+      scoringConfig,
       allergens,
       additives,
       conflictEvaluation,

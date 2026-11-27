@@ -1,0 +1,400 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+
+  {{#if success}}
+    <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold text-emerald-900 dark:text-emerald-200 flex items-center gap-2 shadow-sm">
+      <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+      <span>{{success}}</span>
+    </div>
+  {{/if}}
+
+  {{#if error}}
+    <div class="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-xs font-semibold text-rose-900 dark:text-rose-200 flex items-center gap-2 shadow-sm">
+      <svg class="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      <span>{{error}}</span>
+    </div>
+  {{/if}}
+
+  <!-- Header -->
+  <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-7 flex flex-col lg:flex-row lg:items-center justify-between gap-5 shadow-sm">
+    <div class="space-y-1.5">
+      <div class="flex flex-wrap items-center gap-2">
+        <a href="/dashboard/admin" class="inline-flex items-center min-h-[36px] text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
+          &larr; Admin console
+        </a>
+        <span class="text-slate-300 dark:text-slate-700">/</span>
+        <span class="text-xs font-mono font-semibold text-slate-700 dark:text-slate-300">Quality score formula</span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+        Food Quality Score formula &amp; weights
+      </h1>
+      <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-2xl leading-relaxed">
+        Configure the deterministic 5-component scoring weights (must sum to 100%) across ingredients, nutrition, safety verification, recall/complaint signals, and community reviews.
+      </p>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+      <a
+        href="/admin/rules"
+        class="min-h-[44px] inline-flex items-center px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-lg text-xs font-semibold transition-colors shadow-sm"
+      >
+        Food rule base
+      </a>
+      <form method="POST" action="/admin/scoring/recalculate" class="inline">
+        <input type="hidden" name="_csrf" value="{{csrfToken}}">
+        <button
+          type="submit"
+          class="min-h-[44px] px-4 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white rounded-lg text-xs font-semibold transition-colors shadow-sm"
+        >
+          Recalculate catalog scores
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Connected Telemetry Strip -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl divide-y sm:divide-y-0 sm:divide-x divide-slate-100 dark:divide-slate-800 overflow-hidden shadow-sm">
+    <div class="p-4 sm:p-5">
+      <span class="text-xs font-medium text-slate-500 dark:text-slate-400 block">Catalog products</span>
+      <div class="text-2xl font-black font-mono text-slate-900 dark:text-white mt-1">{{tierStats.total}}</div>
+      <span class="text-[11px] text-slate-400 block mt-0.5">Evaluated under active formula</span>
+    </div>
+    <div class="p-4 sm:p-5">
+      <span class="text-xs font-medium text-slate-500 dark:text-slate-400 block">Mean quality score</span>
+      <div class="text-2xl font-black font-mono text-emerald-700 dark:text-emerald-400 mt-1">{{tierStats.averageScore}}<span class="text-xs font-normal text-slate-400">/100</span></div>
+      <span class="text-[11px] text-slate-400 block mt-0.5">Deterministic weighted average</span>
+    </div>
+    <div class="p-4 sm:p-5">
+      <span class="text-xs font-medium text-slate-500 dark:text-slate-400 block">Tier distribution</span>
+      <div class="text-sm font-black font-mono text-slate-900 dark:text-white mt-2 flex flex-wrap items-center gap-2">
+        <span class="text-emerald-700 dark:text-emerald-400">T1: {{tierStats.tier1}}</span>
+        <span class="text-amber-700 dark:text-amber-400">T2: {{tierStats.tier2}}</span>
+        <span class="text-rose-700 dark:text-rose-400">T3: {{tierStats.tier3}}</span>
+      </div>
+      <span class="text-[11px] text-slate-400 block mt-1">High (&ge;80) · Mod (60–79) · Flagged (&lt;60)</span>
+    </div>
+    <div class="p-4 sm:p-5">
+      <span class="text-xs font-medium text-slate-500 dark:text-slate-400 block">History snapshots</span>
+      <div class="text-2xl font-black font-mono text-indigo-700 dark:text-indigo-400 mt-1">{{tierStats.snapshotCount}}</div>
+      <span class="text-[11px] text-slate-400 block mt-0.5">Audit trail rows persisted</span>
+    </div>
+  </div>
+
+  <!-- Main Workspace Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+    <!-- Left 7 Cols: Weight Tuning Form -->
+    <div class="lg:col-span-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm space-y-5">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-4">
+        <div>
+          <h2 class="text-base font-black text-slate-900 dark:text-white">Active scoring weights</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">All five component weights must add up to exactly 100%.</p>
+        </div>
+        <div id="weightSumBadge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-mono text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+          Total: <span id="weightSumValue">{{totalWeight}}</span>%
+        </div>
+      </div>
+
+      <!-- Segmented Weight Distribution Bar -->
+      <div class="space-y-1.5">
+        <div class="h-3 w-full rounded-full overflow-hidden flex bg-slate-100 dark:bg-slate-800">
+          <div id="barIngredient" class="bg-emerald-600 h-full transition-all" style="width: {{config.ingredientWeight}}%;"></div>
+          <div id="barNutrition" class="bg-teal-600 h-full transition-all" style="width: {{config.nutritionWeight}}%;"></div>
+          <div id="barVerification" class="bg-blue-600 h-full transition-all" style="width: {{config.verificationWeight}}%;"></div>
+          <div id="barRecall" class="bg-amber-600 h-full transition-all" style="width: {{config.recallWeight}}%;"></div>
+          <div id="barCommunity" class="bg-indigo-600 h-full transition-all" style="width: {{config.communityWeight}}%;"></div>
+        </div>
+      </div>
+
+      <form method="POST" action="/admin/scoring/weights" id="scoringWeightsForm" class="space-y-4">
+        <input type="hidden" name="_csrf" value="{{csrfToken}}">
+
+        <div class="space-y-3">
+          <!-- 1. Ingredient -->
+          <div class="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="space-y-0.5">
+              <label for="ingredientWeight" class="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-sm bg-emerald-600"></span>
+                1. Ingredient &amp; allergen transparency
+              </label>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                Penalizes warning additives, caution limits, and unclassified ingredients against FoodRule checks.
+              </p>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <input
+                type="number"
+                id="ingredientWeight"
+                name="ingredientWeight"
+                min="0"
+                max="100"
+                required
+                value="{{config.ingredientWeight}}"
+                class="weight-input w-20 min-h-[44px] text-right font-mono font-bold text-sm rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+              />
+              <span class="text-xs font-mono font-bold text-slate-500">%</span>
+            </div>
+          </div>
+
+          <!-- 2. Nutrition -->
+          <div class="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="space-y-0.5">
+              <label for="nutritionWeight" class="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-sm bg-teal-600"></span>
+                2. Standardized nutrition profile
+              </label>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                Scores per-100g/ml sugars, saturated fat, salt/sodium, calories, protein, and dietary fiber.
+              </p>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <input
+                type="number"
+                id="nutritionWeight"
+                name="nutritionWeight"
+                min="0"
+                max="100"
+                required
+                value="{{config.nutritionWeight}}"
+                class="weight-input w-20 min-h-[44px] text-right font-mono font-bold text-sm rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+              />
+              <span class="text-xs font-mono font-bold text-slate-500">%</span>
+            </div>
+          </div>
+
+          <!-- 3. Verification -->
+          <div class="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="space-y-0.5">
+              <label for="verificationWeight" class="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-sm bg-blue-600"></span>
+                3. Verification &amp; certification records
+              </label>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                Evaluates active ISO/BSTI/lab certificates and valid manufacturer trade licences (pending/missing marked provisional).
+              </p>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <input
+                type="number"
+                id="verificationWeight"
+                name="verificationWeight"
+                min="0"
+                max="100"
+                required
+                value="{{config.verificationWeight}}"
+                class="weight-input w-20 min-h-[44px] text-right font-mono font-bold text-sm rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+              />
+              <span class="text-xs font-mono font-bold text-slate-500">%</span>
+            </div>
+          </div>
+
+          <!-- 4. Recall & safety incidents -->
+          <div class="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="space-y-0.5">
+              <label for="recallWeight" class="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-sm bg-amber-600"></span>
+                4. Recall &amp; safety incident standing
+              </label>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                Accounts for active statutory bans, open consumer issue reports, and repeated batch clusters.
+              </p>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <input
+                type="number"
+                id="recallWeight"
+                name="recallWeight"
+                min="0"
+                max="100"
+                required
+                value="{{config.recallWeight}}"
+                class="weight-input w-20 min-h-[44px] text-right font-mono font-bold text-sm rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+              />
+              <span class="text-xs font-mono font-bold text-slate-500">%</span>
+            </div>
+          </div>
+
+          <!-- 5. Community -->
+          <div class="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="space-y-0.5">
+              <label for="communityWeight" class="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-sm bg-indigo-600"></span>
+                5. Credibility-weighted community reviews
+              </label>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                Aggregates visible consumer ratings by credibility weight (unreviewed items carry a provisional baseline).
+              </p>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <input
+                type="number"
+                id="communityWeight"
+                name="communityWeight"
+                min="0"
+                max="100"
+                required
+                value="{{config.communityWeight}}"
+                class="weight-input w-20 min-h-[44px] text-right font-mono font-bold text-sm rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+              />
+              <span class="text-xs font-mono font-bold text-slate-500">%</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label for="notes" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            Formula audit note
+          </label>
+          <input
+            type="text"
+            id="notes"
+            name="notes"
+            maxlength="300"
+            value="{{config.notes}}"
+            placeholder="Document rationale for weight configuration..."
+            class="w-full min-h-[44px] text-xs rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
+          />
+        </div>
+
+        <div id="weightSumError" class="hidden p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-xs font-semibold text-rose-800 dark:text-rose-300">
+          Component weights must total exactly 100% before saving.
+        </div>
+
+        <div class="pt-2 flex flex-wrap items-center justify-between gap-3">
+          <button
+            type="button"
+            onclick="resetDefaultWeights()"
+            class="min-h-[44px] px-3.5 py-2 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-xs font-semibold transition-colors"
+          >
+            Reset defaults (35/30/15/10/10)
+          </button>
+
+          <button
+            type="submit"
+            id="saveWeightsBtn"
+            class="min-h-[44px] px-5 py-2.5 bg-slate-900 dark:bg-emerald-700 hover:bg-slate-800 dark:hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-xs font-semibold transition-colors shadow-sm"
+          >
+            Save weights &amp; recalculate catalog
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Right 5 Cols: Governance Guardrails & Live Sample Breakdowns -->
+    <div class="lg:col-span-5 space-y-6">
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-3">
+        <h2 class="text-sm font-black text-slate-900 dark:text-white">Integrity &amp; provisional safeguards</h2>
+        <ul class="space-y-2 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+          <li class="flex items-start gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 mt-1.5 shrink-0"></span>
+            <span><strong>Reproducible snapshots:</strong> Every formulation, rule, weight, or signal change records a snapshot in <code class="font-mono text-[11px]">food_score_snapshots</code>.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-600 mt-1.5 shrink-0"></span>
+            <span><strong>Honest provisional labels:</strong> Missing reviews, unclassified ingredients, pending certificates, or upcoming recall feeds are explicitly marked <em>Provisional</em>.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-rose-600 mt-1.5 shrink-0"></span>
+            <span><strong>Regulatory ban cap:</strong> Banned products cannot score above <strong>35/100</strong> regardless of nutrition or historical reviews.</span>
+          </li>
+        </ul>
+      </div>
+
+      {{#if sampleBreakdowns.length}}
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
+          <div>
+            <h2 class="text-sm font-black text-slate-900 dark:text-white">Live sample scorecards</h2>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">Previewing current weights against live catalog records.</p>
+          </div>
+
+          <div class="space-y-3">
+            {{#each sampleBreakdowns}}
+              <div class="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/50 space-y-2">
+                <div class="flex items-start justify-between gap-2">
+                  <div>
+                    <a href="/catalog/product/{{this.product.id}}" class="text-xs font-bold text-slate-900 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400">
+                      {{this.product.name}}
+                    </a>
+                    <div class="text-[11px] text-slate-500 dark:text-slate-400">{{this.product.brand}}</div>
+                  </div>
+                  <div class="text-right shrink-0">
+                    <span class="font-mono font-black text-sm {{#if (gte this.breakdown.totalScore 80)}}text-emerald-700 dark:text-emerald-400{{else}}{{#if (gte this.breakdown.totalScore 60)}}text-amber-700 dark:text-amber-400{{else}}text-rose-700 dark:text-rose-400{{/if}}{{/if}}">
+                      {{this.breakdown.totalScore}}/100
+                    </span>
+                    {{#if this.breakdown.isProvisional}}
+                      <span class="block text-[10px] font-semibold text-amber-700 dark:text-amber-300">Provisional</span>
+                    {{/if}}
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-5 gap-1 pt-1 border-t border-slate-200/70 dark:border-slate-800 text-[10px] font-mono text-center">
+                  {{#each this.breakdown.components}}
+                    <div class="px-1 py-1 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                      <div class="text-slate-400 truncate">{{this.shortLabel}}</div>
+                      <div class="font-bold text-slate-800 dark:text-slate-200">{{this.score}}</div>
+                    </div>
+                  {{/each}}
+                </div>
+              </div>
+            {{/each}}
+          </div>
+        </div>
+      {{/if}}
+    </div>
+  </div>
+</div>
+
+<script>
+  function syncWeightTotal() {
+    var ing = Number(document.getElementById('ingredientWeight').value) || 0;
+    var nut = Number(document.getElementById('nutritionWeight').value) || 0;
+    var ver = Number(document.getElementById('verificationWeight').value) || 0;
+    var rec = Number(document.getElementById('recallWeight').value) || 0;
+    var com = Number(document.getElementById('communityWeight').value) || 0;
+
+    var sum = ing + nut + ver + rec + com;
+    var sumValue = document.getElementById('weightSumValue');
+    var sumBadge = document.getElementById('weightSumBadge');
+    var sumError = document.getElementById('weightSumError');
+    var saveBtn = document.getElementById('saveWeightsBtn');
+
+    if (sumValue) sumValue.textContent = sum;
+
+    var normBase = sum > 0 ? sum : 1;
+    var setWidth = function (id, val) {
+      var el = document.getElementById(id);
+      if (el) el.style.width = Math.max(0, Math.min(100, (val / normBase) * 100)) + '%';
+    };
+    setWidth('barIngredient', ing);
+    setWidth('barNutrition', nut);
+    setWidth('barVerification', ver);
+    setWidth('barRecall', rec);
+    setWidth('barCommunity', com);
+
+    var valid = sum === 100;
+    if (sumBadge) {
+      sumBadge.className = valid
+        ? 'inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-mono text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+        : 'inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-mono text-xs font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800';
+    }
+    if (sumError) {
+      sumError.classList.toggle('hidden', valid);
+    }
+    if (saveBtn) {
+      saveBtn.disabled = !valid;
+    }
+  }
+
+  function resetDefaultWeights() {
+    document.getElementById('ingredientWeight').value = 35;
+    document.getElementById('nutritionWeight').value = 30;
+    document.getElementById('verificationWeight').value = 15;
+    document.getElementById('recallWeight').value = 10;
+    document.getElementById('communityWeight').value = 10;
+    syncWeightTotal();
+  }
+
+  document.querySelectorAll('.weight-input').forEach(function (input) {
+    input.addEventListener('input', syncWeightTotal);
+  });
+  syncWeightTotal();
+</script>

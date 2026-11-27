@@ -143,7 +143,7 @@
           {{user.name}} · Platform Administrator
         </h2>
         <p class="text-xs text-slate-600 max-w-xl">
-          Complete administrative control over user identity governance, catalog transparency records, ingredient rule base, regulatory audit review queues, and system parameters.
+          Complete administrative control over user identity governance, catalog transparency records, ingredient rule base, quality scoring weights, regulatory audit review queues, and system parameters.
         </p>
       </div>
 
@@ -158,12 +158,15 @@
             <div class="text-[10px] uppercase font-bold text-slate-500">Pending Audits</div>
           </div>
         </div>
-        <div class="flex flex-col sm:flex-row gap-2">
+        <div class="flex flex-col sm:flex-row flex-wrap gap-2">
           <a href="/dashboard/admin" class="min-h-[44px] px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider text-center inline-flex items-center justify-center transition-colors shadow-sm whitespace-nowrap">
             Admin Console
           </a>
           <a href="/admin/rules" class="min-h-[44px] px-4 py-2.5 rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white font-bold text-xs uppercase tracking-wider text-center inline-flex items-center justify-center transition-colors shadow-sm whitespace-nowrap">
             Food Rules
+          </a>
+          <a href="/admin/scoring" class="min-h-[44px] px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs uppercase tracking-wider text-center inline-flex items-center justify-center transition-colors shadow-sm whitespace-nowrap">
+            Score Weights
           </a>
           <a href="/catalog/manage/create" class="min-h-[44px] px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-slate-800 hover:bg-slate-50 font-bold text-xs uppercase tracking-wider text-center transition-colors whitespace-nowrap inline-flex items-center justify-center gap-1.5">
             <svg class="w-3.5 h-3.5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
@@ -360,88 +363,104 @@
   <!-- SECTION 2: HOW THE TRUELABEL SCORE IS CALCULATED (MATHEMATICAL ARCHITECTURE) -->
   <section data-regulatory-zone="formula" data-bg="#f8faf9" data-fg="#0b0b0c" data-acc="#047857" class="bg-white dark:bg-[#141413] border border-slate-200 dark:border-white/10 rounded-2xl p-8 sm:p-10 shadow-sm space-y-8">
     <div class="max-w-3xl">
-      <span class="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200">
+      <span class="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded border border-emerald-200 dark:border-emerald-800">
         Scientific Methodology
       </span>
       <h2 class="font-display font-bold text-3xl sm:text-4xl text-slate-950 dark:text-slate-100 tracking-tight mt-2">
         The TrueLabel 0–100 Food Quality Formula
       </h2>
-      <p class="text-slate-600 text-sm sm:text-base mt-2 leading-relaxed">
-        Our scoring model eliminates subjective reviews and commercial bias. Every product receives a deterministic score derived from four distinct, mathematically weighted pillars.
+      <p class="text-slate-600 dark:text-slate-400 text-sm sm:text-base mt-2 leading-relaxed">
+        Every packaged food receives a deterministic, reproducible score computed from five configurable, mathematically weighted pillars &mdash; with full breakdown cards, snapshot history, and honest provisional labels whenever records are still accumulating.
       </p>
     </div>
 
-    <!-- The 4-Part Segmented Visual Bar -->
+    <!-- The 5-Part Segmented Visual Bar -->
     <div class="space-y-2">
-      <div class="h-3 w-full rounded-full overflow-hidden flex bg-slate-100 shadow-inner">
-        <div class="bg-emerald-700 h-full w-[40%]" title="40% Ingredients & Additive Safety"></div>
-        <div class="bg-teal-600 h-full w-[30%]" title="30% Nutritional Profile & Salt/Sugar Limits"></div>
-        <div class="bg-blue-600 h-full w-[20%]" title="20% Regulatory Accreditations & Lab Audits"></div>
-        <div class="bg-amber-600 h-full w-[10%]" title="10% Batch Integrity & Contamination Recalls"></div>
+      <div class="h-3 w-full rounded-full overflow-hidden flex bg-slate-100 dark:bg-slate-800 shadow-inner">
+        <div class="bg-emerald-700 h-full" style="width: {{#if scoringConfig}}{{scoringConfig.ingredientWeight}}{{else}}35{{/if}}%;" title="{{#if scoringConfig}}{{scoringConfig.ingredientWeight}}{{else}}35{{/if}}% Ingredients &amp; Allergens"></div>
+        <div class="bg-teal-600 h-full" style="width: {{#if scoringConfig}}{{scoringConfig.nutritionWeight}}{{else}}30{{/if}}%;" title="{{#if scoringConfig}}{{scoringConfig.nutritionWeight}}{{else}}30{{/if}}% Nutrition Profile"></div>
+        <div class="bg-blue-600 h-full" style="width: {{#if scoringConfig}}{{scoringConfig.verificationWeight}}{{else}}15{{/if}}%;" title="{{#if scoringConfig}}{{scoringConfig.verificationWeight}}{{else}}15{{/if}}% Verification &amp; Licences"></div>
+        <div class="bg-amber-600 h-full" style="width: {{#if scoringConfig}}{{scoringConfig.recallWeight}}{{else}}10{{/if}}%;" title="{{#if scoringConfig}}{{scoringConfig.recallWeight}}{{else}}10{{/if}}% Recall &amp; Safety Incidents"></div>
+        <div class="bg-indigo-600 h-full" style="width: {{#if scoringConfig}}{{scoringConfig.communityWeight}}{{else}}10{{/if}}%;" title="{{#if scoringConfig}}{{scoringConfig.communityWeight}}{{else}}10{{/if}}% Community Feedback"></div>
       </div>
-      <div class="flex flex-wrap items-center justify-between text-xs font-semibold text-slate-500 pt-1">
-        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-700"></span> 40% Ingredients & Additives</span>
-        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-teal-600"></span> 30% Nutritional Balance</span>
-        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-blue-600"></span> 20% Regulatory Licences</span>
-        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-amber-600"></span> 10% Batch Recalls</span>
+      <div class="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300 pt-1">
+        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-700"></span> {{#if scoringConfig}}{{scoringConfig.ingredientWeight}}{{else}}35{{/if}}% Ingredients &amp; Allergens</span>
+        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-teal-600"></span> {{#if scoringConfig}}{{scoringConfig.nutritionWeight}}{{else}}30{{/if}}% Nutrition Balance</span>
+        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-blue-600"></span> {{#if scoringConfig}}{{scoringConfig.verificationWeight}}{{else}}15{{/if}}% Verification &amp; Licences</span>
+        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-amber-600"></span> {{#if scoringConfig}}{{scoringConfig.recallWeight}}{{else}}10{{/if}}% Recalls &amp; Incidents</span>
+        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-indigo-600"></span> {{#if scoringConfig}}{{scoringConfig.communityWeight}}{{else}}10{{/if}}% Community Feedback</span>
       </div>
     </div>
 
-    <!-- The 4 Pillar Columns -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-2">
+    <!-- The 5 Pillar Columns -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 pt-2">
       <!-- Pillar 1 -->
-      <div class="p-5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-4">
+      <div class="p-5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 flex flex-col justify-between space-y-4">
         <div>
-          <div class="font-mono text-xs font-bold text-emerald-800 uppercase tracking-wider">Weight: 40%</div>
-          <h3 class="font-extrabold text-slate-900 text-base mt-1">Ingredient Toxicology</h3>
-          <p class="text-xs text-slate-600 mt-2 leading-relaxed">
-            Declared ingredients are checked against international additive databases. High-risk preservatives, artificial food dyes (E-numbers), and ultra-processed binders are heavily penalized.
+          <div class="font-mono text-xs font-bold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider">Weight: {{#if scoringConfig}}{{scoringConfig.ingredientWeight}}{{else}}35{{/if}}%</div>
+          <h3 class="font-extrabold text-slate-900 dark:text-white text-sm mt-1">Ingredients &amp; Allergens</h3>
+          <p class="text-xs text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
+            Checks declared ingredients against the FoodRule base. Warning-tier additives, caution limits, and unclassified items reduce the score proportionally.
           </p>
         </div>
-        <div class="text-[11px] font-bold text-slate-500 pt-3 border-t border-slate-200">
-          Toxicological Screening Engine
+        <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400 pt-3 border-t border-slate-200 dark:border-slate-800">
+          Rule-Based Screening
         </div>
       </div>
 
       <!-- Pillar 2 -->
-      <div class="p-5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-4">
+      <div class="p-5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 flex flex-col justify-between space-y-4">
         <div>
-          <div class="font-mono text-xs font-bold text-teal-800 uppercase tracking-wider">Weight: 30%</div>
-          <h3 class="font-extrabold text-slate-900 text-base mt-1">Nutritional Density</h3>
-          <p class="text-xs text-slate-600 mt-2 leading-relaxed">
-            Evaluates energy saturation, sodium density, saturated fats, and sugar concentration against WHO/FDA daily limits per 100g/ml. Wholesome protein and fiber yield positive adjustments.
+          <div class="font-mono text-xs font-bold text-teal-800 dark:text-teal-400 uppercase tracking-wider">Weight: {{#if scoringConfig}}{{scoringConfig.nutritionWeight}}{{else}}30{{/if}}%</div>
+          <h3 class="font-extrabold text-slate-900 dark:text-white text-sm mt-1">Nutrition Balance</h3>
+          <p class="text-xs text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
+            Evaluates per-100g/ml sugars, saturated fats, salt equivalent, and calories against WHO/FDA thresholds, rewarding dietary protein and fiber.
           </p>
         </div>
-        <div class="text-[11px] font-bold text-slate-500 pt-3 border-t border-slate-200">
-          Multi-Factor Scoring Model
+        <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400 pt-3 border-t border-slate-200 dark:border-slate-800">
+          Nutrient Density Model
         </div>
       </div>
 
       <!-- Pillar 3 -->
-      <div class="p-5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-4">
+      <div class="p-5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 flex flex-col justify-between space-y-4">
         <div>
-          <div class="font-mono text-xs font-bold text-blue-800 uppercase tracking-wider">Weight: 20%</div>
-          <h3 class="font-extrabold text-slate-900 text-base mt-1">Accreditation Audits</h3>
-          <p class="text-xs text-slate-600 mt-2 leading-relaxed">
-            Verifies manufacturer licences against official BSTI, BFSA, and FDA government registries. Valid ISO 22000 certificates, Halal proofs, and accredited lab test reports boost the score.
+          <div class="font-mono text-xs font-bold text-blue-800 dark:text-blue-400 uppercase tracking-wider">Weight: {{#if scoringConfig}}{{scoringConfig.verificationWeight}}{{else}}15{{/if}}%</div>
+          <h3 class="font-extrabold text-slate-900 dark:text-white text-sm mt-1">Verification &amp; Licences</h3>
+          <p class="text-xs text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
+            Audits inspector-approved certificates and valid BSTI/BFSA/FDA manufacturer licences. Pending or missing filings are marked provisional.
           </p>
         </div>
-        <div class="text-[11px] font-bold text-slate-500 pt-3 border-t border-slate-200">
-          Regulatory Compliance Audit
+        <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400 pt-3 border-t border-slate-200 dark:border-slate-800">
+          Compliance Standing
         </div>
       </div>
 
       <!-- Pillar 4 -->
-      <div class="p-5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-4">
+      <div class="p-5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 flex flex-col justify-between space-y-4">
         <div>
-          <div class="font-mono text-xs font-bold text-amber-800 uppercase tracking-wider">Weight: 10%</div>
-          <h3 class="font-extrabold text-slate-900 text-base mt-1">Batch Safety & Recalls</h3>
-          <p class="text-xs text-slate-600 mt-2 leading-relaxed">
-            Continuous surveillance of batch codes and expiration thresholds. Products flagged in active health recalls or counterfeit reports are immediately downgraded.
+          <div class="font-mono text-xs font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wider">Weight: {{#if scoringConfig}}{{scoringConfig.recallWeight}}{{else}}10{{/if}}%</div>
+          <h3 class="font-extrabold text-slate-900 dark:text-white text-sm mt-1">Recalls &amp; Incidents</h3>
+          <p class="text-xs text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
+            Enforces a statutory 35-point quarantine cap on banned items and penalizes open safety reports and batch complaint clusters.
           </p>
         </div>
-        <div class="text-[11px] font-bold text-slate-500 pt-3 border-t border-slate-200">
-          Public Health Recall Surveillance
+        <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400 pt-3 border-t border-slate-200 dark:border-slate-800">
+          Quarantine &amp; Surveillance
+        </div>
+      </div>
+
+      <!-- Pillar 5 -->
+      <div class="p-5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 flex flex-col justify-between space-y-4">
+        <div>
+          <div class="font-mono text-xs font-bold text-indigo-800 dark:text-indigo-400 uppercase tracking-wider">Weight: {{#if scoringConfig}}{{scoringConfig.communityWeight}}{{else}}10{{/if}}%</div>
+          <h3 class="font-extrabold text-slate-900 dark:text-white text-sm mt-1">Community Feedback</h3>
+          <p class="text-xs text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
+            Computes credibility-weighted consumer rating averages across visible reviews, displaying a transparent provisional baseline when unreviewed.
+          </p>
+        </div>
+        <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400 pt-3 border-t border-slate-200 dark:border-slate-800">
+          Credibility-Weighted Reviews
         </div>
       </div>
     </div>

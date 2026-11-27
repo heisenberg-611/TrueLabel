@@ -4,9 +4,11 @@ import { Repository } from 'typeorm';
 import { ConflictException, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { CatalogService } from './catalog.service';
 import { IngredientAnalyzerService } from './ingredient-analyzer.service';
+import { FoodScoreService } from './food-score.service';
 import { FoodProduct } from '../models/food-product.entity';
 import { Ingredient } from '../models/ingredient.entity';
 import { NutritionFact } from '../models/nutrition-fact.entity';
+import { FoodScoreSnapshot } from '../models/food-score-snapshot.entity';
 import { FoodRule } from '../../admin/models/food-rule.entity';
 
 describe('CatalogService (Unit Tests)', () => {
@@ -654,6 +656,79 @@ describe('CatalogService (Unit Tests)', () => {
           }),
         ]),
       );
+    });
+  });
+
+  describe('Feature F04: FoodScoreService & Snapshot Lifecycle Integration', () => {
+    it('delegates create, ban, unban, recalculateAllWithRules, and delete snapshot cleanup when FoodScoreService is wired', async () => {
+      const mockScoreService: jest.Mocked<Partial<FoodScoreService>> = {
+        evaluateAndSyncProduct: jest.fn().mockResolvedValue({
+          breakdown: { totalScore: 81 } as any,
+          history: [],
+          config: {} as any,
+          updatedProductScore: true,
+          snapshotCreated: true,
+        }),
+        recalculateAllScores: jest.fn().mockResolvedValue({
+          productsEvaluated: 1,
+          productsUpdated: 1,
+          snapshotsRecorded: 1,
+          tierCounts: { tier1: 1, tier2: 0, tier3: 0 },
+        }),
+      };
+      const mockSnapshotRepo = { delete: jest.fn().mockResolvedValue({ affected: 2 }) };
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          CatalogService,
+          IngredientAnalyzerService,
+          { provide: getRepositoryToken(FoodProduct), useValue: productRepo },
+          { provide: getRepositoryToken(Ingredient), useValue: ingredientRepo },
+          { provide: getRepositoryToken(NutritionFact), useValue: nutritionRepo },
+          { provide: getRepositoryToken(FoodRule), useValue: foodRuleRepo },
+          { provide: getRepositoryToken(FoodScoreSnapshot), useValue: mockSnapshotRepo },
+          { provide: FoodScoreService, useValue: mockScoreService },
+        ],
+      }).compile();
+
+      const wiredService = module.get<CatalogService>(CatalogService);
+
+      (productRepo.findOne as jest.Mock).mockResolvedValueOnce(null);
+      (productRepo.create as jest.Mock).mockReturnValue({ ...mockProduct, id: 77 });
+      (productRepo.save as jest.Mock).mockImplementation((p) => Promise.resolve(p));
+      await wiredService.create(
+        { name: 'Wired Food', brand: 'Brand', category: 'Beverages', barcode: '77777777' } as any,
+        10,
+      );
+      expect(mockScoreService.evaluateAndSyncProduct).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 77 }),
+        expect.objectContaining({ trigger: 'product_create', forceSnapshot: true }),
+      );
+
+      (productRepo.findOne as jest.Mock).mockResolvedValueOnce({ ...mockProduct, id: 77 });
+      await wiredService.ban(77, 'Recall detected', { id: 99, role: 'admin' });
+      expect(mockScoreService.evaluateAndSyncProduct).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 77, status: 'banned' }),
+        expect.objectContaining({ trigger: 'product_ban', forceSnapshot: true }),
+      );
+
+      (productRepo.findOne as jest.Mock).mockResolvedValueOnce({ ...mockProduct, id: 77, status: 'banned' });
+      await wiredService.unban(77, { id: 99, role: 'admin' });
+      expect(mockScoreService.evaluateAndSyncProduct).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 77, status: 'active' }),
+        expect.objectContaining({ trigger: 'product_unban', forceSnapshot: true }),
+      );
+
+      (productRepo.find as jest.Mock).mockResolvedValue([]);
+      const ruleSummary = await wiredService.recalculateAllWithRules([]);
+      expect(mockScoreService.recalculateAllScores).toHaveBeenCalledWith('rule_update', []);
+      expect(ruleSummary.scoresUpdated).toBe(1);
+      expect(ruleSummary.snapshotsRecorded).toBe(1);
+
+      (productRepo.findOne as jest.Mock).mockResolvedValueOnce({ ...mockProduct, id: 77 });
+      (productRepo.delete as jest.Mock).mockResolvedValue({ affected: 1 });
+      await wiredService.delete(77, { id: 99, role: 'admin' });
+      expect(mockSnapshotRepo.delete).toHaveBeenCalledWith({ productId: 77 });
     });
   });
 

@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { FoodCatalogController } from './food-catalog.controller';
 import { CatalogService } from '../services/catalog.service';
 import { IngredientAnalyzerService } from '../services/ingredient-analyzer.service';
+import { FoodScoreService } from '../services/food-score.service';
 import { PreferenceService } from '../../personal-food/services/preference.service';
 import { DocumentService } from '../../food-safety/services/document.service';
 
@@ -209,6 +210,45 @@ describe('FoodCatalogController (Unit Tests)', () => {
 
       expect(catalogService.analyzeProductIngredients).toHaveBeenCalledWith(mockProduct);
       expect(result.ingredientAnalysis).toEqual(mockReport);
+    });
+
+    it('should delegate F04 scoreBreakdown & snapshot history to FoodScoreService when wired', async () => {
+      const mockScoreSync = {
+        breakdown: {
+          totalScore: 87,
+          rawWeightedScore: 87.2,
+          isProvisional: true,
+          components: [{ key: 'ingredient', score: 95, weight: 35 }],
+        },
+        history: [{ id: 1, totalScore: 87, triggerLabel: 'Catalog seed baseline' }],
+        config: { ingredientWeight: 35, nutritionWeight: 30, verificationWeight: 15, recallWeight: 10, communityWeight: 10 },
+      };
+      const mockFoodScoreService = {
+        evaluateAndSyncProduct: jest.fn().mockResolvedValue(mockScoreSync),
+      };
+
+      const wiredModule: TestingModule = await Test.createTestingModule({
+        controllers: [FoodCatalogController],
+        providers: [
+          IngredientAnalyzerService,
+          { provide: CatalogService, useValue: catalogService },
+          { provide: PreferenceService, useValue: preferenceService },
+          { provide: DocumentService, useValue: documentService },
+          { provide: FoodScoreService, useValue: mockFoodScoreService },
+        ],
+      }).compile();
+      const wiredController = wiredModule.get<FoodCatalogController>(FoodCatalogController);
+
+      (catalogService.findById as jest.Mock).mockResolvedValue(mockProduct as any);
+      const mockReq = { session: { user: null } } as any;
+      const result = await wiredController.getProductDetail(1, mockReq);
+
+      expect(mockFoodScoreService.evaluateAndSyncProduct).toHaveBeenCalledWith(mockProduct, {
+        trigger: 'signal_sync',
+      });
+      expect(result.scoreBreakdown).toEqual(mockScoreSync.breakdown);
+      expect(result.scoreHistory).toEqual(mockScoreSync.history);
+      expect(result.scoringConfig).toEqual(mockScoreSync.config);
     });
 
     it('should evaluate personal dietary conflict for consumer users on product detail', async () => {

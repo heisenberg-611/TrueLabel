@@ -17,6 +17,8 @@ import { User } from './areas/identity/models/user.entity';
 import { FoodProduct } from './areas/food-catalog/models/food-product.entity';
 import { Ingredient } from './areas/food-catalog/models/ingredient.entity';
 import { NutritionFact } from './areas/food-catalog/models/nutrition-fact.entity';
+import { ScoringConfig } from './areas/food-catalog/models/scoring-config.entity';
+import { FoodScoreSnapshot } from './areas/food-catalog/models/food-score-snapshot.entity';
 import { PreferenceProfile } from './areas/personal-food/models/preference-profile.entity';
 import { FoodSafetyDocument } from './areas/food-safety/models/food-safety-document.entity';
 import { ManufacturerLicence } from './areas/food-safety/models/manufacturer-licence.entity';
@@ -30,6 +32,8 @@ import { FoodRule } from './areas/admin/models/food-rule.entity';
       FoodProduct,
       Ingredient,
       NutritionFact,
+      ScoringConfig,
+      FoodScoreSnapshot,
       PreferenceProfile,
       FoodSafetyDocument,
       ManufacturerLicence,

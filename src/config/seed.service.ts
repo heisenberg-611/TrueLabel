@@ -14,6 +14,7 @@ import { FoodReport } from '../areas/community/models/food-report.entity';
 import { FoodRule } from '../areas/admin/models/food-rule.entity';
 import { CatalogService } from '../areas/food-catalog/services/catalog.service';
 import { IngredientAnalyzerService } from '../areas/food-catalog/services/ingredient-analyzer.service';
+import { FoodScoreService } from '../areas/food-catalog/services/food-score.service';
 import {
   SEED_USERS,
   SEED_PREFERENCES,
@@ -57,6 +58,8 @@ export class SeedService {
     private readonly catalogService?: CatalogService,
     @Optional()
     private readonly ingredientAnalyzer?: IngredientAnalyzerService,
+    @Optional()
+    private readonly foodScoreService?: FoodScoreService,
   ) {}
 
   /**
@@ -73,6 +76,13 @@ export class SeedService {
     await this.seedManufacturerLicences();
     await this.seedFoodSafetyDocuments();
     await this.seedCommunityReviewsAndReports();
+    if (this.foodScoreService) {
+      await this.foodScoreService.getActiveConfig();
+      const scoreSummary = await this.foodScoreService.recalculateAllScores('seed');
+      this.logger.log(
+        `F04 quality score synchronization: evaluated ${scoreSummary.productsEvaluated} products, updated ${scoreSummary.productsUpdated} scores, recorded ${scoreSummary.snapshotsRecorded} snapshots.`,
+      );
+    }
     this.logger.log('TrueLabel modular curated seed synchronization completed successfully.');
   }
 

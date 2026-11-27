@@ -44,6 +44,12 @@
           Food rule base
         </a>
         <a
+          href="/admin/scoring"
+          class="min-h-[44px] inline-flex items-center px-3 py-1.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-semibold transition-colors border border-slate-300 dark:border-slate-700 shadow-sm"
+        >
+          Scoring weights
+        </a>
+        <a
           href="/catalog/manage/{{product.id}}/edit"
           class="min-h-[44px] inline-flex items-center px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-semibold transition-colors border border-slate-300 dark:border-slate-700 shadow-sm"
         >
@@ -196,7 +202,7 @@
     </div>
 
     <!-- Explainable Food Quality Score Seal -->
-    <div class="flex flex-col items-center justify-center p-5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 text-center min-w-[170px] self-stretch md:self-auto">
+    <div class="flex flex-col items-center justify-center p-5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 text-center min-w-[185px] self-stretch md:self-auto">
       <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Quality score</span>
       <div class="text-4xl font-black mt-1 font-mono {{#if (gte product.qualityScore 80)}}text-emerald-800 dark:text-emerald-400{{else}}{{#if (gte product.qualityScore 60)}}text-amber-800 dark:text-amber-400{{else}}text-rose-800 dark:text-rose-400{{/if}}{{/if}}">
         {{product.qualityScore}}<span class="text-base text-slate-400 font-normal font-sans">/100</span>
@@ -204,7 +210,15 @@
       <div class="text-xs font-semibold mt-1 {{#if (gte product.qualityScore 80)}}text-emerald-800 dark:text-emerald-300{{else}}{{#if (gte product.qualityScore 60)}}text-amber-800 dark:text-amber-300{{else}}text-rose-800 dark:text-rose-400{{/if}}{{/if}}">
         {{#if (gte product.qualityScore 80)}}Tier 1: High transparency{{else}}{{#if (gte product.qualityScore 60)}}Tier 2: Moderate quality{{else}}Tier 3: Elevated processing{{/if}}{{/if}}
       </div>
-      <span class="text-[11px] text-slate-400 mt-0.5">Algorithm verified</span>
+      {{#if scoreBreakdown}}
+        {{#if scoreBreakdown.isProvisional}}
+          <span class="text-[11px] font-semibold text-amber-700 dark:text-amber-300 mt-1">Provisional components active</span>
+        {{else}}
+          <span class="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 mt-1">All 5 signals verified</span>
+        {{/if}}
+      {{else}}
+        <span class="text-[11px] text-slate-400 mt-0.5">Rule-based quality score</span>
+      {{/if}}
     </div>
   </div>
 
@@ -311,13 +325,182 @@
     </div>
   {{/if}}
 
+  <!-- FEATURE F04: Explainable 5-Component Food Quality Score Breakdown & History -->
+  {{#if scoreBreakdown}}
+    <section class="bg-white dark:bg-[#141413] border border-slate-200 dark:border-white/10 rounded-xl p-6 space-y-5 shadow-sm">
+      <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+        <div class="space-y-1">
+          <div class="flex flex-wrap items-center gap-2">
+            <h2 class="text-base font-black text-slate-950 dark:text-white tracking-tight">
+              Explainable Food Quality Score Breakdown
+            </h2>
+            {{#if scoreBreakdown.isProvisional}}
+              <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                Includes provisional baseline
+              </span>
+            {{else}}
+              <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                100% verified signals
+              </span>
+            {{/if}}
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-3xl">
+            Deterministic 0–100 score computed from five weighted signals totaling
+            <strong class="font-mono text-slate-800 dark:text-slate-200">{{scoreBreakdown.rawWeightedScore}} / 100</strong>
+            using active formula weights ({{scoreBreakdown.weights.ingredientWeight}}% / {{scoreBreakdown.weights.nutritionWeight}}% / {{scoreBreakdown.weights.verificationWeight}}% / {{scoreBreakdown.weights.recallWeight}}% / {{scoreBreakdown.weights.communityWeight}}%).
+          </p>
+        </div>
+
+        {{#if (eq user.role 'admin')}}
+          <a
+            href="/admin/scoring"
+            class="min-h-[44px] inline-flex items-center px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shrink-0"
+          >
+            Configure weights &rarr;
+          </a>
+        {{/if}}
+      </div>
+
+      {{#if scoreBreakdown.quarantineCapApplied}}
+        <div class="p-3.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 text-xs text-rose-900 dark:text-rose-200 flex items-start gap-2.5">
+          <span class="w-5 h-5 rounded bg-rose-700 text-white font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">!</span>
+          <div>
+            <strong class="font-bold">Statutory quarantine score cap applied:</strong>
+            Raw formulation score was {{scoreBreakdown.rawWeightedScore}}/100, capped at <strong>35/100</strong> because this item is under an active regulatory ban.
+          </div>
+        </div>
+      {{/if}}
+
+      {{#if scoreBreakdown.isProvisional}}
+        <div class="p-3.5 rounded-lg bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/80 text-xs text-amber-950 dark:text-amber-200 flex items-start gap-2.5">
+          <span class="px-1.5 py-0.5 rounded bg-amber-200/80 dark:bg-amber-900 text-amber-900 dark:text-amber-200 font-mono font-bold text-[10px] uppercase shrink-0 mt-0.5">Provisional</span>
+          <p class="leading-relaxed text-[11px] sm:text-xs">
+            {{scoreBreakdown.provisionalDisclaimer}} Provisional components are transparently marked below and never presented as fully verified facts.
+          </p>
+        </div>
+      {{/if}}
+
+      <!-- 5 Weighted Score Component Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3.5">
+        {{#each scoreBreakdown.components}}
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/60 flex flex-col justify-between gap-3">
+            <div class="space-y-2">
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <span class="text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide block">
+                    Weight {{this.weight}}%
+                  </span>
+                  <h3 class="text-xs font-extrabold text-slate-900 dark:text-slate-100 leading-snug mt-0.5">
+                    {{this.label}}
+                  </h3>
+                </div>
+                {{#if this.provisional}}
+                  <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 shrink-0">
+                    Provisional
+                  </span>
+                {{else}}
+                  <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 shrink-0">
+                    Verified
+                  </span>
+                {{/if}}
+              </div>
+
+              <div class="flex items-baseline justify-between gap-2 pt-1">
+                <div class="text-2xl font-black font-mono text-slate-950 dark:text-white">
+                  {{this.score}}<span class="text-xs font-normal text-slate-400">/100</span>
+                </div>
+                <span class="text-[11px] font-mono font-bold text-emerald-700 dark:text-emerald-400">
+                  +{{this.weightedContributionFormatted}} pts
+                </span>
+              </div>
+
+              <div class="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                <div class="h-full {{this.barColorClass}}" style="width: {{this.score}}%;"></div>
+              </div>
+
+              <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed pt-1">
+                {{this.rationale}}
+              </p>
+              {{#if this.provisionalNote}}
+                <p class="text-[10px] text-amber-800 dark:text-amber-300 leading-snug bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded px-2 py-1">
+                  {{this.provisionalNote}}
+                </p>
+              {{/if}}
+            </div>
+
+            <div class="pt-2 border-t border-slate-200/80 dark:border-slate-800 text-[10px] font-mono text-slate-500 dark:text-slate-400 truncate" title="{{this.evidenceSummary}}">
+              {{this.evidenceSummary}}
+            </div>
+          </div>
+        {{/each}}
+      </div>
+
+      <!-- Score History Snapshot Timeline -->
+      {{#if scoreHistory.length}}
+        <div class="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <h3 class="text-xs font-bold text-slate-800 dark:text-slate-200">
+              Score history &amp; audit trail ({{scoreHistory.length}} recorded {{#if (eq scoreHistory.length 1)}}snapshot{{else}}snapshots{{/if}})
+            </h3>
+            <span class="text-[11px] font-mono text-slate-400">Reproducible snapshots</span>
+          </div>
+
+          <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead class="bg-slate-50 dark:bg-slate-900 text-[11px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                <tr>
+                  <th class="px-3 py-2 font-semibold">Date</th>
+                  <th class="px-3 py-2 font-semibold">Score</th>
+                  <th class="px-3 py-2 font-semibold">Trigger</th>
+                  <th class="px-3 py-2 font-semibold">Component scores</th>
+                  <th class="px-3 py-2 font-semibold">Weights</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-950/40">
+                {{#each scoreHistory}}
+                  <tr>
+                    <td class="px-3 py-2 font-mono text-[11px] text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                      {{this.recordedOn}}
+                    </td>
+                    <td class="px-3 py-2 font-mono font-bold whitespace-nowrap">
+                      <span class="{{#if (gte this.totalScore 80)}}text-emerald-700 dark:text-emerald-400{{else}}{{#if (gte this.totalScore 60)}}text-amber-700 dark:text-amber-400{{else}}text-rose-700 dark:text-rose-400{{/if}}{{/if}}">
+                        {{this.totalScore}}/100
+                      </span>
+                      {{#if this.deltaLabel}}
+                        <span class="ml-1 text-[10px] {{#if this.deltaPositive}}text-emerald-600 dark:text-emerald-400{{else}}{{#if this.deltaNegative}}text-rose-600 dark:text-rose-400{{else}}text-slate-400{{/if}}{{/if}}">
+                          ({{this.deltaLabel}})
+                        </span>
+                      {{/if}}
+                    </td>
+                    <td class="px-3 py-2 text-slate-700 dark:text-slate-200 whitespace-nowrap">
+                      {{this.triggerLabel}}
+                      {{#if this.isProvisional}}
+                        <span class="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">Provisional</span>
+                      {{/if}}
+                    </td>
+                    <td class="px-3 py-2 font-mono text-[11px] text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                      {{this.componentSummary}}
+                    </td>
+                    <td class="px-3 py-2 font-mono text-[11px] text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                      {{this.weightsLabel}}
+                    </td>
+                  </tr>
+                {{/each}}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      {{/if}}
+    </section>
+  {{/if}}
+
   <!-- Feature F11 & F13: Community Reviews Summary & Safety Reporting -->
   <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 space-y-5">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
       <div class="space-y-1">
         <h2 class="text-base font-bold text-slate-950 dark:text-white">Consumer reviews and safety reports</h2>
         <p class="text-xs text-slate-500 dark:text-slate-400">
-          Credibility-weighted ratings from verified accounts (independent of the lab-based Food Quality Score) and private safety reporting.
+          Credibility-weighted ratings from verified accounts (informing the Community component of the Food Quality Score) and private safety reporting.
         </p>
       </div>
       <div class="flex flex-wrap items-center gap-2.5">
