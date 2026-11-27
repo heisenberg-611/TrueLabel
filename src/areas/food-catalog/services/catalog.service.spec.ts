@@ -347,6 +347,30 @@ describe('CatalogService (Unit Tests)', () => {
         { tag: '%vegan%' },
       );
     });
+
+    it('should filter by minScore in query builder (Feature F01 & F04 integration)', async () => {
+      // Arrange
+      const mockQueryBuilder = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([[mockProduct], 1]),
+      };
+      (productRepo.createQueryBuilder as jest.Mock).mockReturnValue(mockQueryBuilder);
+
+      // Act
+      const result = await service.searchAndFilter({ minScore: 80 });
+
+      // Assert
+      expect(result.items).toHaveLength(1);
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'product.qualityScore >= :minScore',
+        { minScore: 80 },
+      );
+    });
   });
 
   describe('getQualityScoreTier (Quality Scoring & Tier Logic)', () => {

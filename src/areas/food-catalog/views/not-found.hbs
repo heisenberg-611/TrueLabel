@@ -1,27 +1,26 @@
-<div class="max-w-md mx-auto my-12 bg-white p-8 border border-slate-200 rounded-lg text-center shadow-sm">
-  <div class="w-12 h-12 bg-amber-50 text-amber-700 rounded-full flex items-center justify-center mx-auto mb-4 font-mono font-black text-sm border border-amber-200">
+<div class="max-w-md mx-auto my-12 bg-white dark:bg-slate-900 p-8 border border-slate-200 dark:border-slate-800 rounded-xl text-center shadow-sm">
+  <div class="w-12 h-12 bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 rounded-full flex items-center justify-center mx-auto mb-4 font-mono font-black text-sm border border-amber-200 dark:border-amber-800">
     EAN
   </div>
 
-  <h1 class="text-xl font-black text-slate-900 tracking-tight">Barcode Not Found</h1>
-  <p class="text-xs text-slate-500 mt-1">
-    No packaged food matches barcode <code class="font-mono font-bold text-slate-800 bg-slate-100 px-1 py-0.5 rounded">{{barcode}}</code> in our catalog.
+  <h1 class="text-xl font-black text-slate-900 dark:text-white tracking-tight">Barcode Not Found</h1>
+  <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+    No packaged food matches barcode <code class="font-mono font-bold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">{{barcode}}</code> in our catalog.
   </p>
 
-  <div class="mt-6 p-4 rounded bg-slate-50 border border-slate-200 text-left text-xs space-y-2 text-slate-600">
-    <div class="font-bold text-slate-800">Request to Add Food:</div>
+  <div class="mt-6 p-4 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-left text-xs space-y-2 text-slate-600 dark:text-slate-300">
+    <div class="font-bold text-slate-800 dark:text-slate-100">Request to Add Food:</div>
     <p>Consumers can request this food to be indexed, or verified manufacturers can register this product immediately with official food safety documentation.</p>
   </div>
 
   <div class="mt-6 flex flex-col gap-2">
-    <a href="/catalog" class="py-2.5 px-4 bg-slate-900 text-white font-bold text-xs rounded hover:bg-slate-800">
+    <a href="/catalog" class="min-h-[44px] flex items-center justify-center py-2.5 px-4 bg-slate-900 hover:bg-slate-800 dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white font-bold text-xs rounded-lg transition-colors shadow-sm">
       Search Other Foods
     </a>
     {{#if (or (eq user.role "manufacturer") (eq user.role "admin"))}}
-      <a href="/catalog/manage/create?barcode={{urlEncode barcode}}" class="py-2.5 px-4 border border-emerald-600 text-emerald-800 font-bold text-xs rounded hover:bg-emerald-50">
+      <a href="/catalog/manage/create?barcode={{urlEncode barcode}}" class="min-h-[44px] flex items-center justify-center py-2.5 px-4 border border-emerald-600 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 font-bold text-xs rounded-lg transition-colors shadow-sm">
         Register Barcode {{barcode}} Now
       </a>
     {{/if}}
   </div>
 </div>
-

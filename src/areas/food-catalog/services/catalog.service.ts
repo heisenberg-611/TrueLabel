@@ -121,9 +121,14 @@ export class CatalogService {
       queryBuilder.andWhere('LOWER(product.dietaryTags) LIKE :tag', { tag: tagLower });
     }
 
-    if (dto.minScore) {
+    if (
+      dto.minScore !== undefined &&
+      dto.minScore !== null &&
+      !isNaN(Number(dto.minScore)) &&
+      Number(dto.minScore) > 0
+    ) {
       queryBuilder.andWhere('product.qualityScore >= :minScore', {
-        minScore: dto.minScore,
+        minScore: Number(dto.minScore),
       });
     }
 

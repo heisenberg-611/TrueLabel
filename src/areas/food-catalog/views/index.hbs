@@ -1,10 +1,10 @@
 <div class="space-y-6">
 
   <!-- Search & Filter Hero -->
-  <div class="bg-white p-6 border border-slate-200 rounded-lg">
+  <div class="bg-white dark:bg-slate-900 p-5 sm:p-7 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
     <div class="max-w-3xl">
-      <h1 class="text-2xl font-black text-slate-900 tracking-tight">Food Catalog & Transparency Discovery</h1>
-      <p class="text-sm text-slate-500 mt-1">Search packaged food records by brand, name, or barcode to inspect ingredients, allergens, and verified nutrition facts.</p>
+      <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">Food Catalog & Transparency Discovery</h1>
+      <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">Search packaged food records by brand, name, or barcode to inspect ingredients, allergens, and verified nutrition facts.</p>
     </div>
 
     <!-- Live Search & Barcode Lookup Form -->
@@ -15,17 +15,17 @@
           name="q"
           value="{{query}}"
           placeholder="Search by food name, brand, or barcode (e.g. Oat, 890123...)"
-          class="w-full pl-4 pr-10 py-2.5 border border-slate-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent font-medium"
+          class="w-full min-h-[44px] pl-4 pr-12 py-2.5 border border-slate-300 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-emerald-500 focus:border-transparent font-medium"
         />
         {{#if query}}
-          <a href="/catalog" class="absolute right-3 top-2.5 text-xs text-slate-400 hover:text-slate-600 font-bold">Clear</a>
+          <a href="/catalog{{#if selectedCategory}}?category={{urlEncode selectedCategory}}{{/if}}{{#if selectedTag}}{{#if selectedCategory}}&{{else}}?{{/if}}tag={{urlEncode selectedTag}}{{/if}}{{#if minScore}}{{#if (or selectedCategory selectedTag)}}&{{else}}?{{/if}}minScore={{minScore}}{{/if}}" class="absolute right-3 top-3 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold">Clear</a>
         {{/if}}
       </div>
 
       <div class="flex flex-wrap sm:flex-nowrap gap-2">
         <select
           name="category"
-          class="w-full sm:w-auto px-3.5 py-2.5 border border-slate-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-transparent bg-white text-slate-800 shadow-sm transition-all"
+          class="w-full sm:w-auto px-3.5 py-2.5 min-h-[44px] border border-slate-300 dark:border-slate-700 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-transparent bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 shadow-sm transition-all"
         >
           <option value="">All Categories</option>
           {{#each categories}}
@@ -35,7 +35,7 @@
 
         <select
           name="tag"
-          class="w-full sm:w-auto px-3.5 py-2.5 border border-slate-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-transparent bg-white text-slate-800 shadow-sm transition-all"
+          class="w-full sm:w-auto px-3.5 py-2.5 min-h-[44px] border border-slate-300 dark:border-slate-700 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-transparent bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 shadow-sm transition-all"
         >
           <option value="">All Dietary Tags</option>
           {{#each dietaryTags}}
@@ -43,26 +43,40 @@
           {{/each}}
         </select>
 
+        <select
+          name="minScore"
+          class="w-full sm:w-auto px-3.5 py-2.5 min-h-[44px] border border-slate-300 dark:border-slate-700 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-transparent bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 shadow-sm transition-all"
+        >
+          <option value="">All Scores</option>
+          <option value="80" {{#if (eq minScore 80)}}selected{{/if}}>Tier 1: High (80+)</option>
+          <option value="60" {{#if (eq minScore 60)}}selected{{/if}}>Tier 2: Mod (60+)</option>
+        </select>
+
         <button
           type="submit"
-          class="w-full sm:w-auto px-5 py-2.5 bg-slate-900 text-white font-bold text-sm rounded-lg hover:bg-slate-800 transition-colors whitespace-nowrap shadow-sm"
+          class="w-full sm:w-auto px-5 py-2.5 min-h-[44px] bg-slate-900 hover:bg-slate-800 dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white font-bold text-sm rounded-lg transition-colors whitespace-nowrap shadow-sm flex items-center justify-center gap-1.5"
         >
-          Search Foods
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <span>Search Foods</span>
         </button>
       </div>
     </form>
   </div>
 
   <!-- Results Count & Active Filters Indicator -->
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500 px-1">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400 px-1">
     <div>
-      Found <strong class="text-slate-900 font-bold">{{total}}</strong> packaged food product(s)
-      {{#if query}} matching &ldquo;<span class="text-slate-800 font-semibold">{{query}}</span>&rdquo;{{/if}}
-      {{#if selectedCategory}} in <span class="font-semibold text-slate-800">{{selectedCategory}}</span>{{/if}}
-      {{#if selectedTag}} with tag <span class="font-semibold text-slate-800">{{selectedTag}}</span>{{/if}}
+      Found <strong class="text-slate-900 dark:text-slate-100 font-bold">{{total}}</strong> packaged food product(s)
+      {{#if query}} matching &ldquo;<span class="text-slate-800 dark:text-slate-200 font-semibold">{{query}}</span>&rdquo;{{/if}}
+      {{#if selectedCategory}} in <span class="font-semibold text-slate-800 dark:text-slate-200">{{selectedCategory}}</span>{{/if}}
+      {{#if selectedTag}} with tag <span class="font-semibold text-slate-800 dark:text-slate-200">{{selectedTag}}</span>{{/if}}
+      {{#if minScore}} with score &ge; <span class="font-semibold font-mono text-emerald-700 dark:text-emerald-400">{{minScore}}/100</span>{{/if}}
+      {{#if (or query selectedCategory selectedTag minScore)}}
+        &middot; <a href="/catalog" class="text-emerald-700 dark:text-emerald-400 hover:underline font-semibold ml-1">Reset all filters</a>
+      {{/if}}
     </div>
     {{#if (or (eq user.role "manufacturer") (eq user.role "admin"))}}
-      <a href="/catalog/manage/create" class="font-bold text-emerald-700 hover:underline inline-flex items-center gap-1 self-start sm:self-auto min-h-[36px]">
+      <a href="/catalog/manage/create" class="font-bold text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 self-start sm:self-auto min-h-[36px]">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
         <span>Register New Food Product</span>
       </a>
@@ -81,18 +95,18 @@
     {{> _pagination baseUrl="/catalog?" itemName="packaged foods"}}
   {{else}}
     <!-- Empty State -->
-    <div class="bg-white border border-slate-200 rounded-lg p-12 text-center max-w-md mx-auto my-8">
-      <div class="w-12 h-12 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-3 text-lg font-bold">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-8 sm:p-12 text-center max-w-md mx-auto my-8 shadow-sm">
+      <div class="w-12 h-12 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-full flex items-center justify-center mx-auto mb-3 text-lg font-bold">
         ?
       </div>
-      <h3 class="text-lg font-black text-slate-900">No packaged foods match your criteria</h3>
-      <p class="text-sm text-slate-500 mt-1">Try modifying your keyword, resetting filters, or scanning a different barcode.</p>
-      <div class="mt-6 flex justify-center gap-3">
-        <a href="/catalog" class="px-4 py-2 border border-slate-300 text-slate-700 font-bold text-xs rounded hover:bg-slate-50">
+      <h3 class="text-lg font-black text-slate-900 dark:text-slate-100">No packaged foods match your criteria</h3>
+      <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Try modifying your keyword, resetting filters, or scanning a different barcode.</p>
+      <div class="mt-6 flex flex-wrap justify-center gap-3">
+        <a href="/catalog" class="min-h-[44px] px-4 py-2 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-center">
           Reset Filters
         </a>
         {{#if (or (eq user.role "manufacturer") (eq user.role "admin"))}}
-          <a href="/catalog/manage/create" class="px-4 py-2 bg-emerald-700 text-white font-bold text-xs rounded hover:bg-emerald-800">
+          <a href="/catalog/manage/create" class="min-h-[44px] px-4 py-2 bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-bold text-xs rounded-lg flex items-center justify-center">
             Add This Food
           </a>
         {{/if}}
@@ -101,4 +115,3 @@
   {{/if}}
 
 </div>
-

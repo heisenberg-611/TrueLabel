@@ -1415,3 +1415,24 @@
    - Clean rebuild (`rm -rf dist && npx tsc --noEmit && npm run build`): Exited `0`.
    - Unit tests (`npm test`): 29/29 suites passed (297/297 tests).
    - E2E tests (`npm run test:e2e`): 2/2 suites passed (12/12 tests).
+
+---
+
+### Entry 064 | 2026-11-27 20:49:10 +06:00 | Sprint 1 & 2 Deep Quality Audit & Member A UX Hardening (F01 & F04)
+
+**What**: Performed deep forensic audit of Member A deliverables (F01 Food Catalog Discovery, F03 Ingredient Analysis, F04 Explainable Food Quality Score) against `PROJECT_RULES.md`, Proposal acceptance criteria, and the `frontend-design` skill. Delivered UI, accessibility, and query builder hardening across Sprint 1 and Sprint 2 features.
+
+**Key Improvements Delivered**:
+1. **F01 Acceptance Criteria Fulfillment (Score Range Filter Exposure)**:
+   - Proposal F01 Acceptance Criteria requires filtering by "category, score range, dietary tags". While `SearchFoodProductDto`, `CatalogService`, and `_pagination.hbs` supported `minScore`, the discovery UI form previously omitted the score range selector.
+   - Added `minScore` dropdown selector in `src/areas/food-catalog/views/index.hbs` with explicit quality tiers (`Tier 1: High (80+)`, `Tier 2: Mod (60+)`), tied directly to pagination persistence and active filter badges.
+2. **Frontend Design, Anti-FOUC Dark Mode & Mobile Ergonomics**:
+   - Fixed unstyled light containers in `index.hbs` and `not-found.hbs`: added `dark:bg-slate-900`, `dark:border-slate-800`, `dark:text-white`, `dark:text-slate-400`, and rounded-xl card architecture.
+   - Added `min-h-[44px]` minimum touch target heights across all search inputs, filter dropdowns, search buttons, reset actions, and barcode request buttons for mobile viewport accessibility (`PROJECT_RULES.md` §7).
+3. **Database Query Hardening**:
+   - Hardened `minScore` condition in `CatalogService.searchAndFilter` to defensively validate numeric values (`!isNaN(Number(dto.minScore)) && Number(dto.minScore) > 0`).
+4. **Unit & E2E Test Verification**:
+   - Added unit test in `src/areas/food-catalog/services/catalog.service.spec.ts` verifying `minScore` query builder parameter injection.
+   - `npm test`: 31/31 suites passed (315/315 unit tests).
+   - `npm run test:e2e`: 2/2 suites passed (13/13 E2E integration tests).
+   - `npm run build`: Clean build with zero TypeScript compiler diagnostics.
