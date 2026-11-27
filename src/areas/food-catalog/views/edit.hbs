@@ -1,15 +1,15 @@
-<div class="max-w-3xl mx-auto my-4 sm:my-6 bg-white p-4 sm:p-8 border border-slate-200 rounded-xl">
-  <div class="mb-6 pb-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+<div class="max-w-3xl mx-auto my-4 sm:my-6 bg-white dark:bg-slate-900 p-4 sm:p-8 border border-slate-200 dark:border-slate-800 rounded-xl">
+  <div class="mb-6 pb-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div>
-      <a href="/catalog/product/{{product.id}}" class="text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors">Back to food details</a>
-      <h1 class="text-2xl font-black text-slate-900 tracking-tight mt-1">Edit food product</h1>
-      <p class="text-xs text-slate-500 mt-0.5">Editing record for {{product.name}} (ID: #{{product.id}})</p>
+      <a href="/catalog/product/{{product.id}}" class="inline-flex items-center min-h-[44px] text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors">&larr; Back to food details</a>
+      <h1 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight mt-1">Edit food product</h1>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Editing record for {{product.name}} (ID: #{{product.id}})</p>
     </div>
     
     <!-- Archive Action Button -->
     <form action="/catalog/manage/{{product.id}}/archive" method="POST" onsubmit="return confirm('Archive this food product? It will be hidden from catalog discovery.');">
       <input type="hidden" name="_csrf" value="{{csrfToken}}">
-      <button type="submit" class="text-xs font-semibold px-3 py-1.5 rounded-md border border-rose-300 text-rose-700 hover:bg-rose-50 transition-colors">
+      <button type="submit" class="min-h-[44px] text-xs font-semibold px-3.5 py-2 rounded-md border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors">
         Archive product
       </button>
     </form>
@@ -21,36 +21,36 @@
     <!-- Section 1: Basic Identity -->
     <div class="space-y-4">
       <div>
-        <h2 class="text-sm font-bold text-slate-900">Basic identification</h2>
-        <p class="text-xs text-slate-500 mt-0.5">Commercial name, brand, category, and barcode</p>
+        <h2 class="text-sm font-bold text-slate-900 dark:text-slate-100">Basic identification</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Commercial name, brand, category, and barcode</p>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">Food name *</label>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Food name *</label>
           <input
             type="text"
             name="name"
             value="{{product.name}}"
             required
-            class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+            class="w-full min-h-[44px] px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
           />
         </div>
         <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">Brand name *</label>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Brand name *</label>
           <input
             type="text"
             name="brand"
             value="{{product.brand}}"
             required
-            class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+            class="w-full min-h-[44px] px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
           />
         </div>
         <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">Category *</label>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Category *</label>
           <select
             name="category"
             required
-            class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white"
+            class="w-full min-h-[44px] px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
           >
             {{#each categories}}
               <option value="{{this}}" {{#if (eq ../product.category this)}}selected{{/if}}>{{this}}</option>
@@ -58,24 +58,24 @@
           </select>
         </div>
         <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">Barcode (EAN/UPC) *</label>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Barcode (EAN/UPC) *</label>
           <input
             type="text"
             name="barcode"
             value="{{product.barcode}}"
             required
-            class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-slate-900"
+            class="w-full min-h-[44px] px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-slate-900"
           />
         </div>
       </div>
     </div>
 
     <div>
-      <label class="block text-xs font-semibold text-slate-700 mb-1">Product description</label>
+      <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Product description</label>
       <textarea
         name="description"
         rows="3"
-        class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+        class="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
       >{{product.description}}</textarea>
     </div>
 
@@ -83,30 +83,30 @@
     {{> _nutrition_facts_form}}
 
     <!-- Section 4: Declared Ingredients & Additives -->
-    <div class="pt-5 border-t border-slate-200 space-y-3">
+    <div class="pt-5 border-t border-slate-200 dark:border-slate-800 space-y-3">
       <div>
-        <h2 class="text-sm font-bold text-slate-900">Declared ingredients and additives</h2>
-        <p class="text-xs text-slate-500 mt-0.5">Enter ingredients as listed on the packaged product label</p>
+        <h2 class="text-sm font-bold text-slate-900 dark:text-slate-100">Declared ingredients and additives</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Enter ingredients as listed on the packaged product label; commas inside nested parentheses are preserved.</p>
       </div>
       <textarea
         name="rawIngredients"
         rows="3"
         placeholder="e.g. Whole Cow Milk, Vitamin D3, Salt"
-        class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 font-sans"
+        class="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 font-sans"
       >{{rawIngredients}}</textarea>
-      <p class="text-xs text-slate-500">
-        Allergens and additive E-numbers are automatically recognized and re-evaluated for the Transparency Score upon update.
+      <p class="text-xs text-slate-500 dark:text-slate-400">
+        Allergens, additive E-numbers/INS/CI codes, and category restrictions are automatically re-evaluated against the active food rule base upon update. Unclassified ingredients are separated and never assumed safe.
       </p>
     </div>
 
-    <div class="flex flex-col sm:flex-row sm:items-center gap-3 pt-4 border-t border-slate-100">
+    <div class="flex flex-col sm:flex-row sm:items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
       <button
         type="submit"
-        class="w-full sm:w-auto px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm rounded-lg transition-colors shadow-sm min-h-[44px] flex items-center justify-center"
+        class="w-full sm:w-auto px-6 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white font-semibold text-sm rounded-lg transition-colors shadow-sm min-h-[44px] flex items-center justify-center"
       >
         Update food product
       </button>
-      <a href="/catalog/product/{{product.id}}" class="w-full sm:w-auto min-h-[44px] flex items-center justify-center px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 border border-slate-200 sm:border-0 rounded-lg sm:rounded-none">
+      <a href="/catalog/product/{{product.id}}" class="w-full sm:w-auto min-h-[44px] flex items-center justify-center px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700 sm:border-0 rounded-lg sm:rounded-none">
         Cancel
       </a>
     </div>

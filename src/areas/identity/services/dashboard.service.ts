@@ -15,6 +15,7 @@ import { DocumentService } from '../../food-safety/services/document.service';
 import { PreferenceService } from '../../personal-food/services/preference.service';
 import { ReviewService } from '../../community/services/review.service';
 import { ReportService } from '../../community/services/report.service';
+import { RuleManagementService } from '../../admin/services/rule-management.service';
 
 export interface AdminDashboardQueryOptions {
   tab?: 'users' | 'catalog';
@@ -39,6 +40,7 @@ export class DashboardService {
     private readonly preferenceService: PreferenceService,
     @Optional() private readonly reviewService?: ReviewService,
     @Optional() private readonly reportService?: ReportService,
+    @Optional() private readonly ruleManagementService?: RuleManagementService,
   ) {}
 
   /**
@@ -143,15 +145,15 @@ export class DashboardService {
   }
 
   /**
-   * Aggregate Admin Command Center Data (Platform Users, Catalog, Accreditation & F13 Complaints)
+   * Aggregate Admin Command Center Data (Platform Users, Catalog, Accreditation, F03 Food Rules & F13 Complaints)
    * Highly optimized: executes global vitals in parallel via Promise.all, avoids unindexed eager joins,
    * and implements tab-aware lazy loading so catalog formulations are only queried when on the catalog tab.
    */
   async getAdminDashboardData(options?: AdminDashboardQueryOptions) {
     const currentTab = options?.tab === 'catalog' ? 'catalog' : 'users';
 
-    // 1. Concurrent telemetry: resolve users, document stats, complaint stats, and catalog counts in parallel
-    const [allUsers, docStats, complaintStats, rawCatalogCounts] = await Promise.all([
+    // 1. Concurrent telemetry: resolve users, document stats, complaint stats, rule stats, and catalog counts in parallel
+    const [allUsers, docStats, complaintStats, rawCatalogCounts, ruleStats] = await Promise.all([
       this.userRepo.find({
         order: { createdAt: 'DESC' },
         select: ['id', 'name', 'email', 'role', 'isVerified', 'createdAt'],
@@ -165,6 +167,9 @@ export class DashboardService {
       typeof this.catalogService.countAll === 'function'
         ? this.catalogService.countAll()
         : Promise.resolve(null),
+      this.ruleManagementService
+        ? this.ruleManagementService.getQuickStats()
+        : Promise.resolve({ total: 0, active: 0, inactive: 0, safe: 0, caution: 0, warning: 0, allergens: 0 }),
     ]);
 
     let catalogCounts = rawCatalogCounts;
@@ -326,6 +331,7 @@ export class DashboardService {
       totalProducts,
       docStats,
       complaintStats,
+      ruleStats,
       page,
       limit,
       total,

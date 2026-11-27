@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
@@ -11,6 +11,9 @@ import { FoodSafetyDocument } from '../areas/food-safety/models/food-safety-docu
 import { ManufacturerLicence } from '../areas/food-safety/models/manufacturer-licence.entity';
 import { FoodReview } from '../areas/community/models/food-review.entity';
 import { FoodReport } from '../areas/community/models/food-report.entity';
+import { FoodRule } from '../areas/admin/models/food-rule.entity';
+import { CatalogService } from '../areas/food-catalog/services/catalog.service';
+import { IngredientAnalyzerService } from '../areas/food-catalog/services/ingredient-analyzer.service';
 import {
   SEED_USERS,
   SEED_PREFERENCES,
@@ -20,6 +23,7 @@ import {
   SEED_SAFETY_DOCUMENTS,
   SEED_REVIEWS,
   SEED_REPORTS,
+  SEED_FOOD_RULES,
   SeedProductDefinition,
 } from './seeds';
 
@@ -46,6 +50,13 @@ export class SeedService {
     private readonly reviewRepo: Repository<FoodReview>,
     @InjectRepository(FoodReport)
     private readonly reportRepo: Repository<FoodReport>,
+    @Optional()
+    @InjectRepository(FoodRule)
+    private readonly foodRuleRepo?: Repository<FoodRule>,
+    @Optional()
+    private readonly catalogService?: CatalogService,
+    @Optional()
+    private readonly ingredientAnalyzer?: IngredientAnalyzerService,
   ) {}
 
   /**
@@ -56,12 +67,73 @@ export class SeedService {
     this.logger.log('Starting TrueLabel modular curated seed synchronization...');
     await this.cleanLegacyDemoProducts();
     await this.seedUsers();
-    await this.seedFoodProducts();
+    const activeRules = await this.seedFoodRules();
+    await this.seedFoodProducts(activeRules);
     await this.seedPreferences();
     await this.seedManufacturerLicences();
     await this.seedFoodSafetyDocuments();
     await this.seedCommunityReviewsAndReports();
     this.logger.log('TrueLabel modular curated seed synchronization completed successfully.');
+  }
+
+  /**
+   * Seed administrative food analysis rules (Feature F03) idempotently by name + categoryScope.
+   */
+  private async seedFoodRules(): Promise<FoodRule[]> {
+    if (!this.foodRuleRepo) {
+      this.logger.warn('FoodRule repository not injected; skipping food rule seeding.');
+      return [];
+    }
+
+    const existingRules = await this.foodRuleRepo.find();
+    for (const def of SEED_FOOD_RULES) {
+      const targetScope = def.categoryScope?.trim() || null;
+      const existing = existingRules.find(
+        (r) =>
+          r.name.toLowerCase() === def.name.toLowerCase() &&
+          (r.categoryScope || null) === targetScope,
+      );
+
+      if (!existing) {
+        const created = await this.foodRuleRepo.save(
+          this.foodRuleRepo.create({
+            name: def.name,
+            pattern: def.pattern,
+            ruleType: def.ruleType,
+            additiveCode: def.additiveCode || null,
+            allergenType: def.allergenType || null,
+            categoryScope: targetScope,
+            hazardLevel: def.hazardLevel,
+            fdaStatus: def.fdaStatus,
+            euStatus: def.euStatus,
+            explanation: def.explanation,
+            source: def.source,
+            isActive: def.isActive ?? true,
+          }),
+        );
+        existingRules.push(created);
+      } else {
+        existing.pattern = def.pattern;
+        existing.ruleType = def.ruleType;
+        existing.additiveCode = def.additiveCode || null;
+        existing.allergenType = def.allergenType || null;
+        existing.hazardLevel = def.hazardLevel;
+        existing.fdaStatus = def.fdaStatus;
+        existing.euStatus = def.euStatus;
+        existing.explanation = def.explanation;
+        existing.source = def.source;
+        if (def.isActive !== undefined) {
+          existing.isActive = def.isActive;
+        }
+        await this.foodRuleRepo.save(existing);
+      }
+    }
+
+    this.logger.log(`Synchronized ${SEED_FOOD_RULES.length} F03 regulatory food analysis rules.`);
+    return this.foodRuleRepo.find({
+      where: { isActive: true },
+      order: { id: 'ASC' },
+    });
   }
 
   /**
@@ -116,9 +188,10 @@ export class SeedService {
   }
 
   /**
-   * Seed curated food catalog across all 7 categories (active & banned items).
+   * Seed curated food catalog across all 7 categories (active & banned items),
+   * then evaluate all declared ingredients against the active F03 FoodRule base.
    */
-  private async seedFoodProducts(): Promise<void> {
+  private async seedFoodProducts(activeRules: FoodRule[] = []): Promise<void> {
     const defaultManufacturer = await this.userRepo.findOne({
       where: { email: 'manufacturer@truelabel.demo' },
     });
@@ -134,6 +207,8 @@ export class SeedService {
       userEmailMap.set(u.email.toLowerCase(), u);
     }
 
+    const analyzer = this.ingredientAnalyzer || new IngredientAnalyzerService();
+
     const allProducts: SeedProductDefinition[] = [
       ...SEED_FOOD_PRODUCTS,
       ...SEED_BANNED_PRODUCTS,
@@ -148,7 +223,16 @@ export class SeedService {
         }
       }
 
-      const existing = await this.productRepo.findOne({ where: { barcode: prodData.barcode } });
+      const existing = await this.productRepo.findOne({
+        where: { barcode: prodData.barcode },
+        relations: ['ingredients', 'nutritionFacts'],
+      });
+
+      const analyzedIngredients = analyzer.analyzeDeclaredIngredients(
+        prodData.ingredients,
+        activeRules,
+        prodData.category,
+      );
 
       if (!existing) {
         const product = await this.productRepo.save(
@@ -170,15 +254,20 @@ export class SeedService {
           }),
         );
 
-        // Save declared ingredients
-        const ingredientEntities = prodData.ingredients.map((ing) =>
+        // Save declared ingredients with persisted F03 classification
+        const ingredientEntities = analyzedIngredients.map((ing) =>
           this.ingredientRepo.create({
             name: ing.name,
-            isAllergen: Boolean(ing.isAllergen),
+            isAllergen: ing.isAllergen,
             allergenType: ing.allergenType || (null as any),
             additiveCode: ing.additiveCode || (null as any),
-            hazardLevel: ing.hazardLevel || 'safe',
-            explanation: ing.explanation || (null as any),
+            hazardLevel: ing.hazardLevel,
+            explanation: ing.explanation,
+            analysisStatus: ing.analysisStatus,
+            matchedRuleId: ing.matchedRuleId,
+            ruleSource: ing.ruleSource,
+            fdaStatus: ing.fdaStatus,
+            euStatus: ing.euStatus,
             product,
           }),
         );
@@ -219,14 +308,19 @@ export class SeedService {
 
         // If ingredients are missing, populate them
         if (!existing.ingredients || existing.ingredients.length === 0) {
-          const ingredientEntities = prodData.ingredients.map((ing) =>
+          const ingredientEntities = analyzedIngredients.map((ing) =>
             this.ingredientRepo.create({
               name: ing.name,
-              isAllergen: Boolean(ing.isAllergen),
+              isAllergen: ing.isAllergen,
               allergenType: ing.allergenType || (null as any),
               additiveCode: ing.additiveCode || (null as any),
-              hazardLevel: ing.hazardLevel || 'safe',
-              explanation: ing.explanation || (null as any),
+              hazardLevel: ing.hazardLevel,
+              explanation: ing.explanation,
+              analysisStatus: ing.analysisStatus,
+              matchedRuleId: ing.matchedRuleId,
+              ruleSource: ing.ruleSource,
+              fdaStatus: ing.fdaStatus,
+              euStatus: ing.euStatus,
               product: existing,
             }),
           );
@@ -249,6 +343,15 @@ export class SeedService {
         }
       }
     }
+
+    // Recalculate all catalog products & ingredients against active F03 rules
+    if (this.catalogService && typeof this.catalogService.recalculateAllWithRules === 'function') {
+      const summary = await this.catalogService.recalculateAllWithRules(activeRules);
+      this.logger.log(
+        `F03 rule recalculation summary: ${summary.matchedCount} matched, ${summary.unknownCount} unclassified across ${summary.productsEvaluated} products (${summary.ingredientsUpdated} updated).`,
+      );
+    }
+
     this.logger.log(`Synchronized ${allProducts.length} food catalog products (active + statutory quarantined).`);
   }
 

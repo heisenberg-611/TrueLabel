@@ -7,3 +7,4 @@ export { SEED_PRODUCTS, SEED_PRODUCTS as SEED_FOOD_PRODUCTS } from './products.s
 export * from './banned-products.seed';
 export * from './safety-registry.seed';
 export * from './community.seed';
+export * from './food-rules.seed';

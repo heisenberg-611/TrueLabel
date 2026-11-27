@@ -3,15 +3,18 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConflictException, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { CatalogService } from './catalog.service';
+import { IngredientAnalyzerService } from './ingredient-analyzer.service';
 import { FoodProduct } from '../models/food-product.entity';
 import { Ingredient } from '../models/ingredient.entity';
 import { NutritionFact } from '../models/nutrition-fact.entity';
+import { FoodRule } from '../../admin/models/food-rule.entity';
 
 describe('CatalogService (Unit Tests)', () => {
   let service: CatalogService;
   let productRepo: jest.Mocked<Partial<Repository<FoodProduct>>>;
   let ingredientRepo: jest.Mocked<Partial<Repository<Ingredient>>>;
   let nutritionRepo: jest.Mocked<Partial<Repository<NutritionFact>>>;
+  let foodRuleRepo: jest.Mocked<Partial<Repository<FoodRule>>>;
 
   const mockProduct: FoodProduct = {
     id: 1,
@@ -59,9 +62,14 @@ describe('CatalogService (Unit Tests)', () => {
       delete: jest.fn(),
     };
 
+    foodRuleRepo = {
+      find: jest.fn().mockResolvedValue([]),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CatalogService,
+        IngredientAnalyzerService,
         {
           provide: getRepositoryToken(FoodProduct),
           useValue: productRepo,
@@ -73,6 +81,10 @@ describe('CatalogService (Unit Tests)', () => {
         {
           provide: getRepositoryToken(NutritionFact),
           useValue: nutritionRepo,
+        },
+        {
+          provide: getRepositoryToken(FoodRule),
+          useValue: foodRuleRepo,
         },
       ],
     }).compile();
@@ -449,6 +461,200 @@ describe('CatalogService (Unit Tests)', () => {
       expect(specimen?.sugarSummary.status).toBe('hazard');
       expect(specimen?.sugarSummary.label).toContain('High Density / Flagged');
     });
+
+    it('should exclude unknown unclassified ingredients (without additiveCode) from synthetic additives count', () => {
+      const mixedProduct: FoodProduct = {
+        ...mockProduct,
+        ingredients: [
+          { id: 1, name: 'Water', hazardLevel: 'safe', analysisStatus: 'matched', isAllergen: false } as any,
+          { id: 2, name: 'Exotic Berry Flavor', hazardLevel: 'caution', analysisStatus: 'unknown', additiveCode: null, isAllergen: false } as any,
+        ],
+      };
+
+      const specimen = service.buildDossierSpecimen(mixedProduct);
+
+      expect(specimen?.additivesSummary.count).toBe(0);
+      expect(specimen?.additivesSummary.label).toContain('0 Detected');
+    });
+  });
+
+  describe('Feature F03: Rule-Based Ingredient Analysis & Recalculation', () => {
+    const activeRules: FoodRule[] = [
+      {
+        id: 11,
+        name: 'Whole Oats',
+        pattern: 'oats, whole oats',
+        ruleType: 'ingredient',
+        additiveCode: null,
+        allergenType: null,
+        categoryScope: null,
+        hazardLevel: 'safe',
+        fdaStatus: 'GRAS Verified',
+        euStatus: 'EU Authorized',
+        explanation: 'Whole grain oats.',
+        source: 'USDA Standard',
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: 12,
+        name: 'Phosphoric Acid (Beverage Limit)',
+        pattern: 'phosphoric acid, e338',
+        ruleType: 'category_restriction',
+        additiveCode: 'E338',
+        allergenType: null,
+        categoryScope: 'Beverages',
+        hazardLevel: 'warning',
+        fdaStatus: 'FDA Limit',
+        euStatus: 'EFSA ADI 40 mg/kg',
+        explanation: 'Restricted acidulant in beverages.',
+        source: 'EFSA Panel',
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ];
+
+    it('create() should evaluate ingredients against FoodRule base and penalize unknown ingredients', async () => {
+      // Arrange
+      (foodRuleRepo.find as jest.Mock).mockResolvedValue(activeRules);
+      (productRepo.findOne as jest.Mock).mockResolvedValue(null);
+      (productRepo.create as jest.Mock).mockImplementation((p) => ({ id: 50, ...p }));
+      (productRepo.save as jest.Mock).mockImplementation(async (p) => p);
+      (ingredientRepo.create as jest.Mock).mockImplementation((i) => i);
+      (ingredientRepo.save as jest.Mock).mockImplementation(async (items) => items);
+
+      const dto = {
+        name: 'Oat Citrus Tonic',
+        brand: 'Botanica',
+        category: 'Beverages',
+        barcode: '991122334455',
+        ingredients: [
+          { name: 'Whole Oats' },
+          { name: 'Phosphoric Acid (E338)' },
+          { name: 'Exotic Yuzu Essence' },
+        ],
+      };
+
+      // Act
+      const created = await service.create(dto as any, 10);
+
+      // Assert
+      // Baseline 88 - 16 (warning E338) - 6 (unknown Exotic Yuzu Essence) = 66
+      expect(created.qualityScore).toBe(66);
+      expect(created.ingredients).toHaveLength(3);
+      expect(created.ingredients[0].analysisStatus).toBe('matched');
+      expect(created.ingredients[1].hazardLevel).toBe('warning');
+      expect(created.ingredients[2].analysisStatus).toBe('unknown');
+      expect(created.ingredients[2].hazardLevel).toBe('caution');
+    });
+
+    it('analyzeProductIngredients() should partition matched and unknown ingredients cleanly', async () => {
+      // Arrange
+      (foodRuleRepo.find as jest.Mock).mockResolvedValue(activeRules);
+      const product = {
+        ...mockProduct,
+        category: 'Beverages',
+        ingredients: [
+          { id: 1, name: 'Whole Oats' },
+          { id: 2, name: 'Exotic Mystery Root' },
+        ],
+      } as any;
+
+      // Act
+      const report = await service.analyzeProductIngredients(product);
+
+      // Assert
+      expect(report.recognizedIngredients).toHaveLength(1);
+      expect(report.unknownIngredients).toHaveLength(1);
+      expect(report.counts.coveragePercent).toBe(50);
+    });
+
+    it('recalculateAllWithRules() should update changed ingredients across catalog products', async () => {
+      // Arrange
+      const catalogProducts = [
+        {
+          ...mockProduct,
+          id: 1,
+          category: 'Beverages',
+          ingredients: [
+            {
+              id: 101,
+              name: 'Whole Oats',
+              isAllergen: false,
+              allergenType: null,
+              additiveCode: null,
+              hazardLevel: 'safe',
+              explanation: 'Whole grain oats.',
+              analysisStatus: 'matched',
+              matchedRuleId: 11,
+              ruleSource: 'USDA Standard',
+              fdaStatus: 'GRAS Verified',
+              euStatus: 'EU Authorized',
+            },
+            {
+              id: 102,
+              name: 'Exotic Berry Flavor',
+              isAllergen: false,
+              allergenType: null,
+              additiveCode: null,
+              hazardLevel: 'caution',
+              explanation: 'Unclassified',
+              analysisStatus: 'unknown',
+              matchedRuleId: null,
+              ruleSource: 'Unclassified',
+              fdaStatus: 'Unverified',
+              euStatus: 'Unverified',
+            },
+          ],
+        },
+      ];
+      (productRepo.find as jest.Mock).mockResolvedValue(catalogProducts);
+      (ingredientRepo.save as jest.Mock).mockImplementation(async (rows) => rows);
+
+      const expandedRules: FoodRule[] = [
+        ...activeRules,
+        {
+          id: 99,
+          name: 'Exotic Berry Flavor',
+          pattern: 'exotic berry flavor',
+          ruleType: 'ingredient',
+          additiveCode: null,
+          allergenType: null,
+          categoryScope: null,
+          hazardLevel: 'safe',
+          fdaStatus: 'FDA Flavoring Approved',
+          euStatus: 'EFSA Flavouring Verified',
+          explanation: 'Verified botanical berry flavor.',
+          source: 'Admin Rule Base',
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
+
+      // Act
+      const summary = await service.recalculateAllWithRules(expandedRules);
+
+      // Assert
+      expect(summary.productsEvaluated).toBe(1);
+      expect(summary.productsUpdated).toBe(1);
+      expect(summary.ingredientsEvaluated).toBe(2);
+      expect(summary.ingredientsUpdated).toBe(1);
+      expect(summary.matchedCount).toBe(2);
+      expect(summary.unknownCount).toBe(0);
+      expect(ingredientRepo.save).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: 102,
+            analysisStatus: 'matched',
+            matchedRuleId: 99,
+            hazardLevel: 'safe',
+          }),
+        ]),
+      );
+    });
   });
 
   describe('ban (Feature F01: Admin Regulatory Governance)', () => {
@@ -580,4 +786,3 @@ describe('CatalogService (Unit Tests)', () => {
     });
   });
 });
-

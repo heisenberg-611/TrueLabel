@@ -43,13 +43,8 @@ Thumbs.db
 *.swp
 *.swo
 
-
-# Documentation and markdown files (proposal, logs, plans)
+# Local proposal & diagram drafts
 TrueLabel_Project_Proposal.md
-
-#lol
 CLASS_DIAGRAM.md
 CLASS_DIAGRAM_SPECIFICATION.pdf
 CLASS_DIAGRAM_SPECIFICATION.tex
-a90.com
-fontsight.xyz

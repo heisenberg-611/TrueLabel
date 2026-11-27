@@ -5,6 +5,7 @@ import { User } from '../models/user.entity';
 import { CatalogService } from '../../food-catalog/services/catalog.service';
 import { DocumentService } from '../../food-safety/services/document.service';
 import { PreferenceService } from '../../personal-food/services/preference.service';
+import { RuleManagementService } from '../../admin/services/rule-management.service';
 
 describe('DashboardService (Unit Tests)', () => {
   let service: DashboardService;
@@ -12,6 +13,7 @@ describe('DashboardService (Unit Tests)', () => {
   let catalogService: any;
   let documentService: any;
   let preferenceService: any;
+  let ruleManagementService: any;
 
   beforeEach(async () => {
     userRepo = {
@@ -87,6 +89,18 @@ describe('DashboardService (Unit Tests)', () => {
       }),
     };
 
+    ruleManagementService = {
+      getQuickStats: jest.fn().mockResolvedValue({
+        total: 35,
+        active: 33,
+        inactive: 2,
+        safe: 16,
+        caution: 11,
+        warning: 8,
+        allergens: 7,
+      }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DashboardService,
@@ -94,6 +108,7 @@ describe('DashboardService (Unit Tests)', () => {
         { provide: CatalogService, useValue: catalogService },
         { provide: DocumentService, useValue: documentService },
         { provide: PreferenceService, useValue: preferenceService },
+        { provide: RuleManagementService, useValue: ruleManagementService },
       ],
     }).compile();
 
@@ -145,7 +160,7 @@ describe('DashboardService (Unit Tests)', () => {
   });
 
   describe('getAdminDashboardData', () => {
-    it('should aggregate platform user directory and system vitals', async () => {
+    it('should aggregate platform user directory, F03 rule stats, and system vitals', async () => {
       const data = await service.getAdminDashboardData();
 
       expect(data.totalUsers).toBe(4);
@@ -155,6 +170,9 @@ describe('DashboardService (Unit Tests)', () => {
       expect(data.roleBreakdown.admin).toBe(1);
       expect(data.totalProducts).toBe(15);
       expect(data.docStats.total).toBe(10);
+      expect(data.ruleStats.total).toBe(35);
+      expect(data.ruleStats.active).toBe(33);
+      expect(ruleManagementService.getQuickStats).toHaveBeenCalled();
       expect(data.userTypesCount).toBe(4);
       expect(data.userTypes).toHaveLength(4);
       expect(data.users[0].status).toBeDefined();

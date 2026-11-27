@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { FoodCatalogController } from './food-catalog.controller';
 import { CatalogService } from '../services/catalog.service';
+import { IngredientAnalyzerService } from '../services/ingredient-analyzer.service';
 import { PreferenceService } from '../../personal-food/services/preference.service';
 import { DocumentService } from '../../food-safety/services/document.service';
 
@@ -62,6 +63,7 @@ describe('FoodCatalogController (Unit Tests)', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [FoodCatalogController],
       providers: [
+        IngredientAnalyzerService,
         {
           provide: CatalogService,
           useValue: catalogService,
@@ -160,12 +162,13 @@ describe('FoodCatalogController (Unit Tests)', () => {
   });
 
   describe('getProductDetail', () => {
-    it('should return product details with allergen and additive groupings and null conflictEvaluation for manufacturers', async () => {
+    it('should return product details with allergen, additive, and F03 ingredientAnalysis groupings for manufacturers', async () => {
       const productWithIngr = {
         ...mockProduct,
         ingredients: [
-          { name: 'Peanut Paste', isAllergen: true, allergenType: 'Peanut' },
-          { name: 'Caramel Color', additiveCode: 'E150d' },
+          { name: 'Peanut Paste', isAllergen: true, allergenType: 'Peanut', analysisStatus: 'matched', hazardLevel: 'warning' },
+          { name: 'Caramel Color', additiveCode: 'E150d', analysisStatus: 'matched', hazardLevel: 'caution' },
+          { name: 'Mystery Gum', analysisStatus: 'unknown', hazardLevel: 'caution' },
         ],
       };
       (catalogService.findById as jest.Mock).mockResolvedValue(productWithIngr as any);
@@ -176,10 +179,36 @@ describe('FoodCatalogController (Unit Tests)', () => {
       expect(result.product.name).toBe('Pure Oat Milk');
       expect(result.allergens).toHaveLength(1);
       expect(result.additives).toHaveLength(1);
+      expect(result.ingredientAnalysis).toBeDefined();
+      expect(result.ingredientAnalysis.recognizedIngredients).toHaveLength(2);
+      expect(result.ingredientAnalysis.unknownIngredients).toHaveLength(1);
       expect(result.isOwner).toBe(true);
       expect(result.conflictEvaluation).toBeNull();
       expect(result.userProfile).toBeNull();
       expect(preferenceService.findByUserId).not.toHaveBeenCalled();
+    });
+
+    it('should delegate F03 analysis to catalogService.analyzeProductIngredients when available', async () => {
+      const mockReport = {
+        totalCount: 1,
+        recognizedIngredients: [{ name: 'Whole Oats', isSafe: true, isUnknown: false }],
+        unknownIngredients: [],
+        allergens: [],
+        additives: [],
+        counts: { total: 1, recognized: 1, unknown: 0, safe: 1, caution: 0, warning: 0, allergens: 0, additives: 0, coveragePercent: 100 },
+        hasUnknownIngredients: false,
+        hasWarnings: false,
+        hasCautions: false,
+        categoryNotes: [],
+      };
+      catalogService.analyzeProductIngredients = jest.fn().mockResolvedValue(mockReport as any);
+      (catalogService.findById as jest.Mock).mockResolvedValue(mockProduct as any);
+
+      const mockReq = { session: { user: null } } as any;
+      const result = await controller.getProductDetail(1, mockReq);
+
+      expect(catalogService.analyzeProductIngredients).toHaveBeenCalledWith(mockProduct);
+      expect(result.ingredientAnalysis).toEqual(mockReport);
     });
 
     it('should evaluate personal dietary conflict for consumer users on product detail', async () => {
@@ -390,4 +419,3 @@ describe('FoodCatalogController (Unit Tests)', () => {
     });
   });
 });
-

@@ -1369,9 +1369,49 @@
    - `npm test`: All 26 test suites passed cleanly (267/267 tests).
    - `nest build`: Compiled with zero TypeScript errors.
 
+---
 
+### Entry 062 | 2026-11-27 12:17:19 +0600 | Feature F03: Rule-Based Ingredient, Additive & Allergen Analysis + Admin Food Rule Base
 
+**What**: Implemented Feature F03 (**Ingredient, additive, and allergen analysis**) end-to-end across NestJS MVC Areas (`food-catalog`, `admin`, `identity`, `home`, `config`, `shared`), integrating a zero-DB pure rule-matching engine with an Admin-managed `FoodRule` registry, automatic catalog recalculation, explicit unknown-ingredient isolation, and forensic HUD/UI integration.
 
+**Key Changes Delivered**:
+1. **Admin Area (`src/areas/admin/`) — Food Rule Base Governance**:
+   - `models/food-rule.entity.ts`: Added `FoodRule` TypeORM entity (`name`, `pattern`, `ruleType` [`allergen` | `additive` | `ingredient` | `category_restriction`], `additiveCode`, `allergenType`, `categoryScope`, `hazardLevel` [`safe` | `caution` | `warning`], `fdaStatus`, `euStatus`, `explanation`, `source`, `isActive`).
+   - `models/dto/create-food-rule.dto.ts` & `search-food-rule.dto.ts`: Input validation & transformation (`isActive` string/boolean normalization, pagination & multi-filter parameters).
+   - `services/rule-management.service.ts`: DB-level paginated `searchRules()`, lightweight `getQuickStats()`, and rule CRUD (`createRule`, `updateRule`, `toggleRuleActive`, `deleteRule`, `triggerFullRecalculation`) that automatically recalculates catalog products via `CatalogService.recalculateAllWithRules()`.
+   - `controllers/admin-rules.controller.ts`: Thin `@Roles('admin')` controller exposing `/admin/rules`, `/admin/rules/create`, `/admin/rules/:id/update`, `/admin/rules/:id/toggle`, `/admin/rules/:id/delete`, and `/admin/rules/recalculate`.
+   - `views/rules.hbs`: Mobile-first Admin Rule Base console (telemetry strip, search/type/hazard/category-scope filters, Add/Edit modals, `_csrf` protection, dark mode, pagination).
+2. **Food Catalog Area (`src/areas/food-catalog/`) — Pure Analysis Engine & Separation of Unknowns**:
+   - `models/ingredient.entity.ts`: Persisted `analysisStatus` (`'matched' | 'unknown'`), `matchedRuleId`, `ruleSource`, `fdaStatus`, and `euStatus`.
+   - `services/ingredient-analyzer.service.ts`: Zero-DB pure SRP engine supporting parentheses-aware ingredient tokenization (`Oat Base (Water, Oats 10%)` preserved intact), additive code extraction (`E-codes`, `INS`, `CI`), category-scoped rule precedence (`categoryScope`), explicit unknown separation (`analysisStatus: 'unknown'`, `hazardLevel: 'caution'`, never `'safe'`), `buildProductAnalysisReport()`, and form nutrition parsing.
+   - `services/catalog.service.ts`: Integrated `IngredientAnalyzerService` on product `create()`, `update()`, `findById()`, and `recalculateAllWithRules()`; updated `buildDossierSpecimen()` so unclassified unknowns without extracted additive codes do not inflate synthetic additive counts.
+   - `controllers/food-catalog.controller.ts` & `views/detail.hbs`, `create.hbs`, `edit.hbs`: Passed `ingredientAnalysis` report to `detail.hbs`; added rule-coverage meter, category-rule notices, separated **Part A: Rule-verified** vs **Part B: Unclassified / unknown (not assumed safe)** sections, HUD data attributes, and informational disclaimer.
+3. **Cross-Area Integration, Seed Data & Frontend HUD**:
+   - `src/config/seeds/food-rules.seed.ts` & `src/config/seed.service.ts`: Seeded 52 regulatory `FoodRule` records (allergens, E-codes, category restrictions, wholesome botanicals) and recalculated all catalog products on `npm run seed`.
+   - `src/areas/identity/` (`dashboard.service.ts`, `dashboard/admin.hbs`), `src/shared/views/partials/navbar.hbs`, `_pagination.hbs`, and `src/areas/home/views/index.hbs`: Added Admin `Food Rules` navigation, telemetry, and query-preserving pagination.
+   - `public/js/truelabel-ingredient-inspector.js`: Added HTML escaping, `unknown` tier HUD display, and `data-rule-source`.
+4. **Testing & Live Verification**:
+   - `npm run seed`: Synchronized 52 food rules and recalculated 254 ingredients across 46 products (240 matched, 14 unclassified).
+   - `npm run build`: `nest build` exited 0.
+   - `npm test`: 29/29 test suites passed (297/297 unit tests).
+   - `npm run test:e2e`: Fixed shared HBS helper/partial registration in `test/e2e-helper.ts` and updated `test/catalog.e2e-spec.ts` & `test/safety.e2e-spec.ts`; 2/2 E2E suites passed (12/12 tests).
+   - Live HTTP verification: Verified `/catalog/product/5`, consumer 403 RBAC on `/admin/rules`, admin filtering/pagination, nested-parens product creation, Beverages E338 category rule matching, unknown separation, automatic catalog recalculation on rule creation/toggle/delete, and cleanup.
 
+---
 
+### Entry 063 | 2026-11-27 12:25:56 +0600 | Chore: Safe Repository Cleanup & Unused Asset Removal
 
+**What**: Audited the repository against TrueLabel's project scope (`PROJECT_RULES.md`, `IMPLEMENTATION_PLAN.md`) and removed strictly unnecessary assets and local clutter without affecting existing features, upcoming sprints, or teammate deliverables.
+
+**Changes**:
+1. **Removed Unused Raw Asset (`public/TrueLabel Food Quality Logo.png`, 1.3 MB)**:
+   - Confirmed zero references across `src/`, `public/`, `test/`, and `README.md`; all views and `dark-mode.spec.ts` use the web-optimized `public/images/logo*.png` and `public/favicon.png` assets.
+2. **Cleaned Local Agent & Stale Artifacts**:
+   - Removed untracked `skills/` and redundant `.agents/skills/supabase*` folders while retaining required `.agents/skills/frontend-design/` (`PROJECT_RULES.md` §0).
+   - Removed stale local `truelabel_dev.sqlite` and cleaned obsolete temporary comments/entries (`#lol`, `a90.com`, `fontsight.xyz`) from `.gitignore`.
+   - Preserved all team collaboration docs (`GIT_WORKFLOW_GUIDE.md`, `README_F11_F13.md`, `IMPLEMENTATION_PLAN.md`), SQL migrations (`database/migrations/`), and cross-area utilities (`@CurrentUser()`).
+3. **Verification**:
+   - Clean rebuild (`rm -rf dist && npx tsc --noEmit && npm run build`): Exited `0`.
+   - Unit tests (`npm test`): 29/29 suites passed (297/297 tests).
+   - E2E tests (`npm run test:e2e`): 2/2 suites passed (12/12 tests).

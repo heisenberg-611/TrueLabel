@@ -10,6 +10,7 @@ import { ManufacturerLicence } from '../areas/food-safety/models/manufacturer-li
 import { FoodReview } from '../areas/community/models/food-review.entity';
 import { FoodReport } from '../areas/community/models/food-report.entity';
 import { ReportEvidence } from '../areas/community/models/report-evidence.entity';
+import { FoodRule } from '../areas/admin/models/food-rule.entity';
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ const ALL_ENTITIES = [
   FoodReview,
   FoodReport,
   ReportEvidence,
+  FoodRule,
 ];
 
 export const getDatabaseConfig = (): TypeOrmModuleOptions => {

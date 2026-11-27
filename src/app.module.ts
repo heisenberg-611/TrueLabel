@@ -9,6 +9,7 @@ import { HomeModule } from './areas/home/home.module';
 import { SupabaseModule } from './config/supabase.module';
 import { SeedService } from './config/seed.service';
 import { CommunityModule } from './areas/community/community.module';
+import { AdminModule } from './areas/admin/admin.module';
 import { FoodReview } from './areas/community/models/food-review.entity';
 import { FoodReport } from './areas/community/models/food-report.entity';
 import { ReportEvidence } from './areas/community/models/report-evidence.entity';
@@ -19,6 +20,7 @@ import { NutritionFact } from './areas/food-catalog/models/nutrition-fact.entity
 import { PreferenceProfile } from './areas/personal-food/models/preference-profile.entity';
 import { FoodSafetyDocument } from './areas/food-safety/models/food-safety-document.entity';
 import { ManufacturerLicence } from './areas/food-safety/models/manufacturer-licence.entity';
+import { FoodRule } from './areas/admin/models/food-rule.entity';
 
 @Module({
   imports: [
@@ -34,6 +36,7 @@ import { ManufacturerLicence } from './areas/food-safety/models/manufacturer-lic
       FoodReview,
       FoodReport,
       ReportEvidence,
+      FoodRule,
     ]),
     SupabaseModule,
     IdentityModule,
@@ -41,9 +44,9 @@ import { ManufacturerLicence } from './areas/food-safety/models/manufacturer-lic
     PersonalFoodModule,
     FoodSafetyModule,
     CommunityModule,
+    AdminModule,
     HomeModule,
   ],
   providers: [SeedService],
 })
 export class AppModule {}
-

@@ -9,6 +9,7 @@ import { FoodCatalogModule } from '../food-catalog/food-catalog.module';
 import { FoodSafetyModule } from '../food-safety/food-safety.module';
 import { PersonalFoodModule } from '../personal-food/personal-food.module';
 import { CommunityModule } from '../community/community.module';
+import { AdminModule } from '../admin/admin.module';
 
 @Module({
   imports: [
@@ -17,10 +18,10 @@ import { CommunityModule } from '../community/community.module';
     FoodSafetyModule,
     PersonalFoodModule,
     CommunityModule,
+    AdminModule,
   ],
   controllers: [AuthController, DashboardController],
   providers: [AuthService, DashboardService],
   exports: [AuthService, DashboardService],
 })
 export class IdentityModule {}
-

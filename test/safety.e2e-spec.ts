@@ -2,10 +2,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { join } from 'path';
-import * as session from 'express-session';
-import * as hbs from 'hbs';
 import { AppModule } from '../src/app.module';
+import { configureE2eApp } from './e2e-helper';
 
 describe('Food Safety & Licences (E2E Integration Test - F06)', () => {
   let app: INestApplication;
@@ -16,44 +14,14 @@ describe('Food Safety & Licences (E2E Integration Test - F06)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-
-    (app as any).setBaseViewsDir(join(__dirname, '..', 'src'));
-    (app as any).setViewEngine('hbs');
-    hbs.registerPartials(join(__dirname, '..', 'src', 'shared', 'views', 'partials'));
-    (app as any).set('view options', {
-      layout: 'shared/views/layouts/main',
-    });
-
-    hbs.registerHelper('eq', (a, b) => a === b);
-    hbs.registerHelper('ne', (a, b) => a !== b);
-    hbs.registerHelper('or', (a, b) => a || b);
-    hbs.registerHelper('and', (a, b) => a && b);
-    hbs.registerHelper('gte', (a, b) => a >= b);
-    hbs.registerHelper('lte', (a, b) => a <= b);
-    hbs.registerHelper('includes', (arr: any, val: any) => {
-      if (!arr) return false;
-      if (Array.isArray(arr)) {
-        return arr.some((item) => String(item).toLowerCase() === String(val).toLowerCase());
-      }
-      if (typeof arr === 'string') {
-        return arr.toLowerCase().includes(String(val).toLowerCase());
-      }
-      return false;
-    });
-
-    app.use(
-      session({
-        secret: 'test-secret',
-        resave: false,
-        saveUninitialized: false,
-      }),
-    );
-
+    configureE2eApp(app);
     await app.init();
-  });
+  }, 30000);
 
   afterAll(async () => {
-    await app.close();
+    if (app) {
+      await app.close();
+    }
   });
 
   it('GET /safety/documents should return 200 OK and render documents registry', async () => {

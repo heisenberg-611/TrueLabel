@@ -1,12 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { join } from 'path';
-import * as session from 'express-session';
-import * as hbs from 'hbs';
 import { AppModule } from '../src/app.module';
+import { configureE2eApp } from './e2e-helper';
 
-describe('Food Catalog (E2E Integration Test)', () => {
+describe('Food Catalog & Ingredient Analysis (E2E Integration Test)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
@@ -15,44 +13,14 @@ describe('Food Catalog (E2E Integration Test)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-
-    (app as any).setBaseViewsDir(join(__dirname, '..', 'src'));
-    (app as any).setViewEngine('hbs');
-    hbs.registerPartials(join(__dirname, '..', 'src', 'shared', 'views', 'partials'));
-    (app as any).set('view options', {
-      layout: 'shared/views/layouts/main',
-    });
-
-    hbs.registerHelper('eq', (a, b) => a === b);
-    hbs.registerHelper('ne', (a, b) => a !== b);
-    hbs.registerHelper('or', (a, b) => a || b);
-    hbs.registerHelper('and', (a, b) => a && b);
-    hbs.registerHelper('gte', (a, b) => a >= b);
-    hbs.registerHelper('lte', (a, b) => a <= b);
-    hbs.registerHelper('includes', (arr: any, val: any) => {
-      if (!arr) return false;
-      if (Array.isArray(arr)) {
-        return arr.some((item) => String(item).toLowerCase() === String(val).toLowerCase());
-      }
-      if (typeof arr === 'string') {
-        return arr.toLowerCase().includes(String(val).toLowerCase());
-      }
-      return false;
-    });
-
-    app.use(
-      session({
-        secret: 'test-secret',
-        resave: false,
-        saveUninitialized: false,
-      }),
-    );
-
+    configureE2eApp(app);
     await app.init();
-  });
+  }, 30000);
 
   afterAll(async () => {
-    await app.close();
+    if (app) {
+      await app.close();
+    }
   });
 
   it('GET / should return 200 OK and render the authoritative Home Page', async () => {
@@ -68,17 +36,17 @@ describe('Food Catalog (E2E Integration Test)', () => {
 
   it('GET /catalog should return 200 OK and render food catalog page', async () => {
     const response = await request(app.getHttpServer())
-      .get('/catalog')
+      .get('/catalog?q=Oatly')
       .expect(200);
 
     expect(response.text).toContain('Food Catalog & Transparency Discovery');
-    expect(response.text).toContain('PureHarvest');
-    expect(response.text).toContain('Organic Whole Oat Drink');
+    expect(response.text).toContain('Oatly');
+    expect(response.text).toContain('Barista Edition Oat Drink');
   });
 
-  it('GET /catalog/barcode/9312345678901 should redirect to product detail page', async () => {
+  it('GET /catalog/barcode/7394376311482 should redirect to product detail page', async () => {
     const response = await request(app.getHttpServer())
-      .get('/catalog/barcode/9312345678901')
+      .get('/catalog/barcode/7394376311482')
       .expect(302);
 
     expect(response.header.location).toContain('/catalog/product/');
@@ -108,13 +76,26 @@ describe('Food Catalog (E2E Integration Test)', () => {
       .expect(401);
   });
 
-  it('GET /catalog/product/1 should render product details with F16 health profile hook', async () => {
+  it('GET /admin/rules without authentication should require login (401)', async () => {
+    await request(app.getHttpServer())
+      .get('/admin/rules')
+      .expect(401);
+  });
+
+  it('GET /catalog/product/:id should render product details with F03 rule-based ingredient analysis & nutrition', async () => {
+    const barcodeRes = await request(app.getHttpServer())
+      .get('/catalog/barcode/7394376311482')
+      .expect(302);
+
+    const productPath = barcodeRes.header.location;
     const response = await request(app.getHttpServer())
-      .get('/catalog/product/1')
+      .get(productPath)
       .expect(200);
 
-    expect(response.text).toContain('Organic Whole Oat Drink');
+    expect(response.text).toContain('Barista Edition Oat Drink');
     expect(response.text).toContain('Nutrition Facts');
-    expect(response.text).toContain('Declared Ingredients');
+    expect(response.text).toContain('Ingredient, additive &amp; allergen analysis');
+    expect(response.text).toContain('Rule base coverage:');
+    expect(response.text).toContain('Rule-verified ingredients &amp; additives');
   });
 });

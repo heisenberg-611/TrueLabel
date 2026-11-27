@@ -1,36 +1,36 @@
 {{#if (gt totalPages 1)}}
-  <nav aria-label="Pagination navigation" class="bg-white border border-slate-200 rounded-xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
-    <div class="text-xs text-slate-500 font-medium text-center sm:text-left">
-      Showing page <strong class="text-slate-900 font-bold">{{page}}</strong> of <strong class="text-slate-900 font-bold">{{totalPages}}</strong> ({{total}} {{#if itemName}}{{itemName}}{{else}}items{{/if}})
+  <nav aria-label="Pagination navigation" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
+    <div class="text-xs text-slate-500 dark:text-slate-400 font-medium text-center sm:text-left">
+      Showing page <strong class="text-slate-900 dark:text-slate-100 font-bold">{{page}}</strong> of <strong class="text-slate-900 dark:text-slate-100 font-bold">{{totalPages}}</strong> ({{total}} {{#if itemName}}{{itemName}}{{else}}items{{/if}})
     </div>
 
     <div class="flex items-center gap-2 w-full sm:w-auto justify-center">
       {{#if (gt page 1)}}
         <a
-          href="{{#if baseUrl}}{{baseUrl}}{{else}}?{{/if}}page={{subtract page 1}}{{#if query}}&q={{urlEncode query}}{{/if}}{{#if selectedCategory}}&category={{urlEncode selectedCategory}}{{/if}}{{#if selectedTag}}&tag={{urlEncode selectedTag}}{{/if}}{{#if minScore}}&minScore={{minScore}}{{/if}}{{#if (and currentFilter (ne currentFilter.status 'all'))}}&status={{currentFilter.status}}{{/if}}{{#if (and currentFilter.type (ne currentFilter.type 'all'))}}&type={{currentFilter.type}}{{/if}}{{#if currentSort}}&sort={{currentSort}}{{/if}}{{#if currentOrder}}&order={{currentOrder}}{{/if}}{{#if selectedRole}}&role={{selectedRole}}{{/if}}"
-          class="min-h-[44px] min-w-[44px] px-3.5 py-2 text-xs font-semibold rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-center"
+          href="{{#if baseUrl}}{{baseUrl}}{{else}}?{{/if}}page={{subtract page 1}}{{#if query}}&q={{urlEncode query}}{{/if}}{{#if selectedCategory}}&category={{urlEncode selectedCategory}}{{/if}}{{#if selectedTag}}&tag={{urlEncode selectedTag}}{{/if}}{{#if minScore}}&minScore={{minScore}}{{/if}}{{#if (and currentFilter (ne currentFilter.status 'all'))}}&status={{currentFilter.status}}{{/if}}{{#if (and currentFilter.type (ne currentFilter.type 'all'))}}&type={{currentFilter.type}}{{/if}}{{#if (and selectedHazard (ne selectedHazard 'all'))}}&hazardLevel={{urlEncode selectedHazard}}{{/if}}{{#if (and selectedScope (ne selectedScope 'all'))}}&categoryScope={{urlEncode selectedScope}}{{/if}}{{#if currentSort}}&sort={{currentSort}}{{/if}}{{#if currentOrder}}&order={{currentOrder}}{{/if}}{{#if selectedRole}}&role={{selectedRole}}{{/if}}"
+          class="min-h-[44px] min-w-[44px] px-3.5 py-2 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center"
         >
           Previous
         </a>
       {{else}}
-        <span class="min-h-[44px] min-w-[44px] px-3.5 py-2 text-xs font-semibold rounded-lg border border-slate-200 text-slate-300 cursor-not-allowed flex items-center justify-center">
+        <span class="min-h-[44px] min-w-[44px] px-3.5 py-2 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-800 text-slate-300 dark:text-slate-600 cursor-not-allowed flex items-center justify-center">
           Previous
         </span>
       {{/if}}
 
-      <span class="min-h-[44px] min-w-[44px] px-3 py-2 text-xs font-mono font-bold text-slate-700 bg-slate-100 rounded-lg flex items-center justify-center">
+      <span class="min-h-[44px] min-w-[44px] px-3 py-2 text-xs font-mono font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
         {{page}} / {{totalPages}}
       </span>
 
       {{#if (lt page totalPages)}}
         <a
-          href="{{#if baseUrl}}{{baseUrl}}{{else}}?{{/if}}page={{add page 1}}{{#if query}}&q={{urlEncode query}}{{/if}}{{#if selectedCategory}}&category={{urlEncode selectedCategory}}{{/if}}{{#if selectedTag}}&tag={{urlEncode selectedTag}}{{/if}}{{#if minScore}}&minScore={{minScore}}{{/if}}{{#if (and currentFilter (ne currentFilter.status 'all'))}}&status={{currentFilter.status}}{{/if}}{{#if (and currentFilter.type (ne currentFilter.type 'all'))}}&type={{currentFilter.type}}{{/if}}{{#if currentSort}}&sort={{currentSort}}{{/if}}{{#if currentOrder}}&order={{currentOrder}}{{/if}}{{#if selectedRole}}&role={{selectedRole}}{{/if}}"
-          class="min-h-[44px] min-w-[44px] px-3.5 py-2 text-xs font-semibold rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-center"
+          href="{{#if baseUrl}}{{baseUrl}}{{else}}?{{/if}}page={{add page 1}}{{#if query}}&q={{urlEncode query}}{{/if}}{{#if selectedCategory}}&category={{urlEncode selectedCategory}}{{/if}}{{#if selectedTag}}&tag={{urlEncode selectedTag}}{{/if}}{{#if minScore}}&minScore={{minScore}}{{/if}}{{#if (and currentFilter (ne currentFilter.status 'all'))}}&status={{currentFilter.status}}{{/if}}{{#if (and currentFilter.type (ne currentFilter.type 'all'))}}&type={{currentFilter.type}}{{/if}}{{#if (and selectedHazard (ne selectedHazard 'all'))}}&hazardLevel={{urlEncode selectedHazard}}{{/if}}{{#if (and selectedScope (ne selectedScope 'all'))}}&categoryScope={{urlEncode selectedScope}}{{/if}}{{#if currentSort}}&sort={{currentSort}}{{/if}}{{#if currentOrder}}&order={{currentOrder}}{{/if}}{{#if selectedRole}}&role={{selectedRole}}{{/if}}"
+          class="min-h-[44px] min-w-[44px] px-3.5 py-2 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center"
         >
           Next
         </a>
       {{else}}
-        <span class="min-h-[44px] min-w-[44px] px-3.5 py-2 text-xs font-semibold rounded-lg border border-slate-200 text-slate-300 cursor-not-allowed flex items-center justify-center">
+        <span class="min-h-[44px] min-w-[44px] px-3.5 py-2 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-800 text-slate-300 dark:text-slate-600 cursor-not-allowed flex items-center justify-center">
           Next
         </span>
       {{/if}}

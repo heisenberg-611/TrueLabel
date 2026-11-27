@@ -18,6 +18,7 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { CatalogService } from '../services/catalog.service';
+import { IngredientAnalyzerService } from '../services/ingredient-analyzer.service';
 import { PreferenceService } from '../../personal-food/services/preference.service';
 import { DocumentService } from '../../food-safety/services/document.service';
 import { ReviewService } from '../../community/services/review.service';
@@ -30,12 +31,23 @@ import { Roles } from '../../../common/decorators/roles.decorator';
 
 @Controller('catalog')
 export class FoodCatalogController {
+  private _fallbackAnalyzer?: IngredientAnalyzerService;
+
   constructor(
     private readonly catalogService: CatalogService,
     private readonly preferenceService: PreferenceService,
     private readonly documentService: DocumentService,
     @Optional() private readonly reviewService?: ReviewService,
+    @Optional() private readonly ingredientAnalyzer?: IngredientAnalyzerService,
   ) {}
+
+  private get analyzer(): IngredientAnalyzerService {
+    if (this.ingredientAnalyzer) return this.ingredientAnalyzer;
+    if (!this._fallbackAnalyzer) {
+      this._fallbackAnalyzer = new IngredientAnalyzerService();
+    }
+    return this._fallbackAnalyzer;
+  }
 
   /**
    * Catalog Discovery: Search, filter by category/tag, score breakdown
@@ -174,12 +186,22 @@ export class FoodCatalogController {
 
       const body = req.body || {};
 
-      // Extract and map nutrition facts & ingredients from form submission
+      // Delegate nutrition & raw ingredient parsing to pure F03 analyzer service
       if (!dto.nutritionFacts || dto.nutritionFacts.length === 0) {
-        dto.nutritionFacts = buildNutritionFactsFromForm(body);
+        dto.nutritionFacts = this.analyzer.buildNutritionFactsFromForm(body);
       }
       if (!dto.ingredients || dto.ingredients.length === 0) {
-        dto.ingredients = parseRawIngredients(body.rawIngredients);
+        dto.ingredients = this.analyzer.parseRawIngredients(
+          body.rawIngredients,
+          [],
+          dto.category,
+        ).map((item) => ({
+          name: item.name,
+          isAllergen: item.isAllergen,
+          allergenType: item.allergenType || undefined,
+          additiveCode: item.additiveCode || undefined,
+          hazardLevel: item.hazardLevel,
+        }));
       }
 
       const product = await this.catalogService.create(dto, user.id);
@@ -248,7 +270,7 @@ export class FoodCatalogController {
   }
 
   /**
-   * Product Details: Ingredients, Nutrition Facts, Transparency breakdown
+   * Product Details: Ingredients, Rule-Based Analysis (F03), Nutrition Facts, Transparency breakdown
    */
   @Get('product/:id')
   @Render('areas/food-catalog/views/detail')
@@ -260,9 +282,18 @@ export class FoodCatalogController {
   ) {
     const product = await this.catalogService.findById(id);
 
-    // Group ingredients by hazard level for clear presentation
-    const allergens = product.ingredients?.filter((i) => i.isAllergen) || [];
-    const additives = product.ingredients?.filter((i) => i.additiveCode) || [];
+    // Feature F03: Rule-based ingredient, additive & allergen analysis (with unknown separation)
+    const ingredientAnalysis =
+      typeof this.catalogService.analyzeProductIngredients === 'function'
+        ? await this.catalogService.analyzeProductIngredients(product)
+        : this.analyzer.buildProductAnalysisReport(
+            product.ingredients || [],
+            [],
+            product.category,
+          );
+
+    const allergens = ingredientAnalysis.allergens;
+    const additives = ingredientAnalysis.additives;
 
     // Personal Allergen & Dietary Conflict Evaluation (Feature F16 - Consumer only)
     let conflictEvaluation = null;
@@ -284,6 +315,7 @@ export class FoodCatalogController {
       title: `${product.name} (${product.brand}) — TrueLabel`,
       activeNav: 'catalog',
       product,
+      ingredientAnalysis,
       allergens,
       additives,
       conflictEvaluation,
@@ -356,10 +388,20 @@ export class FoodCatalogController {
     try {
       const body = req.body || {};
       if (body.nutrition_energy !== undefined) {
-        dto.nutritionFacts = buildNutritionFactsFromForm(body);
+        dto.nutritionFacts = this.analyzer.buildNutritionFactsFromForm(body);
       }
       if (body.rawIngredients !== undefined) {
-        dto.ingredients = parseRawIngredients(body.rawIngredients);
+        dto.ingredients = this.analyzer.parseRawIngredients(
+          body.rawIngredients,
+          [],
+          dto.category || body.category,
+        ).map((item) => ({
+          name: item.name,
+          isAllergen: item.isAllergen,
+          allergenType: item.allergenType || undefined,
+          additiveCode: item.additiveCode || undefined,
+          hazardLevel: item.hazardLevel,
+        }));
       }
       await this.catalogService.update(id, dto, req.session.user);
       return res.redirect(`/catalog/product/${id}`);
@@ -463,91 +505,3 @@ export class FoodCatalogController {
     }
   }
 }
-
-/**
- * Helper to parse comma-separated raw ingredients with allergen & additive detection
- */
-export function parseRawIngredients(raw?: string) {
-  if (!raw || !raw.trim()) return [];
-  const items = raw.split(',').map((s) => s.trim()).filter(Boolean);
-  return items.map((name) => {
-    const lower = name.toLowerCase();
-    let isAllergen = false;
-    let allergenType: string | undefined = undefined;
-
-    if (/peanut|groundnut/.test(lower)) {
-      isAllergen = true;
-      allergenType = 'Peanut';
-    } else if (/milk|dairy|cheese|cream|whey|casein|butter|lactose|yogurt/.test(lower)) {
-      isAllergen = true;
-      allergenType = 'Milk';
-    } else if (/wheat|gluten|barley|rye|spelt/.test(lower)) {
-      isAllergen = true;
-      allergenType = 'Gluten';
-    } else if (/soy|soya|soybean/.test(lower)) {
-      isAllergen = true;
-      allergenType = 'Soy';
-    } else if (/almond|walnut|cashew|hazelnut|pecan|pistachio|macadamia|tree nut/.test(lower)) {
-      isAllergen = true;
-      allergenType = 'Tree Nut';
-    } else if (/egg|albumin/.test(lower)) {
-      isAllergen = true;
-      allergenType = 'Egg';
-    } else if (/celery/.test(lower)) {
-      isAllergen = true;
-      allergenType = 'Celery';
-    } else if (/sesame/.test(lower)) {
-      isAllergen = true;
-      allergenType = 'Sesame';
-    }
-
-    const match = /E-?(\d{3,4}[a-z]?)/i.exec(name);
-    const additiveCode = match ? `E${match[1].toUpperCase()}` : undefined;
-
-    let hazardLevel: 'safe' | 'caution' | 'warning' = 'safe';
-    if (additiveCode && /E150|E211|E635|E250|E102|E110|E129/.test(additiveCode)) {
-      hazardLevel = 'caution';
-    } else if (/high fructose|palm oil|hydrogenated|artificial/.test(lower)) {
-      hazardLevel = 'caution';
-    }
-
-    return {
-      name,
-      isAllergen,
-      allergenType,
-      additiveCode,
-      hazardLevel,
-    };
-  });
-}
-
-/**
- * Helper to build nutrition facts from standard form inputs
- */
-export function buildNutritionFactsFromForm(body: any) {
-  const servingSize = Number(body.servingSize) || 100;
-
-  const specs = [
-    { key: 'nutrition_energy', name: 'Energy', unit: 'kcal' },
-    { key: 'nutrition_fat', name: 'Fat', unit: 'g' },
-    { key: 'nutrition_saturatedFat', name: 'Saturated Fat', unit: 'g' },
-    { key: 'nutrition_carbohydrates', name: 'Carbohydrates', unit: 'g' },
-    { key: 'nutrition_sugars', name: 'Sugars', unit: 'g' },
-    { key: 'nutrition_fiber', name: 'Fiber', unit: 'g' },
-    { key: 'nutrition_protein', name: 'Protein', unit: 'g' },
-    { key: 'nutrition_salt', name: 'Salt', unit: 'g' },
-  ];
-
-  return specs.map((spec) => {
-    const rawVal = body[spec.key];
-    const amountPer100g = rawVal !== undefined && rawVal !== '' ? Number(rawVal) : 0;
-    const amountPerServing = Math.round(((amountPer100g * servingSize) / 100) * 10) / 10;
-    return {
-      nutrient: spec.name,
-      amountPer100g: isNaN(amountPer100g) ? 0 : amountPer100g,
-      amountPerServing,
-      unit: spec.unit,
-    };
-  });
-}
-

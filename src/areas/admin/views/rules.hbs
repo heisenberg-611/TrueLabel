@@ -1,0 +1,597 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+
+  {{#if success}}
+    <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold text-emerald-900 dark:text-emerald-200 flex items-center gap-2 shadow-sm">
+      <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+      <span>{{success}}</span>
+    </div>
+  {{/if}}
+
+  {{#if error}}
+    <div class="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-xs font-semibold text-rose-900 dark:text-rose-200 flex items-center gap-2 shadow-sm">
+      <svg class="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      <span>{{error}}</span>
+    </div>
+  {{/if}}
+
+  <!-- Regulatory Registry Header -->
+  <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-7 flex flex-col lg:flex-row lg:items-center justify-between gap-5 shadow-sm">
+    <div class="space-y-1.5">
+      <div class="flex flex-wrap items-center gap-2">
+        <a href="/dashboard/admin" class="inline-flex items-center min-h-[36px] text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
+          &larr; Admin console
+        </a>
+        <span class="text-slate-300 dark:text-slate-700">/</span>
+        <span class="text-xs font-mono font-semibold text-slate-700 dark:text-slate-300">Feature F03 Registry</span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+        Food rule base &amp; ingredient analysis
+      </h1>
+      <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-2xl leading-relaxed">
+        Maintain allergen tags, E-number/INS/CI additive tiers, and category-specific restrictions. Every rule change automatically re-evaluates declared ingredients across the entire food catalog.
+      </p>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+      <button
+        type="button"
+        onclick="openAddRuleModal()"
+        class="min-h-[44px] px-4 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white rounded-lg text-xs font-semibold transition-colors shadow-sm inline-flex items-center gap-1.5"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Add food rule
+      </button>
+
+      <form method="POST" action="/admin/rules/recalculate" class="inline">
+        <input type="hidden" name="_csrf" value="{{csrfToken}}">
+        <button
+          type="submit"
+          class="min-h-[44px] px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-lg text-xs font-semibold transition-colors shadow-sm"
+        >
+          Recalculate catalog
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Connected Telemetry Strip -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl divide-y sm:divide-y-0 sm:divide-x divide-slate-100 dark:divide-slate-800 overflow-hidden shadow-sm">
+    <div class="p-4 sm:p-5">
+      <span class="text-xs font-medium text-slate-500 dark:text-slate-400 block">Active rules</span>
+      <div class="text-2xl font-black font-mono text-emerald-700 dark:text-emerald-400 mt-1">{{stats.active}}</div>
+      <span class="text-[11px] text-slate-400 block mt-0.5">{{stats.total}} total ({{stats.inactive}} paused)</span>
+    </div>
+    <div class="p-4 sm:p-5">
+      <span class="text-xs font-medium text-slate-500 dark:text-slate-400 block">Warning tier rules</span>
+      <div class="text-2xl font-black font-mono text-rose-700 dark:text-rose-400 mt-1">{{stats.warning}}</div>
+      <span class="text-[11px] text-slate-400 block mt-0.5">Prohibited or high-hazard triggers</span>
+    </div>
+    <div class="p-4 sm:p-5">
+      <span class="text-xs font-medium text-slate-500 dark:text-slate-400 block">Caution tier rules</span>
+      <div class="text-2xl font-black font-mono text-amber-700 dark:text-amber-400 mt-1">{{stats.caution}}</div>
+      <span class="text-[11px] text-slate-400 block mt-0.5">ADI-monitored &amp; category rules</span>
+    </div>
+    <div class="p-4 sm:p-5">
+      <span class="text-xs font-medium text-slate-500 dark:text-slate-400 block">Allergen classifiers</span>
+      <div class="text-2xl font-black font-mono text-slate-900 dark:text-white mt-1">{{stats.allergens}}</div>
+      <span class="text-[11px] text-slate-400 block mt-0.5">EU Annex II &amp; FDA FALCPA rules</span>
+    </div>
+  </div>
+
+  <!-- Search & Multi-Attribute Filter Bar -->
+  <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
+    <form method="GET" action="/admin/rules" class="p-4 bg-slate-50 dark:bg-slate-950/50 border-b border-slate-200 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center gap-3">
+      <div class="relative flex-1 min-w-[200px]">
+        <input
+          type="text"
+          name="q"
+          value="{{query}}"
+          placeholder="Search by rule name, keyword, E-code, allergen, or source..."
+          class="w-full min-h-[44px] text-xs rounded-lg border border-slate-300 dark:border-slate-700 pl-9 pr-3 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900"
+        />
+        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <select
+          name="type"
+          aria-label="Filter by rule type"
+          class="min-h-[44px] text-xs rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-900 font-medium text-slate-700 dark:text-slate-200"
+        >
+          <option value="all" {{#if (eq currentFilter.type 'all')}}selected{{/if}}>All rule types</option>
+          <option value="allergen" {{#if (eq currentFilter.type 'allergen')}}selected{{/if}}>Allergen</option>
+          <option value="additive" {{#if (eq currentFilter.type 'additive')}}selected{{/if}}>Additive (E-code)</option>
+          <option value="category_restriction" {{#if (eq currentFilter.type 'category_restriction')}}selected{{/if}}>Category restriction</option>
+          <option value="ingredient" {{#if (eq currentFilter.type 'ingredient')}}selected{{/if}}>General ingredient</option>
+        </select>
+
+        <select
+          name="hazardLevel"
+          aria-label="Filter by hazard level"
+          class="min-h-[44px] text-xs rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-900 font-medium text-slate-700 dark:text-slate-200"
+        >
+          <option value="all" {{#if (eq selectedHazard 'all')}}selected{{/if}}>All hazard tiers</option>
+          <option value="safe" {{#if (eq selectedHazard 'safe')}}selected{{/if}}>Safe</option>
+          <option value="caution" {{#if (eq selectedHazard 'caution')}}selected{{/if}}>Caution</option>
+          <option value="warning" {{#if (eq selectedHazard 'warning')}}selected{{/if}}>Warning</option>
+        </select>
+
+        <select
+          name="categoryScope"
+          aria-label="Filter by category scope"
+          class="min-h-[44px] text-xs rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-900 font-medium text-slate-700 dark:text-slate-200"
+        >
+          <option value="all" {{#if (eq selectedScope 'all')}}selected{{/if}}>All scopes</option>
+          <option value="global" {{#if (eq selectedScope 'global')}}selected{{/if}}>Global (all categories)</option>
+          {{#each categories}}
+            <option value="{{this}}" {{#if (eq ../selectedScope this)}}selected{{/if}}>{{this}}</option>
+          {{/each}}
+        </select>
+
+        <select
+          name="status"
+          aria-label="Filter by status"
+          class="min-h-[44px] text-xs rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-900 font-medium text-slate-700 dark:text-slate-200"
+        >
+          <option value="all" {{#if (eq currentFilter.status 'all')}}selected{{/if}}>Active &amp; paused</option>
+          <option value="active" {{#if (eq currentFilter.status 'active')}}selected{{/if}}>Active only</option>
+          <option value="inactive" {{#if (eq currentFilter.status 'inactive')}}selected{{/if}}>Paused only</option>
+        </select>
+
+        <button
+          type="submit"
+          class="min-h-[44px] px-4 py-2 bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold transition-colors"
+        >
+          Filter rules
+        </button>
+
+        {{#if (or query (ne currentFilter.status 'all') (ne currentFilter.type 'all') (ne selectedHazard 'all') (ne selectedScope 'all'))}}
+          <a
+            href="/admin/rules"
+            class="min-h-[44px] inline-flex items-center px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white underline"
+          >
+            Reset
+          </a>
+        {{/if}}
+      </div>
+    </form>
+
+    <!-- Paginated Rule Registry Table -->
+    <div class="overflow-x-auto">
+      <table class="w-full min-w-[820px] text-left text-xs">
+        <thead class="bg-slate-50 dark:bg-slate-950/60 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 font-semibold text-[11px]">
+          <tr>
+            <th class="px-5 py-3.5">Rule &amp; match pattern</th>
+            <th class="px-4 py-3.5">Type &amp; tags</th>
+            <th class="px-4 py-3.5">Category scope</th>
+            <th class="px-4 py-3.5">Hazard tier</th>
+            <th class="px-4 py-3.5">Regulatory source</th>
+            <th class="px-4 py-3.5">State</th>
+            <th class="px-5 py-3.5 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+          {{#each rules}}
+            <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors {{#unless this.isActive}}opacity-60{{/unless}}">
+              <td class="px-5 py-4 max-w-xs">
+                <div class="font-bold text-slate-900 dark:text-white">{{this.name}}</div>
+                <div class="text-[11px] font-mono text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2" title="{{this.pattern}}">
+                  {{this.pattern}}
+                </div>
+                <p class="text-[11px] text-slate-600 dark:text-slate-300 mt-1 line-clamp-2">{{this.explanation}}</p>
+              </td>
+              <td class="px-4 py-4">
+                <span class="inline-block px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
+                  {{this.ruleType}}
+                </span>
+                <div class="flex flex-wrap gap-1 mt-1.5">
+                  {{#if this.additiveCode}}
+                    <span class="additive-pill">{{this.additiveCode}}</span>
+                  {{/if}}
+                  {{#if this.allergenType}}
+                    <span class="allergen-pill">{{this.allergenType}}</span>
+                  {{/if}}
+                </div>
+              </td>
+              <td class="px-4 py-4">
+                {{#if this.categoryScope}}
+                  <span class="inline-block px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-[11px] font-semibold">
+                    {{this.categoryScope}}
+                  </span>
+                {{else}}
+                  <span class="text-[11px] text-slate-500 dark:text-slate-400">Global</span>
+                {{/if}}
+              </td>
+              <td class="px-4 py-4">
+                <span class="inline-block px-2.5 py-0.5 rounded text-[11px] font-bold {{#if (eq this.hazardLevel 'warning')}}bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-800{{else}}{{#if (eq this.hazardLevel 'caution')}}bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800{{else}}bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800{{/if}}{{/if}}">
+                  {{this.hazardLevel}}
+                </span>
+              </td>
+              <td class="px-4 py-4 max-w-[200px]">
+                <div class="font-semibold text-slate-800 dark:text-slate-200 text-[11px]">{{this.source}}</div>
+                {{#if this.fdaStatus}}
+                  <div class="text-[10px] font-mono text-slate-500 dark:text-slate-400 mt-0.5">FDA: {{this.fdaStatus}}</div>
+                {{/if}}
+                {{#if this.euStatus}}
+                  <div class="text-[10px] font-mono text-slate-500 dark:text-slate-400">EU: {{this.euStatus}}</div>
+                {{/if}}
+              </td>
+              <td class="px-4 py-4">
+                {{#if this.isActive}}
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                    Active
+                  </span>
+                {{else}}
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-300 dark:border-slate-700">
+                    Paused
+                  </span>
+                {{/if}}
+              </td>
+              <td class="px-5 py-4 text-right">
+                <div class="flex items-center justify-end gap-1.5">
+                  <button
+                    type="button"
+                    onclick="openEditRuleModal(this)"
+                    data-id="{{this.id}}"
+                    data-name="{{this.name}}"
+                    data-pattern="{{this.pattern}}"
+                    data-type="{{this.ruleType}}"
+                    data-additive-code="{{this.additiveCode}}"
+                    data-allergen-type="{{this.allergenType}}"
+                    data-category-scope="{{this.categoryScope}}"
+                    data-hazard="{{this.hazardLevel}}"
+                    data-fda-status="{{this.fdaStatus}}"
+                    data-eu-status="{{this.euStatus}}"
+                    data-explanation="{{this.explanation}}"
+                    data-source="{{this.source}}"
+                    data-active="{{#if this.isActive}}true{{else}}false{{/if}}"
+                    class="min-h-[44px] px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-semibold text-xs transition-colors"
+                  >
+                    Edit
+                  </button>
+
+                  <form method="POST" action="/admin/rules/{{this.id}}/toggle" class="inline">
+                    <input type="hidden" name="_csrf" value="{{../csrfToken}}">
+                    <button
+                      type="submit"
+                      class="min-h-[44px] px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors"
+                    >
+                      {{#if this.isActive}}Pause{{else}}Activate{{/if}}
+                    </button>
+                  </form>
+
+                  <form
+                    method="POST"
+                    action="/admin/rules/{{this.id}}/delete"
+                    onsubmit="return confirm('Delete food rule &quot;{{this.name}}&quot; and recalculate catalog ingredients?');"
+                    class="inline"
+                  >
+                    <input type="hidden" name="_csrf" value="{{../csrfToken}}">
+                    <button
+                      type="submit"
+                      class="min-h-[44px] px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 font-semibold text-xs transition-colors"
+                    >
+                      Delete
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {{/each}}
+
+          {{#if (eq rules.length 0)}}
+            <tr>
+              <td colspan="7" class="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+                <div class="max-w-sm mx-auto space-y-2">
+                  <p class="text-sm font-bold text-slate-800 dark:text-slate-200">No food analysis rules match your filters</p>
+                  <p class="text-xs text-slate-500 dark:text-slate-400">Reset your search filters or add a new rule to classify previously unknown ingredients.</p>
+                  <div class="pt-2 flex justify-center gap-2">
+                    <a href="/admin/rules" class="min-h-[44px] inline-flex items-center px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200">
+                      Reset filters
+                    </a>
+                    <button type="button" onclick="openAddRuleModal()" class="min-h-[44px] px-4 py-2 rounded-lg bg-slate-900 text-white text-xs font-semibold">
+                      Add food rule
+                    </button>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          {{/if}}
+        </tbody>
+      </table>
+    </div>
+
+    {{#if (gt totalPages 1)}}
+      <div class="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">
+        {{> _pagination baseUrl="/admin/rules?" itemName="food rules"}}
+      </div>
+    {{/if}}
+  </div>
+</div>
+
+<!-- Modal: Add Food Rule -->
+<div
+  id="addRuleModal"
+  class="!m-0 fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden"
+  onclick="if (event.target === this) closeAddRuleModal()"
+>
+  <div class="bg-white dark:bg-slate-900 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col border border-slate-200 dark:border-slate-700 overflow-hidden">
+    <div class="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
+      <div>
+        <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Add administrative food rule</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Saving a rule automatically re-evaluates all ingredients in the catalog.</p>
+      </div>
+      <button
+        type="button"
+        onclick="closeAddRuleModal()"
+        class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center"
+        aria-label="Close modal"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <form method="POST" action="/admin/rules/create" class="p-5 sm:p-6 space-y-4 overflow-y-auto flex-grow">
+      <input type="hidden" name="_csrf" value="{{csrfToken}}">
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label for="addRuleName" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Rule name *</label>
+          <input type="text" id="addRuleName" name="name" required placeholder="e.g. Vanillin Synthetic Flavor" class="w-full min-h-[44px] text-xs rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" />
+        </div>
+        <div>
+          <label for="addRuleType" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Rule type *</label>
+          <select id="addRuleType" name="ruleType" required class="w-full min-h-[44px] text-xs rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">
+            <option value="ingredient">General ingredient</option>
+            <option value="additive">Additive (E-code / INS / CI)</option>
+            <option value="allergen">Mandatory allergen</option>
+            <option value="category_restriction">Category restriction</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label for="addRulePattern" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Match keywords / patterns (comma-separated) *</label>
+        <input type="text" id="addRulePattern" name="pattern" required placeholder="e.g. vanillin flavoring, synthetic vanillin, e150d" class="w-full min-h-[44px] text-xs font-mono rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" />
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label for="addRuleHazard" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Hazard tier *</label>
+          <select id="addRuleHazard" name="hazardLevel" required class="w-full min-h-[44px] text-xs rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">
+            <option value="safe">Safe</option>
+            <option value="caution">Caution</option>
+            <option value="warning">Warning</option>
+          </select>
+        </div>
+        <div>
+          <label for="addRuleAdditiveCode" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Additive code</label>
+          <input type="text" id="addRuleAdditiveCode" name="additiveCode" placeholder="e.g. E150d" class="w-full min-h-[44px] text-xs font-mono rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" />
+        </div>
+        <div>
+          <label for="addRuleAllergenType" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Allergen tag</label>
+          <select id="addRuleAllergenType" name="allergenType" class="w-full min-h-[44px] text-xs rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">
+            <option value="">None</option>
+            {{#each allergenTypes}}
+              <option value="{{this}}">{{this}}</option>
+            {{/each}}
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label for="addRuleCategoryScope" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Category scope (optional)</label>
+          <select id="addRuleCategoryScope" name="categoryScope" class="w-full min-h-[44px] text-xs rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">
+            <option value="">Global (all food categories)</option>
+            {{#each categories}}
+              <option value="{{this}}">{{this}}</option>
+            {{/each}}
+          </select>
+        </div>
+        <div>
+          <label for="addRuleSource" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Authority / source</label>
+          <input type="text" id="addRuleSource" name="source" placeholder="e.g. EFSA / FDA 21 CFR" class="w-full min-h-[44px] text-xs rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label for="addRuleFdaStatus" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">FDA status</label>
+          <input type="text" id="addRuleFdaStatus" name="fdaStatus" placeholder="e.g. GRAS / Regulated Limit" class="w-full min-h-[44px] text-xs rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" />
+        </div>
+        <div>
+          <label for="addRuleEuStatus" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">EU / EFSA status</label>
+          <input type="text" id="addRuleEuStatus" name="euStatus" placeholder="e.g. EU Authorized" class="w-full min-h-[44px] text-xs rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" />
+        </div>
+      </div>
+
+      <div>
+        <label for="addRuleExplanation" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Rule explanation *</label>
+        <textarea id="addRuleExplanation" name="explanation" required rows="3" placeholder="Plain-language explanation displayed on product dossiers when this rule matches..." class="w-full text-xs rounded-lg border border-slate-300 dark:border-slate-700 p-3 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"></textarea>
+      </div>
+
+      <input type="hidden" name="isActive" value="true">
+
+      <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2.5">
+        <button type="button" onclick="closeAddRuleModal()" class="min-h-[44px] px-4 py-2 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-semibold">
+          Cancel
+        </button>
+        <button type="submit" class="min-h-[44px] px-4 py-2 bg-slate-900 dark:bg-emerald-700 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-sm">
+          Save &amp; recalculate catalog
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Edit Food Rule -->
+<div
+  id="editRuleModal"
+  class="!m-0 fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden"
+  onclick="if (event.target === this) closeEditRuleModal()"
+>
+  <div class="bg-white dark:bg-slate-900 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col border border-slate-200 dark:border-slate-700 overflow-hidden">
+    <div class="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
+      <div>
+        <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Edit food rule <span id="editRuleIdBadge" class="font-mono text-slate-500"></span></h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Changes automatically trigger catalog ingredient recalculation.</p>
+      </div>
+      <button
+        type="button"
+        onclick="closeEditRuleModal()"
+        class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center"
+        aria-label="Close modal"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <form id="editRuleForm" method="POST" action="/admin/rules/0/update" class="p-5 sm:p-6 space-y-4 overflow-y-auto flex-grow">
+      <input type="hidden" name="_csrf" value="{{csrfToken}}">
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label for="editRuleName" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Rule name *</label>
+          <input type="text" id="editRuleName" name="name" required class="w-full min-h-[44px] text-xs rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" />
+        </div>
+        <div>
+          <label for="editRuleType" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Rule type *</label>
+          <select id="editRuleType" name="ruleType" required class="w-full min-h-[44px] text-xs rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">
+            <option value="ingredient">General ingredient</option>
+            <option value="additive">Additive (E-code / INS / CI)</option>
+            <option value="allergen">Mandatory allergen</option>
+            <option value="category_restriction">Category restriction</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label for="editRulePattern" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Match keywords / patterns *</label>
+        <input type="text" id="editRulePattern" name="pattern" required class="w-full min-h-[44px] text-xs font-mono rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" />
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label for="editRuleHazard" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Hazard tier *</label>
+          <select id="editRuleHazard" name="hazardLevel" required class="w-full min-h-[44px] text-xs rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">
+            <option value="safe">Safe</option>
+            <option value="caution">Caution</option>
+            <option value="warning">Warning</option>
+          </select>
+        </div>
+        <div>
+          <label for="editRuleAdditiveCode" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Additive code</label>
+          <input type="text" id="editRuleAdditiveCode" name="additiveCode" class="w-full min-h-[44px] text-xs font-mono rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" />
+        </div>
+        <div>
+          <label for="editRuleAllergenType" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Allergen tag</label>
+          <select id="editRuleAllergenType" name="allergenType" class="w-full min-h-[44px] text-xs rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">
+            <option value="">None</option>
+            {{#each allergenTypes}}
+              <option value="{{this}}">{{this}}</option>
+            {{/each}}
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label for="editRuleCategoryScope" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Category scope</label>
+          <select id="editRuleCategoryScope" name="categoryScope" class="w-full min-h-[44px] text-xs rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">
+            <option value="">Global (all categories)</option>
+            {{#each categories}}
+              <option value="{{this}}">{{this}}</option>
+            {{/each}}
+          </select>
+        </div>
+        <div>
+          <label for="editRuleActive" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Rule state</label>
+          <select id="editRuleActive" name="isActive" class="w-full min-h-[44px] text-xs rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">
+            <option value="true">Active (enforced)</option>
+            <option value="false">Paused (inactive)</option>
+          </select>
+        </div>
+        <div>
+          <label for="editRuleSource" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Authority / source</label>
+          <input type="text" id="editRuleSource" name="source" class="w-full min-h-[44px] text-xs rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label for="editRuleFdaStatus" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">FDA status</label>
+          <input type="text" id="editRuleFdaStatus" name="fdaStatus" class="w-full min-h-[44px] text-xs rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" />
+        </div>
+        <div>
+          <label for="editRuleEuStatus" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">EU / EFSA status</label>
+          <input type="text" id="editRuleEuStatus" name="euStatus" class="w-full min-h-[44px] text-xs rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" />
+        </div>
+      </div>
+
+      <div>
+        <label for="editRuleExplanation" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Rule explanation *</label>
+        <textarea id="editRuleExplanation" name="explanation" required rows="3" class="w-full text-xs rounded-lg border border-slate-300 dark:border-slate-700 p-3 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"></textarea>
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2.5">
+        <button type="button" onclick="closeEditRuleModal()" class="min-h-[44px] px-4 py-2 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-semibold">
+          Cancel
+        </button>
+        <button type="submit" class="min-h-[44px] px-4 py-2 bg-slate-900 dark:bg-emerald-700 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-sm">
+          Update &amp; recalculate catalog
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openAddRuleModal() {
+    var modal = document.getElementById('addRuleModal');
+    if (modal) modal.classList.remove('hidden');
+  }
+
+  function closeAddRuleModal() {
+    var modal = document.getElementById('addRuleModal');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  function openEditRuleModal(btn) {
+    var id = btn.getAttribute('data-id');
+    var form = document.getElementById('editRuleForm');
+    if (form) form.action = '/admin/rules/' + id + '/update';
+
+    var badge = document.getElementById('editRuleIdBadge');
+    if (badge) badge.textContent = '#' + id;
+
+    document.getElementById('editRuleName').value = btn.getAttribute('data-name') || '';
+    document.getElementById('editRulePattern').value = btn.getAttribute('data-pattern') || '';
+    document.getElementById('editRuleType').value = btn.getAttribute('data-type') || 'ingredient';
+    document.getElementById('editRuleAdditiveCode').value = btn.getAttribute('data-additive-code') || '';
+    document.getElementById('editRuleAllergenType').value = btn.getAttribute('data-allergen-type') || '';
+    document.getElementById('editRuleCategoryScope').value = btn.getAttribute('data-category-scope') || '';
+    document.getElementById('editRuleHazard').value = btn.getAttribute('data-hazard') || 'safe';
+    document.getElementById('editRuleFdaStatus').value = btn.getAttribute('data-fda-status') || '';
+    document.getElementById('editRuleEuStatus').value = btn.getAttribute('data-eu-status') || '';
+    document.getElementById('editRuleExplanation').value = btn.getAttribute('data-explanation') || '';
+    document.getElementById('editRuleSource').value = btn.getAttribute('data-source') || '';
+    document.getElementById('editRuleActive').value = btn.getAttribute('data-active') === 'false' ? 'false' : 'true';
+
+    var modal = document.getElementById('editRuleModal');
+    if (modal) modal.classList.remove('hidden');
+  }
+
+  function closeEditRuleModal() {
+    var modal = document.getElementById('editRuleModal');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      closeAddRuleModal();
+      closeEditRuleModal();
+    }
+  });
+</script>

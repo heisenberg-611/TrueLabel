@@ -4,6 +4,7 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  Optional,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -12,9 +13,26 @@ import { Ingredient } from '../models/ingredient.entity';
 import { NutritionFact } from '../models/nutrition-fact.entity';
 import { CreateFoodProductDto } from '../models/dto/create-food-product.dto';
 import { SearchFoodProductDto } from '../models/dto/search-food-product.dto';
+import { FoodRule } from '../../admin/models/food-rule.entity';
+import {
+  AnalyzedIngredientResult,
+  IngredientAnalysisReport,
+  IngredientAnalyzerService,
+} from './ingredient-analyzer.service';
+
+export interface RuleRecalculationSummary {
+  productsEvaluated: number;
+  productsUpdated: number;
+  ingredientsEvaluated: number;
+  ingredientsUpdated: number;
+  matchedCount: number;
+  unknownCount: number;
+}
 
 @Injectable()
 export class CatalogService {
+  private _fallbackAnalyzer?: IngredientAnalyzerService;
+
   constructor(
     @InjectRepository(FoodProduct)
     private readonly productRepo: Repository<FoodProduct>,
@@ -22,7 +40,31 @@ export class CatalogService {
     private readonly ingredientRepo: Repository<Ingredient>,
     @InjectRepository(NutritionFact)
     private readonly nutritionRepo: Repository<NutritionFact>,
+    @Optional()
+    @InjectRepository(FoodRule)
+    private readonly foodRuleRepo?: Repository<FoodRule>,
+    @Optional()
+    private readonly ingredientAnalyzer?: IngredientAnalyzerService,
   ) {}
+
+  private get analyzer(): IngredientAnalyzerService {
+    if (this.ingredientAnalyzer) return this.ingredientAnalyzer;
+    if (!this._fallbackAnalyzer) {
+      this._fallbackAnalyzer = new IngredientAnalyzerService();
+    }
+    return this._fallbackAnalyzer;
+  }
+
+  /**
+   * Fetch all active administrative food rules for F03 analysis.
+   */
+  async getActiveRules(): Promise<FoodRule[]> {
+    if (!this.foodRuleRepo) return [];
+    return this.foodRuleRepo.find({
+      where: { isActive: true },
+      order: { id: 'ASC' },
+    });
+  }
 
   /**
    * Search and filter food catalog (Feature F01)
@@ -116,8 +158,22 @@ export class CatalogService {
   }
 
   /**
-   * Create a new food product (Feature F01)
-   * Enforces barcode uniqueness across the catalog.
+   * Compute F03 rule-based ingredient, additive, and allergen breakdown for a product.
+   */
+  async analyzeProductIngredients(
+    product: FoodProduct,
+  ): Promise<IngredientAnalysisReport> {
+    const activeRules = await this.getActiveRules();
+    return this.analyzer.buildProductAnalysisReport(
+      product.ingredients || [],
+      activeRules,
+      product.category,
+    );
+  }
+
+  /**
+   * Create a new food product (Feature F01 + Feature F03 rule analysis)
+   * Enforces barcode uniqueness across the catalog and evaluates ingredients against FoodRule base.
    */
   async create(
     dto: CreateFoodProductDto,
@@ -134,14 +190,21 @@ export class CatalogService {
       );
     }
 
-    // Baseline provisional Food Quality Score (70-90 default, refined in F04)
-    let baselineScore = 75;
-    if (dto.ingredients && dto.ingredients.length > 0) {
-      const cautionCount = dto.ingredients.filter(
-        (i) => i.hazardLevel === 'caution' || i.hazardLevel === 'warning',
-      ).length;
-      baselineScore = Math.max(40, 85 - cautionCount * 10);
-    }
+    const activeRules = await this.getActiveRules();
+    const analyzedIngredients =
+      dto.ingredients && dto.ingredients.length > 0
+        ? this.analyzer.analyzeDeclaredIngredients(
+            dto.ingredients,
+            activeRules,
+            dto.category,
+          )
+        : [];
+
+    // Provisional baseline score incorporating F03 rule classifications and unknown penalty (refined in F04)
+    const baselineScore = this.computeProvisionalScoreFromAnalysis(
+      analyzedIngredients,
+      activeRules.length > 0,
+    );
 
     const product = this.productRepo.create({
       name: dto.name.trim(),
@@ -160,11 +223,20 @@ export class CatalogService {
 
     const savedProduct = await this.productRepo.save(product);
 
-    if (dto.ingredients && dto.ingredients.length > 0) {
-      const ingredients = dto.ingredients.map((i) =>
+    if (analyzedIngredients.length > 0) {
+      const ingredients = analyzedIngredients.map((i) =>
         this.ingredientRepo.create({
-          ...i,
-          name: i.name.trim(),
+          name: i.name,
+          isAllergen: i.isAllergen,
+          allergenType: i.allergenType || (null as any),
+          additiveCode: i.additiveCode || (null as any),
+          hazardLevel: i.hazardLevel,
+          explanation: i.explanation,
+          analysisStatus: i.analysisStatus,
+          matchedRuleId: i.matchedRuleId,
+          ruleSource: i.ruleSource,
+          fdaStatus: i.fdaStatus,
+          euStatus: i.euStatus,
           product: savedProduct,
         }),
       );
@@ -185,7 +257,7 @@ export class CatalogService {
   }
 
   /**
-   * Update food product (Feature F01)
+   * Update food product (Feature F01 + Feature F03 rule re-evaluation)
    * Manufacturers can edit ONLY their own products. Admins can edit any.
    */
   async update(
@@ -213,6 +285,7 @@ export class CatalogService {
       product.barcode = dto.barcode.trim();
     }
 
+    const previousCategory = product.category;
     if (dto.name) product.name = dto.name.trim();
     if (dto.brand) product.brand = dto.brand.trim();
     if (dto.category) product.category = dto.category.trim();
@@ -222,18 +295,59 @@ export class CatalogService {
     if (dto.servingUnit) product.servingUnit = dto.servingUnit;
     if (dto.dietaryTags) product.dietaryTags = dto.dietaryTags;
 
+    const categoryChanged = Boolean(
+      dto.category && dto.category.trim() !== previousCategory,
+    );
+
     const saved = await this.productRepo.save(product);
 
     if (dto.ingredients) {
+      const activeRules = await this.getActiveRules();
+      const analyzedIngredients = this.analyzer.analyzeDeclaredIngredients(
+        dto.ingredients,
+        activeRules,
+        product.category,
+      );
+
       await this.ingredientRepo.delete({ product: { id } });
-      const entities = dto.ingredients.map((i) =>
+      const entities = analyzedIngredients.map((i) =>
         this.ingredientRepo.create({
-          ...i,
-          name: i.name.trim(),
+          name: i.name,
+          isAllergen: i.isAllergen,
+          allergenType: i.allergenType || (null as any),
+          additiveCode: i.additiveCode || (null as any),
+          hazardLevel: i.hazardLevel,
+          explanation: i.explanation,
+          analysisStatus: i.analysisStatus,
+          matchedRuleId: i.matchedRuleId,
+          ruleSource: i.ruleSource,
+          fdaStatus: i.fdaStatus,
+          euStatus: i.euStatus,
           product: saved,
         }),
       );
       saved.ingredients = await this.ingredientRepo.save(entities);
+
+      if (saved.status !== 'banned' && analyzedIngredients.length > 0) {
+        saved.qualityScore = this.computeProvisionalScoreFromAnalysis(
+          analyzedIngredients,
+          activeRules.length > 0,
+        );
+        await this.productRepo.save(saved);
+      }
+    } else if (categoryChanged && product.ingredients && product.ingredients.length > 0) {
+      const activeRules = await this.getActiveRules();
+      if (activeRules.length > 0) {
+        const analyzed = this.analyzer.analyzeDeclaredIngredients(
+          product.ingredients,
+          activeRules,
+          product.category,
+        );
+        await this.applyAnalyzedToPersistedIngredients(
+          product.ingredients,
+          analyzed,
+        );
+      }
     }
 
     if (dto.nutritionFacts) {
@@ -248,6 +362,126 @@ export class CatalogService {
     }
 
     return saved;
+  }
+
+  /**
+   * Feature F03: Trigger rule-base recalculation across all catalog products & ingredients
+   * whenever an administrator creates, modifies, toggles, or deletes a FoodRule.
+   */
+  async recalculateAllWithRules(
+    suppliedRules?: FoodRule[],
+  ): Promise<RuleRecalculationSummary> {
+    const activeRules = suppliedRules ?? (await this.getActiveRules());
+    const products = await this.productRepo.find({
+      relations: ['ingredients'],
+    });
+
+    let productsUpdated = 0;
+    let ingredientsEvaluated = 0;
+    let ingredientsUpdated = 0;
+    let matchedCount = 0;
+    let unknownCount = 0;
+
+    for (const product of products) {
+      const existingIngredients = product.ingredients || [];
+      if (existingIngredients.length === 0) continue;
+
+      ingredientsEvaluated += existingIngredients.length;
+      const analyzed = this.analyzer.analyzeDeclaredIngredients(
+        existingIngredients,
+        activeRules,
+        product.category,
+      );
+
+      matchedCount += analyzed.filter((a) => a.analysisStatus === 'matched').length;
+      unknownCount += analyzed.filter((a) => a.analysisStatus === 'unknown').length;
+
+      const changedCount = await this.applyAnalyzedToPersistedIngredients(
+        existingIngredients,
+        analyzed,
+      );
+      if (changedCount > 0) {
+        ingredientsUpdated += changedCount;
+        productsUpdated++;
+      }
+    }
+
+    return {
+      productsEvaluated: products.length,
+      productsUpdated,
+      ingredientsEvaluated,
+      ingredientsUpdated,
+      matchedCount,
+      unknownCount,
+    };
+  }
+
+  private async applyAnalyzedToPersistedIngredients(
+    persisted: Ingredient[],
+    analyzed: AnalyzedIngredientResult[],
+  ): Promise<number> {
+    const toSave: Ingredient[] = [];
+
+    for (let idx = 0; idx < persisted.length; idx++) {
+      const entity = persisted[idx];
+      const next = analyzed[idx];
+      if (!next) continue;
+
+      const nextAllergenType = next.allergenType || (null as any);
+      const nextAdditiveCode = next.additiveCode || (null as any);
+
+      const hasChanged =
+        entity.isAllergen !== next.isAllergen ||
+        (entity.allergenType || null) !== (nextAllergenType || null) ||
+        (entity.additiveCode || null) !== (nextAdditiveCode || null) ||
+        entity.hazardLevel !== next.hazardLevel ||
+        (entity.explanation || null) !== (next.explanation || null) ||
+        entity.analysisStatus !== next.analysisStatus ||
+        (entity.matchedRuleId ?? null) !== (next.matchedRuleId ?? null) ||
+        (entity.ruleSource || null) !== (next.ruleSource || null) ||
+        (entity.fdaStatus || null) !== (next.fdaStatus || null) ||
+        (entity.euStatus || null) !== (next.euStatus || null);
+
+      if (hasChanged) {
+        entity.isAllergen = next.isAllergen;
+        entity.allergenType = nextAllergenType;
+        entity.additiveCode = nextAdditiveCode;
+        entity.hazardLevel = next.hazardLevel;
+        entity.explanation = next.explanation;
+        entity.analysisStatus = next.analysisStatus;
+        entity.matchedRuleId = next.matchedRuleId;
+        entity.ruleSource = next.ruleSource;
+        entity.fdaStatus = next.fdaStatus;
+        entity.euStatus = next.euStatus;
+        toSave.push(entity);
+      }
+    }
+
+    if (toSave.length > 0) {
+      await this.ingredientRepo.save(toSave);
+    }
+
+    return toSave.length;
+  }
+
+  private computeProvisionalScoreFromAnalysis(
+    analyzed: AnalyzedIngredientResult[],
+    rulesActive: boolean,
+  ): number {
+    if (!analyzed || analyzed.length === 0) return 75;
+
+    let score = 88;
+    for (const item of analyzed) {
+      if (item.hazardLevel === 'warning') {
+        score -= 16;
+      } else if (item.analysisStatus === 'unknown' && rulesActive) {
+        // Unknown ingredients cannot be rewarded as verified-safe
+        score -= 6;
+      } else if (item.hazardLevel === 'caution') {
+        score -= 9;
+      }
+    }
+    return Math.max(25, Math.min(98, score));
   }
 
   /**
@@ -539,9 +773,12 @@ export class CatalogService {
 
     const tierInfo = this.getQualityScoreTier(product.qualityScore);
 
-    // 1. Synthetic Additives
+    // 1. Synthetic Additives (exclude unclassified unknown ingredients unless an explicit additive code was extracted)
     const additives = (product.ingredients || []).filter(
-      (i) => Boolean(i.additiveCode) || i.hazardLevel === 'caution' || i.hazardLevel === 'warning',
+      (i) =>
+        Boolean(i.additiveCode) ||
+        (i.analysisStatus !== 'unknown' &&
+          (i.hazardLevel === 'caution' || i.hazardLevel === 'warning')),
     );
     const additiveCodes = additives
       .map((a) => a.additiveCode || a.name)
@@ -687,5 +924,3 @@ export interface DossierSpecimen {
   nationalLicence: string;
   ingredients: Ingredient[];
 }
-
-
